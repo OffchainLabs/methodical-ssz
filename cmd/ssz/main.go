@@ -9,8 +9,9 @@ import (
 
 func main() {
 	app := &cli.App{
-		Usage:   "ssz support for prysm",
-		Commands: []*cli.Command{benchmark, generate, ir},
+		Usage: "ssz support for prysm",
+		// TODO: implement benchmark
+		Commands: []*cli.Command{ /*benchmark,*/ generate, ir},
 	}
 
 	err := app.Run(os.Args)

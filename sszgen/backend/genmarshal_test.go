@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/kasey/methodical-ssz/sszgen/types"
 	"github.com/prysmaticlabs/prysm/shared/testutil/require"
-	"github.com/prysmaticlabs/prysm/sszgen/types"
 )
 
 func TestGenerateMarshalSSZ(t *testing.T) {
@@ -22,4 +22,3 @@ func TestGenerateMarshalSSZ(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
 }
-

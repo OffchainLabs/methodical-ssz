@@ -2,19 +2,17 @@
 // to speed up the tedious process of writing jen code
 package testdata
 
-
 import (
-	"github.com/prysmaticlabs/prysm/sszgen/types"
+	"github.com/kasey/methodical-ssz/sszgen/types"
 )
 
-
 var testing types.ValRep = &types.ValueContainer{
-	Name: "testing",
+	Name:    "testing",
 	Package: "github.com/prysmaticlabs/derp",
 	Contents: map[string]types.ValRep{
 		"OverlayUint": &types.ValuePointer{
 			Referent: &types.ValueOverlay{
-				Name: "FakeContainer",
+				Name:    "FakeContainer",
 				Package: "github.com/prysmaticlabs/derp/derp",
 				Underlying: &types.ValueUint{
 					Name: "uint8",

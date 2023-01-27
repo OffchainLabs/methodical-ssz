@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 
-	"github.com/prysmaticlabs/prysm/sszgen/types"
+	"github.com/kasey/methodical-ssz/sszgen/types"
 )
 
 type Representer struct {
@@ -39,7 +39,7 @@ func (r *Representer) GetDeclaration(packagePath, structName string, mutators ..
 	switch ty := ts.typeSpec.Type.(type) {
 	case *ast.StructType:
 		vr := &types.ValueContainer{
-			Name:     ts.Name,
+			Name:    ts.Name,
 			Package: packagePath,
 		}
 		for _, f := range ty.Fields.List {
@@ -146,8 +146,8 @@ func (r *Representer) expandArray(dims []*SSZDimension, art *ast.ArrayType, ts *
 		}
 	default:
 		elv, err = r.expandRepresentation(&ParseNode{
-			FileParser: ts.FileParser,
-			PackageParser: ts.PackageParser,
+			FileParser:     ts.FileParser,
+			PackageParser:  ts.PackageParser,
 			typeExpression: elt,
 		})
 		if err != nil {
@@ -158,13 +158,13 @@ func (r *Representer) expandArray(dims []*SSZDimension, art *ast.ArrayType, ts *
 	if d.IsVector() {
 		return &types.ValueVector{
 			ElementValue: elv,
-			Size: d.VectorLen(),
+			Size:         d.VectorLen(),
 		}, nil
 	}
 	if d.IsList() {
 		return &types.ValueList{
 			ElementValue: elv,
-			MaxSize: d.ListLen(),
+			MaxSize:      d.ListLen(),
 		}, nil
 	}
 	return nil, nil
@@ -179,7 +179,7 @@ func (r *Representer) expandIdent(ident *ast.Ident, ts *ParseNode) (types.ValRep
 	case "uint8":
 		return &types.ValueUint{Size: 8, Name: ident.Name}, nil
 	case "uint16":
-		return &types.ValueUint{Size: 16, Name:ident.Name}, nil
+		return &types.ValueUint{Size: 16, Name: ident.Name}, nil
 	case "uint32":
 		return &types.ValueUint{Size: 32, Name: ident.Name}, nil
 	case "uint64":

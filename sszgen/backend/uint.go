@@ -3,11 +3,11 @@ package backend
 import (
 	"fmt"
 
-	"github.com/prysmaticlabs/prysm/sszgen/types"
+	"github.com/kasey/methodical-ssz/sszgen/types"
 )
 
 type generateUint struct {
-	valRep *types.ValueUint
+	valRep        *types.ValueUint
 	targetPackage string
 	casterConfig
 }

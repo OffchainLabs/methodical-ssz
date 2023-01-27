@@ -1,8 +1,9 @@
 package backend
 
 import (
-	"github.com/prysmaticlabs/prysm/sszgen/types"
 	"go/format"
+
+	"github.com/kasey/methodical-ssz/sszgen/types"
 )
 
 func normalizeFixtureBytes(raw []byte) (string, error) {

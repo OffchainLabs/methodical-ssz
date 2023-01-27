@@ -4,10 +4,10 @@ import (
 	"go/format"
 
 	jen "github.com/dave/jennifer/jen"
-	"github.com/prysmaticlabs/prysm/sszgen/types"
+	"github.com/kasey/methodical-ssz/sszgen/types"
 )
 
-func RenderIntermediate(vr types.ValRep) (string, error){
+func RenderIntermediate(vr types.ValRep) (string, error) {
 	file := jen.NewFile("values")
 	evr, err := encodeValRep(vr)
 	if err != nil {

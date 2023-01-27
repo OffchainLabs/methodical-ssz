@@ -1,6 +1,6 @@
 package backend
 
-import "github.com/prysmaticlabs/prysm/sszgen/types"
+import "github.com/kasey/methodical-ssz/sszgen/types"
 
 type visitor func(vr types.ValRep)
 

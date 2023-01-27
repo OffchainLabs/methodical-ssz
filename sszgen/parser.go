@@ -7,19 +7,19 @@ import (
 	"go/token"
 	"strconv"
 
-	"github.com/prysmaticlabs/prysm/sszgen/types"
+	"github.com/kasey/methodical-ssz/sszgen/types"
 	"golang.org/x/tools/go/packages"
 )
 
 type ParseNode struct {
 	PackagePath    string
 	Name           string
-	typeSpec *ast.TypeSpec
+	typeSpec       *ast.TypeSpec
 	typeExpression ast.Expr
-	FileParser FileParser
+	FileParser     FileParser
 	PackageParser  PackageParser
 	ValRep         types.ValRep
-	Tag string
+	Tag            string
 }
 
 func (pn *ParseNode) DeclarationRef() *DeclarationRef {
@@ -27,7 +27,7 @@ func (pn *ParseNode) DeclarationRef() *DeclarationRef {
 }
 
 type DeclarationRef struct {
-	Name string
+	Name    string
 	Package string
 }
 
@@ -46,7 +46,7 @@ type FileParser interface {
 }
 
 type astFileParser struct {
-	file *ast.File
+	file     *ast.File
 	filename string
 }
 
@@ -66,13 +66,13 @@ type PackageParser interface {
 	Imports() ([]*ast.ImportSpec, error)
 	AllParseNodes() []*ParseNode
 	GetType(name string) (*ParseNode, error)
-	Path() string // parser's package path
+	Path() string                 // parser's package path
 	PackageName() (string, error) // "real" name ie `package $NAME` declaration in source files in package
 }
 
 type packageParser struct {
 	packagePath string
-	files map[string]*ast.File
+	files       map[string]*ast.File
 }
 
 func (pp *packageParser) Imports() ([]*ast.ImportSpec, error) {
@@ -97,11 +97,11 @@ func (pp *packageParser) AllParseNodes() []*ParseNode {
 				continue
 			}
 			ts := &ParseNode{
-				Name:           name,
+				Name: name,
 				//TypeExpression: typeSpec.Type,
-				typeSpec: typeSpec,
-				FileParser:           &astFileParser{filename: fname, file:f},
-				PackagePath:    pp.packagePath,
+				typeSpec:    typeSpec,
+				FileParser:  &astFileParser{filename: fname, file: f},
+				PackagePath: pp.packagePath,
 			}
 			structs = append(structs, ts)
 		}
@@ -128,11 +128,11 @@ func (pp *packageParser) GetType(name string) (*ParseNode, error) {
 			}
 			if name == objName {
 				return &ParseNode{
-					Name:           objName,
+					Name: objName,
 					//TypeExpression: typeSpec.Type,
-					typeSpec: typeSpec,
-					FileParser:           &astFileParser{file: f, filename: fname},
-					PackageParser:  pp,
+					typeSpec:      typeSpec,
+					FileParser:    &astFileParser{file: f, filename: fname},
+					PackageParser: pp,
 				}, nil
 			}
 		}
@@ -166,4 +166,3 @@ func NewPackageParser(packageName string) (*packageParser, error) {
 	}
 	return nil, fmt.Errorf("Package named '%s' could not be loaded from the go build system. Please make sure the current folder contains the go.mod for the target package, or that its go.mod is in a parent directory", packageName)
 }
-

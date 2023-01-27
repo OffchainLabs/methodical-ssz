@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/kasey/methodical-ssz/sszgen/types"
 	"github.com/prysmaticlabs/prysm/shared/testutil/require"
-	"github.com/prysmaticlabs/prysm/sszgen/types"
 )
 
 var generator_generateFixture = `package derp
@@ -24,11 +24,11 @@ func main() {
 
 func TestGenerator_Generate(t *testing.T) {
 	gc := &generatedCode{
-		blocks:  []string{"func main() {\n\tfmt.printf(\"hello world\")\n}"},
+		blocks: []string{"func main() {\n\tfmt.printf(\"hello world\")\n}"},
 		imports: map[string]string{
 			"github.com/prysmaticlabs/derp/derp": "derp",
-			"github.com/ferranbt/fastssz": "ssz",
-			"fmt": "",
+			"github.com/ferranbt/fastssz":        "ssz",
+			"fmt":                                "",
 		},
 	}
 	g := &Generator{packagePath: "github.com/prysmaticlabs/derp", packageName: "derp"}
@@ -57,21 +57,21 @@ func TestGenerator_GenerateBeaconState(t *testing.T) {
 }
 
 func TestImportAlias(t *testing.T) {
-	cases := []struct{
+	cases := []struct {
 		packageName string
-		alias string
+		alias       string
 	}{
 		{
 			packageName: "github.com/derp/derp",
-			alias: "derp_derp",
+			alias:       "derp_derp",
 		},
 		{
 			packageName: "text/template",
-			alias: "text_template",
+			alias:       "text_template",
 		},
 		{
 			packageName: "fmt",
-			alias: "fmt",
+			alias:       "fmt",
 		},
 	}
 	for _, c := range cases {

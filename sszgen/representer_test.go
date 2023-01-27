@@ -4,14 +4,14 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/kasey/methodical-ssz/sszgen/types"
 	"github.com/prysmaticlabs/prysm/shared/testutil/require"
-	"github.com/prysmaticlabs/prysm/sszgen/types"
 )
 
 func TestGetSimpleRepresentation(t *testing.T) {
 	packageName := "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
 	sourceFiles := []string{"testdata/simple.go"}
-	pp, err:= newTestPackageParser(packageName, sourceFiles)
+	pp, err := newTestPackageParser(packageName, sourceFiles)
 	require.NoError(t, err)
 	pi := newTestIndexer()
 	pi.index[packageName] = pp
@@ -300,7 +300,7 @@ func TestVectorOfOverlays(t *testing.T) {
 func TestGetRepresentationMultiPackage(t *testing.T) {
 	packageName := "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
 	sourceFiles := []string{"testdata/types.pb.go"}
-	pp, err:= newTestPackageParser(packageName, sourceFiles)
+	pp, err := newTestPackageParser(packageName, sourceFiles)
 	require.NoError(t, err)
 	pi := newTestIndexer()
 	pi.index[packageName] = pp
@@ -313,7 +313,7 @@ func TestGetRepresentationMultiPackage(t *testing.T) {
 func TestBitlist(t *testing.T) {
 	packageName := "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
 	sourceFiles := []string{"testdata/types.pb.go"}
-	pp, err:= newTestPackageParser(packageName, sourceFiles)
+	pp, err := newTestPackageParser(packageName, sourceFiles)
 	require.NoError(t, err)
 	pi := newTestIndexer()
 	pi.index[packageName] = pp
@@ -325,7 +325,7 @@ func TestBitlist(t *testing.T) {
 	container, ok := testBitlist.(*types.ValueContainer)
 	require.Equal(t, true, ok, "Expected \"TestBitlist\" to be type ValueContainer, got %v", typename(testBitlist))
 
-	overlayValRep, err:= container.GetField("AggregationBits")
+	overlayValRep, err := container.GetField("AggregationBits")
 	require.NoError(t, err)
 	overlay, ok := overlayValRep.(*types.ValueOverlay)
 	require.Equal(t, true, ok, "Expected the result to be a ValueOverlay type, got %v", typename(overlayValRep))
@@ -338,7 +338,7 @@ func TestBitlist(t *testing.T) {
 	_, ok = underlying.ElementValue.(*types.ValueByte)
 	require.Equal(t, true, ok, "Expected the result to be a ValueByte type, got %v", typename(underlying.ElementValue))
 
-	overlayVecValRep, err:= container.GetField("JustificationBits")
+	overlayVecValRep, err := container.GetField("JustificationBits")
 	require.NoError(t, err)
 	overlayVec, ok := overlayVecValRep.(*types.ValueOverlay)
 	require.Equal(t, true, ok, "Expected the result to be a ValueOverlay type, got %v", typename(overlayVec))

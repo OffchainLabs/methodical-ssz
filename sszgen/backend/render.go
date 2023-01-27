@@ -7,7 +7,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/prysmaticlabs/prysm/sszgen/types"
+	"github.com/kasey/methodical-ssz/sszgen/types"
 )
 
 type generatedCode struct {
@@ -108,7 +108,7 @@ func (g *Generator) Render() ([]byte, error) {
 	final := &generatedCode{
 		imports: map[string]string{
 			"github.com/ferranbt/fastssz": "ssz",
-			"fmt": "",
+			"fmt":                         "",
 		},
 	}
 	for _, gc := range g.gc {
@@ -122,7 +122,7 @@ func (g *Generator) Render() ([]byte, error) {
 	}{
 		Package: g.packageName,
 		Imports: final.renderImportPairs(),
-		Blocks: final.renderBlocks(),
+		Blocks:  final.renderBlocks(),
 	})
 	if err != nil {
 		return nil, err

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/prysmaticlabs/prysm/sszgen/types"
+	"github.com/kasey/methodical-ssz/sszgen/types"
 )
 
 type generateVector struct {
-	valRep *types.ValueVector
+	valRep        *types.ValueVector
 	targetPackage string
 	casterConfig
 }
@@ -41,22 +41,22 @@ func (g *generateVector) generateUnmarshalValue(fieldName string, sliceName stri
 		}
 		buf := bytes.NewBuffer(nil)
 		nvr := g.valRep.ElementValue
-		err = tmpl.Execute(buf, struct{
-			TypeName string
-			SliceName string
-			NumElements int
+		err = tmpl.Execute(buf, struct {
+			TypeName        string
+			SliceName       string
+			NumElements     int
 			NestedFixedSize int
-			LoopVar string
+			LoopVar         string
 			NestedUnmarshal string
-			FieldName string
+			FieldName       string
 		}{
-			TypeName: fullyQualifiedTypeName(nvr, g.targetPackage),
-			SliceName: sliceName,
-			NumElements: g.valRep.FixedSize() / g.valRep.ElementValue.FixedSize(),
+			TypeName:        fullyQualifiedTypeName(nvr, g.targetPackage),
+			SliceName:       sliceName,
+			NumElements:     g.valRep.FixedSize() / g.valRep.ElementValue.FixedSize(),
 			NestedFixedSize: g.valRep.ElementValue.FixedSize(),
-			LoopVar: loopVar,
+			LoopVar:         loopVar,
 			NestedUnmarshal: gg.generateUnmarshalValue("tmp", "tmpSlice"),
-			FieldName: fieldName,
+			FieldName:       fieldName,
 		})
 		if err != nil {
 			panic(err)
@@ -92,13 +92,13 @@ func (g *generateVector) generateFixedMarshalValue(fieldName string) string {
 		marshalValue = fmt.Sprintf(t, nestedFieldName, fieldName, internal)
 	}
 	buf := bytes.NewBuffer(nil)
-	err = mvTmpl.Execute(buf, struct{
-		FieldName string
-		Size int
+	err = mvTmpl.Execute(buf, struct {
+		FieldName    string
+		Size         int
 		MarshalValue string
 	}{
-		FieldName: fieldName,
-		Size: g.valRep.Size,
+		FieldName:    fieldName,
+		Size:         g.valRep.Size,
 		MarshalValue: marshalValue,
 	})
 	if err != nil {
@@ -119,11 +119,11 @@ var generateVectorHTRPutterTmpl = `{
 }`
 
 type vecPutterElements struct {
-	FieldName string
+	FieldName       string
 	NestedFieldName string
-	Size int
-	AppendCall string
-	Merkleize string
+	Size            int
+	AppendCall      string
+	Merkleize       string
 }
 
 func renderHtrVecPutter(lpe vecPutterElements) string {
@@ -168,9 +168,9 @@ func (g *generateVector) generateHTRPutter(fieldName string) string {
 	}
 
 	vpe := vecPutterElements{
-		FieldName: fieldName,
+		FieldName:       fieldName,
 		NestedFieldName: nestedFieldName,
-		Size: g.valRep.Size,
+		Size:            g.valRep.Size,
 	}
 
 	switch v := vr.(type) {

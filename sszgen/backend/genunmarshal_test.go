@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kasey/methodical-ssz/sszgen/types"
 	"github.com/prysmaticlabs/prysm/shared/testutil/require"
-	"github.com/prysmaticlabs/prysm/sszgen/types"
 )
 
 func TestGenerateUnmarshalSSZ(t *testing.T) {
@@ -33,7 +33,7 @@ func TestUnmarshalSteps(t *testing.T) {
 
 	vc, ok := testFixBeaconState.(*types.ValueContainer)
 	require.Equal(t, true, ok)
-	gc := &generateContainer{vc, "" }
+	gc := &generateContainer{vc, ""}
 	ums := gc.unmarshalSteps()
 	require.Equal(t, 21, len(ums))
 	require.Equal(t, ums[15].nextVariable.fieldNumber, ums[16].fieldNumber)
@@ -43,4 +43,3 @@ func TestUnmarshalSteps(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
 }
-

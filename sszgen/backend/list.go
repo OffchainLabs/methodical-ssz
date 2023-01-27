@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/prysmaticlabs/prysm/sszgen/types"
+	"github.com/kasey/methodical-ssz/sszgen/types"
 )
 
 type generateList struct {
-	valRep *types.ValueList
+	valRep        *types.ValueList
 	targetPackage string
 	casterConfig
 }
@@ -27,12 +27,12 @@ var generateListHTRPutterTmpl = `{
 }`
 
 type listPutterElements struct {
-	FieldName string
+	FieldName       string
 	NestedFieldName string
-	MaxSize int
-	AppendCall string
-	PadCall string
-	Merkleize string
+	MaxSize         int
+	AppendCall      string
+	PadCall         string
+	Merkleize       string
 }
 
 func renderHtrListPutter(lpe listPutterElements) string {
@@ -64,9 +64,9 @@ func (g *generateList) generateHTRPutter(fieldName string) string {
 	}
 
 	lpe := listPutterElements{
-		FieldName: fieldName,
+		FieldName:       fieldName,
 		NestedFieldName: nestedFieldName,
-		MaxSize: g.valRep.MaxSize,
+		MaxSize:         g.valRep.MaxSize,
 	}
 	switch v := vr.(type) {
 	case *types.ValueByte:
@@ -86,7 +86,7 @@ func (g *generateList) generateHTRPutter(fieldName string) string {
 		}
 	case *types.ValueUint:
 		lpe.AppendCall = fmt.Sprintf("hh.AppendUint%d(%s)", v.Size, nestedFieldName)
-		if v.FixedSize() % ChunkSize != 0 {
+		if v.FixedSize()%ChunkSize != 0 {
 			lpe.PadCall = "\nhh.FillUpTo32()"
 		}
 		mtmpl := `numItems := uint64(len(%s))
@@ -173,24 +173,24 @@ func (g *generateList) generateUnmarshalVariableValue(fieldName string, sliceNam
 		panic(err)
 	}
 	buf := bytes.NewBuffer(nil)
-	err = tmpl.Execute(buf, struct{
-		LoopVar string
-		SliceName string
-		ElementSize int
-		TypeName string
-		FieldName string
-		MaxSize int
-		Initializer string
+	err = tmpl.Execute(buf, struct {
+		LoopVar         string
+		SliceName       string
+		ElementSize     int
+		TypeName        string
+		FieldName       string
+		MaxSize         int
+		Initializer     string
 		NestedFixedSize int
 		NestedUnmarshal string
 	}{
-		LoopVar: loopVar,
-		SliceName: sliceName,
-		ElementSize: g.valRep.ElementValue.FixedSize(),
-		TypeName: fullyQualifiedTypeName(g.valRep.ElementValue, g.targetPackage),
-		FieldName: fieldName,
-		MaxSize: g.valRep.MaxSize,
-		Initializer: initializer,
+		LoopVar:         loopVar,
+		SliceName:       sliceName,
+		ElementSize:     g.valRep.ElementValue.FixedSize(),
+		TypeName:        fullyQualifiedTypeName(g.valRep.ElementValue, g.targetPackage),
+		FieldName:       fieldName,
+		MaxSize:         g.valRep.MaxSize,
+		Initializer:     initializer,
 		NestedFixedSize: g.valRep.ElementValue.FixedSize(),
 		NestedUnmarshal: gg.generateUnmarshalValue("tmp", "tmpSlice"),
 	})
@@ -226,24 +226,24 @@ func (g *generateList) generateUnmarshalFixedValue(fieldName string, sliceName s
 		panic(err)
 	}
 	buf := bytes.NewBuffer(nil)
-	err = tmpl.Execute(buf, struct{
-		LoopVar string
-		SliceName string
-		ElementSize int
-		TypeName string
-		FieldName string
-		MaxSize int
-		Initializer string
+	err = tmpl.Execute(buf, struct {
+		LoopVar         string
+		SliceName       string
+		ElementSize     int
+		TypeName        string
+		FieldName       string
+		MaxSize         int
+		Initializer     string
 		NestedFixedSize int
 		NestedUnmarshal string
 	}{
-		LoopVar: loopVar,
-		SliceName: sliceName,
-		ElementSize: g.valRep.ElementValue.FixedSize(),
-		TypeName: fullyQualifiedTypeName(g.valRep.ElementValue, g.targetPackage),
-		FieldName: fieldName,
-		MaxSize: g.valRep.MaxSize,
-		Initializer: initializer,
+		LoopVar:         loopVar,
+		SliceName:       sliceName,
+		ElementSize:     g.valRep.ElementValue.FixedSize(),
+		TypeName:        fullyQualifiedTypeName(g.valRep.ElementValue, g.targetPackage),
+		FieldName:       fieldName,
+		MaxSize:         g.valRep.MaxSize,
+		Initializer:     initializer,
 		NestedFixedSize: g.valRep.ElementValue.FixedSize(),
 		NestedUnmarshal: nestedUnmarshal,
 	})
@@ -291,11 +291,11 @@ func (g *generateList) variableSizeSSZ(fieldName string) string {
 		panic(err)
 	}
 	buf := bytes.NewBuffer(nil)
-	err = vslTmpl.Execute(buf, struct{
-		FieldName string
+	err = vslTmpl.Execute(buf, struct {
+		FieldName       string
 		SizeComputation string
 	}{
-		FieldName: fieldName,
+		FieldName:       fieldName,
 		SizeComputation: gg.variableSizeSSZ("o"),
 	})
 	if err != nil {
@@ -330,12 +330,12 @@ func variableOffsetManagement(vg valueGenerator, fieldName, nestedFieldName stri
 		panic(err)
 	}
 	buf := bytes.NewBuffer(nil)
-	err = vomt.Execute(buf, struct{
-		FieldName string
+	err = vomt.Execute(buf, struct {
+		FieldName       string
 		NestedFieldName string
 		SizeComputation string
 	}{
-		FieldName: fieldName,
+		FieldName:       fieldName,
 		NestedFieldName: nestedFieldName,
 		SizeComputation: vg.variableSizeSSZ(nestedFieldName),
 	})
@@ -383,15 +383,15 @@ func (g *generateList) generateVariableMarshalValue(fieldName string) string {
 		marshalValue = fmt.Sprintf(t, nestedFieldName, fieldName, internal)
 	}
 	buf := bytes.NewBuffer(nil)
-	err = mvTmpl.Execute(buf, struct{
-		FieldName string
-		MaxSize int
-		MarshalValue string
+	err = mvTmpl.Execute(buf, struct {
+		FieldName        string
+		MaxSize          int
+		MarshalValue     string
 		OffsetManagement string
 	}{
-		FieldName: fieldName,
-		MaxSize: g.valRep.MaxSize,
-		MarshalValue: marshalValue,
+		FieldName:        fieldName,
+		MaxSize:          g.valRep.MaxSize,
+		MarshalValue:     marshalValue,
 		OffsetManagement: offsetMgmt,
 	})
 	if err != nil {

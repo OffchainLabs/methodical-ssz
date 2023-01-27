@@ -2,11 +2,12 @@ package backend
 
 import (
 	"fmt"
-	"github.com/prysmaticlabs/prysm/sszgen/types"
+
+	"github.com/kasey/methodical-ssz/sszgen/types"
 )
 
 type generateBool struct {
-	valRep *types.ValueBool
+	valRep        *types.ValueBool
 	targetPackage string
 	casterConfig
 }

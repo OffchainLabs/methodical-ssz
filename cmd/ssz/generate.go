@@ -7,17 +7,17 @@ import (
 	"os"
 	"strings"
 
-	"github.com/prysmaticlabs/prysm/sszgen"
-	"github.com/prysmaticlabs/prysm/sszgen/backend"
+	"github.com/kasey/methodical-ssz/sszgen"
+	"github.com/kasey/methodical-ssz/sszgen/backend"
 	"github.com/urfave/cli/v2"
 )
 
 var sourcePackage, output, typeNames string
 var generate = &cli.Command{
-	Name:    "generate",
+	Name:      "generate",
 	ArgsUsage: "<input package, eg github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1>",
-	Aliases: []string{"gen"},
-	Usage:   "generate methodsets for a go struct type to support ssz ser/des",
+	Aliases:   []string{"gen"},
+	Usage:     "generate methodsets for a go struct type to support ssz ser/des",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:        "output",

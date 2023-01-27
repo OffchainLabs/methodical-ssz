@@ -3,10 +3,12 @@ package backend
 import (
 	"bytes"
 	"fmt"
-	"github.com/prysmaticlabs/prysm/sszgen/types"
 	"strings"
 	"text/template"
+
+	"github.com/kasey/methodical-ssz/sszgen/types"
 )
+
 var generateUnmarshalSSZTmpl = `func ({{.Receiver}} {{.Type}}) XXUnmarshalSSZ(buf []byte) error {
 	var err error
 	size := uint64(len(buf))
@@ -19,8 +21,7 @@ var generateUnmarshalSSZTmpl = `func ({{.Receiver}} {{.Type}}) XXUnmarshalSSZ(bu
 	return err
 }`
 
-
-func  GenerateUnmarshalSSZ(g *generateContainer) *generatedCode {
+func GenerateUnmarshalSSZ(g *generateContainer) *generatedCode {
 	sizeInequality := "!="
 	if g.IsVariableSized() {
 		sizeInequality = "<"
@@ -70,19 +71,19 @@ func  GenerateUnmarshalSSZ(g *generateContainer) *generatedCode {
 		panic(err)
 	}
 	buf := bytes.NewBuffer(nil)
-	err = unmTmpl.Execute(buf, struct{
-		Receiver string
-		Type string
-		SizeInequality string
-		FixedOffset int
-		SliceDeclaration string
+	err = unmTmpl.Execute(buf, struct {
+		Receiver          string
+		Type              string
+		SizeInequality    string
+		FixedOffset       int
+		SliceDeclaration  string
 		ValueUnmarshaling string
 	}{
-		Receiver: receiverName,
-		Type: fmt.Sprintf("*%s", g.TypeName()),
-		SizeInequality: sizeInequality,
-		FixedOffset: g.fixedOffset(),
-		SliceDeclaration: sliceDeclarations,
+		Receiver:          receiverName,
+		Type:              fmt.Sprintf("*%s", g.TypeName()),
+		SizeInequality:    sizeInequality,
+		FixedOffset:       g.fixedOffset(),
+		SliceDeclaration:  sliceDeclarations,
 		ValueUnmarshaling: strings.Join(unmarshalBlocks, "\n"),
 	})
 	// TODO: allow GenerateUnmarshalSSZ to return an error since template.Execute
@@ -97,13 +98,13 @@ func  GenerateUnmarshalSSZ(g *generateContainer) *generatedCode {
 }
 
 type unmarshalStep struct {
-	valRep types.ValRep
-	fieldNumber int
-	fieldName string
-	beginByte int
-	endByte int
+	valRep           types.ValRep
+	fieldNumber      int
+	fieldName        string
+	beginByte        int
+	endByte          int
 	previousVariable *unmarshalStep
-	nextVariable *unmarshalStep
+	nextVariable     *unmarshalStep
 }
 
 type unmarshalStepSlice []*unmarshalStep
@@ -144,7 +145,7 @@ func (steps unmarshalStepSlice) fixedSlices() string {
 	return strings.Join(slices, "\n")
 }
 
-func (steps unmarshalStepSlice)  variableSlices(outerSize int) string {
+func (steps unmarshalStepSlice) variableSlices(outerSize int) string {
 	validate := make([]string, 0)
 	assign := make([]string, 0)
 	for _, s := range steps {
@@ -157,7 +158,7 @@ func (steps unmarshalStepSlice)  variableSlices(outerSize int) string {
 	return strings.Join(append(validate, assign...), "\n")
 }
 
-func (g *generateContainer) unmarshalSteps() unmarshalStepSlice{
+func (g *generateContainer) unmarshalSteps() unmarshalStepSlice {
 	ums := make([]*unmarshalStep, 0)
 	var begin, end int
 	var prevVariable *unmarshalStep
@@ -165,11 +166,11 @@ func (g *generateContainer) unmarshalSteps() unmarshalStepSlice{
 		begin = end
 		end += c.Value.FixedSize()
 		um := &unmarshalStep{
-			valRep: c.Value,
+			valRep:      c.Value,
 			fieldNumber: i,
-			fieldName: fmt.Sprintf("%s.%s", receiverName, c.Key),
-			beginByte: begin,
-			endByte: end,
+			fieldName:   fmt.Sprintf("%s.%s", receiverName, c.Key),
+			beginByte:   begin,
+			endByte:     end,
 		}
 		if c.Value.IsVariableSized() {
 			if prevVariable != nil {

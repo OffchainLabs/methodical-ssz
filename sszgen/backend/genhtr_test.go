@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/kasey/methodical-ssz/sszgen/types"
 	"github.com/prysmaticlabs/prysm/shared/testutil/require"
-	"github.com/prysmaticlabs/prysm/sszgen/types"
 )
 
 // cases left to satisfy:
@@ -28,9 +28,9 @@ func TestGenerateHashTreeRoot(t *testing.T) {
 func TestHTROverlayCoerce(t *testing.T) {
 	pkg := "derp"
 	expected := "hh.PutUint64(uint64(b.Slot))"
-	val :=  &types.ValueOverlay{
-		Name:       "",
-		Package:    pkg,
+	val := &types.ValueOverlay{
+		Name:    "",
+		Package: pkg,
 		Underlying: &types.ValueUint{
 			Name:    "uint64",
 			Size:    64,

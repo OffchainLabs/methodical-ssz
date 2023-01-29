@@ -11,9 +11,9 @@ import (
 	sync "sync"
 
 	proto "github.com/golang/protobuf/proto"
-	github_com_prysmaticlabs_eth2_types "github.com/prysmaticlabs/eth2-types"
-	_ "github.com/prysmaticlabs/prysm/proto/eth/ext"
-	v1alpha1 "github.com/prysmaticlabs/prysm/proto/eth/v1alpha1"
+	primitives "github.com/prysmaticlabs/prysm/v3/consensus-types/primitives"
+	_ "github.com/prysmaticlabs/prysm/v3/proto/eth/ext"
+	v1alpha1 "github.com/prysmaticlabs/prysm/v3/proto/prysm/v1alpha1"
 	github_com_prysmaticlabs_go_bitfield "github.com/prysmaticlabs/go-bitfield"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -37,7 +37,7 @@ type BeaconState struct {
 
 	GenesisTime                 uint64                                          `protobuf:"varint,1001,opt,name=genesis_time,json=genesisTime,proto3" json:"genesis_time,omitempty"`
 	GenesisValidatorsRoot       []byte                                          `protobuf:"bytes,1002,opt,name=genesis_validators_root,json=genesisValidatorsRoot,proto3" json:"genesis_validators_root,omitempty" ssz-size:"32"`
-	Slot                        github_com_prysmaticlabs_eth2_types.Slot        `protobuf:"varint,1003,opt,name=slot,proto3" json:"slot,omitempty" cast-type:"github.com/prysmaticlabs/eth2-types.Slot"`
+	Slot                        primitives.Slot        `protobuf:"varint,1003,opt,name=slot,proto3" json:"slot,omitempty" cast-type:"github.com/prysmaticlabs/prysm/v3/consensus-types/primitives.Slot"`
 	Fork                        *Fork                                           `protobuf:"bytes,1004,opt,name=fork,proto3" json:"fork,omitempty"`
 	LatestBlockHeader           *v1alpha1.BeaconBlockHeader                     `protobuf:"bytes,2001,opt,name=latest_block_header,json=latestBlockHeader,proto3" json:"latest_block_header,omitempty"`
 	BlockRoots                  [][]byte                                        `protobuf:"bytes,2002,rep,name=block_roots,json=blockRoots,proto3" json:"block_roots,omitempty" ssz-size:"8192,32"`
@@ -104,11 +104,11 @@ func (x *BeaconState) GetGenesisValidatorsRoot() []byte {
 	return nil
 }
 
-func (x *BeaconState) GetSlot() github_com_prysmaticlabs_eth2_types.Slot {
+func (x *BeaconState) GetSlot() primitives.Slot {
 	if x != nil {
 		return x.Slot
 	}
-	return github_com_prysmaticlabs_eth2_types.Slot(0)
+	return primitives.Slot(0)
 }
 
 func (x *BeaconState) GetFork() *Fork {
@@ -244,7 +244,7 @@ type Fork struct {
 
 	PreviousVersion []byte                                    `protobuf:"bytes,1,opt,name=previous_version,json=previousVersion,proto3" json:"previous_version,omitempty" ssz-size:"4"`
 	CurrentVersion  []byte                                    `protobuf:"bytes,2,opt,name=current_version,json=currentVersion,proto3" json:"current_version,omitempty" ssz-size:"4"`
-	Epoch           github_com_prysmaticlabs_eth2_types.Epoch `protobuf:"varint,3,opt,name=epoch,proto3" json:"epoch,omitempty" cast-type:"github.com/prysmaticlabs/eth2-types.Epoch"`
+	Epoch           primitives.Epoch `protobuf:"varint,3,opt,name=epoch,proto3" json:"epoch,omitempty" cast-type:"github.com/prysmaticlabs/prysm/v3/consensus-types/primitives.Epoch"`
 }
 
 func (x *Fork) Reset() {
@@ -293,11 +293,11 @@ func (x *Fork) GetCurrentVersion() []byte {
 	return nil
 }
 
-func (x *Fork) GetEpoch() github_com_prysmaticlabs_eth2_types.Epoch {
+func (x *Fork) GetEpoch() primitives.Epoch {
 	if x != nil {
 		return x.Epoch
 	}
-	return github_com_prysmaticlabs_eth2_types.Epoch(0)
+	return primitives.Epoch(0)
 }
 
 type PendingAttestation struct {
@@ -307,8 +307,8 @@ type PendingAttestation struct {
 
 	AggregationBits github_com_prysmaticlabs_go_bitfield.Bitlist       `protobuf:"bytes,1,opt,name=aggregation_bits,json=aggregationBits,proto3" json:"aggregation_bits,omitempty" cast-type:"github.com/prysmaticlabs/go-bitfield.Bitlist" ssz-max:"2048"`
 	Data            *v1alpha1.AttestationData                          `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
-	InclusionDelay  github_com_prysmaticlabs_eth2_types.Slot           `protobuf:"varint,3,opt,name=inclusion_delay,json=inclusionDelay,proto3" json:"inclusion_delay,omitempty" cast-type:"github.com/prysmaticlabs/eth2-types.Slot"`
-	ProposerIndex   github_com_prysmaticlabs_eth2_types.ValidatorIndex `protobuf:"varint,4,opt,name=proposer_index,json=proposerIndex,proto3" json:"proposer_index,omitempty" cast-type:"github.com/prysmaticlabs/eth2-types.ValidatorIndex"`
+	InclusionDelay  primitives.Slot           `protobuf:"varint,3,opt,name=inclusion_delay,json=inclusionDelay,proto3" json:"inclusion_delay,omitempty" cast-type:"github.com/prysmaticlabs/v3/consensus-types/primitives.Slot"`
+	ProposerIndex   primitives.ValidatorIndex `protobuf:"varint,4,opt,name=proposer_index,json=proposerIndex,proto3" json:"proposer_index,omitempty" cast-type:"github.com/prysmaticlabs/prysm/v3/consensus-types/primitives.ValidatorIndex"`
 }
 
 func (x *PendingAttestation) Reset() {
@@ -357,18 +357,18 @@ func (x *PendingAttestation) GetData() *v1alpha1.AttestationData {
 	return nil
 }
 
-func (x *PendingAttestation) GetInclusionDelay() github_com_prysmaticlabs_eth2_types.Slot {
+func (x *PendingAttestation) GetInclusionDelay() primitives.Slot {
 	if x != nil {
 		return x.InclusionDelay
 	}
-	return github_com_prysmaticlabs_eth2_types.Slot(0)
+	return primitives.Slot(0)
 }
 
-func (x *PendingAttestation) GetProposerIndex() github_com_prysmaticlabs_eth2_types.ValidatorIndex {
+func (x *PendingAttestation) GetProposerIndex() primitives.ValidatorIndex {
 	if x != nil {
 		return x.ProposerIndex
 	}
-	return github_com_prysmaticlabs_eth2_types.ValidatorIndex(0)
+	return primitives.ValidatorIndex(0)
 }
 
 type HistoricalBatch struct {
@@ -431,7 +431,7 @@ type StateSummary struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Slot github_com_prysmaticlabs_eth2_types.Slot `protobuf:"varint,1,opt,name=slot,proto3" json:"slot,omitempty" cast-type:"github.com/prysmaticlabs/eth2-types.Slot"`
+	Slot primitives.Slot `protobuf:"varint,1,opt,name=slot,proto3" json:"slot,omitempty" cast-type:"github.com/prysmaticlabs/v3/consensus-types/primitives.Slot"`
 	Root []byte                                   `protobuf:"bytes,2,opt,name=root,proto3" json:"root,omitempty"`
 }
 
@@ -467,11 +467,11 @@ func (*StateSummary) Descriptor() ([]byte, []int) {
 	return file_proto_beacon_p2p_v1_types_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *StateSummary) GetSlot() github_com_prysmaticlabs_eth2_types.Slot {
+func (x *StateSummary) GetSlot() primitives.Slot {
 	if x != nil {
 		return x.Slot
 	}
-	return github_com_prysmaticlabs_eth2_types.Slot(0)
+	return primitives.Slot(0)
 }
 
 func (x *StateSummary) GetRoot() []byte {

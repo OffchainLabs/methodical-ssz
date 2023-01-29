@@ -23,8 +23,8 @@ func newTestPackageParser(packageName string, files []string) (*packageParser, e
 	for _, f := range files {
 		syn, err := parser.ParseFile(token.NewFileSet(), f, nil, parser.AllErrors)
 		if err != nil {
-				return nil, err
-			}
+			return nil, err
+		}
 		pp.files[f] = syn
 	}
 	return pp, nil
@@ -37,9 +37,9 @@ func TestResolveImport(t *testing.T) {
 	require.NoError(t, err)
 	ts, err := pp.GetType("BeaconState")
 	require.NoError(t, err)
-	alias := "github_com_prysmaticlabs_eth2_types"
+	alias := "github_com_prysmaticlabs_go_bitfield"
 	path, err := ts.FileParser.ResolveAlias(alias)
 	require.NoError(t, err)
-	expectedPath := "github.com/prysmaticlabs/eth2-types"
+	expectedPath := "github.com/prysmaticlabs/go-bitfield"
 	require.Equal(t, expectedPath, path)
 }

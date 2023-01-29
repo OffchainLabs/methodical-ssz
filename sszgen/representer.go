@@ -62,7 +62,7 @@ func (r *Representer) GetDeclaration(packagePath, structName string, mutators ..
 			if err != nil {
 				return nil, err
 			}
-			vr.Contents = append(vr.Contents, types.ContainerField{fieldName, rep})
+			vr.Append(fieldName, rep)
 		}
 		return vr, nil
 	case *ast.Ident:

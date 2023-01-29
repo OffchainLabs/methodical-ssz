@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/kasey/methodical-ssz/sszgen/types"
-	"github.com/prysmaticlabs/prysm/shared/testutil/require"
+	"github.com/prysmaticlabs/prysm/v3/testing/require"
 )
 
 func TestGenerateSizeSSZ(t *testing.T) {

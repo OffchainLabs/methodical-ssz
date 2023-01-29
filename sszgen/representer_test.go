@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/kasey/methodical-ssz/sszgen/types"
-	"github.com/prysmaticlabs/prysm/shared/testutil/require"
+	"github.com/prysmaticlabs/prysm/v3/testing/require"
 )
 
 func TestGetSimpleRepresentation(t *testing.T) {
@@ -154,10 +154,12 @@ func TestContainerField(t *testing.T) {
 
 	refFieldValRep, err := container.GetField("ContainerRefField")
 	require.NoError(t, err)
-	require.Equal(t, "AnotherContainerType", refFieldValRep.TypeName())
-	refField, ok := refFieldValRep.(*types.ValueContainer)
+	require.Equal(t, "*AnotherContainerType", refFieldValRep.TypeName())
+	refField, ok := refFieldValRep.(*types.ValuePointer)
 	require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(refFieldValRep))
-	require.Equal(t, 1, len(refField.Fields()))
+	cont, isCont := refField.Referent.(*types.ValueContainer)
+	require.Equal(t, true, isCont)
+	require.Equal(t, 1, len(cont.Fields()))
 }
 
 func TestListContainers(t *testing.T) {
@@ -298,7 +300,7 @@ func TestVectorOfOverlays(t *testing.T) {
 // Test cross-package traversal
 
 func TestGetRepresentationMultiPackage(t *testing.T) {
-	packageName := "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
+	packageName := "github.com/prysmaticlabs/prysm/v3/proto/beacon/p2p/v1"
 	sourceFiles := []string{"testdata/types.pb.go"}
 	pp, err := newTestPackageParser(packageName, sourceFiles)
 	require.NoError(t, err)

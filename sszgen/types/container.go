@@ -3,7 +3,7 @@ package types
 import "fmt"
 
 type ContainerField struct {
-	Key string
+	Key   string
 	Value ValRep
 }
 
@@ -43,9 +43,11 @@ func (vc *ValueContainer) PackagePath() string {
 }
 
 func (vc *ValueContainer) FixedSize() int {
-	if vc.IsVariableSized() {
-		return 4
-	}
+	/*
+		if vc.IsVariableSized() {
+			return 4
+		}
+	*/
 	total := 0
 	for _, c := range vc.Contents {
 		o := c.Value

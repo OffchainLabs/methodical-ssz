@@ -31,7 +31,7 @@ func TestListOfVector(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestWildcardSSZSize(t *testing.T)  {
+func TestWildcardSSZSize(t *testing.T) {
 	tag := "`ssz-max:\"16777216\" ssz-size:\"?,32\"`"
 	bounds, err := extractSSZDimensions(tag)
 	require.NoError(t, err)
@@ -42,4 +42,17 @@ func TestWildcardSSZSize(t *testing.T)  {
 	require.Equal(t, false, bounds[1].IsList())
 	require.Equal(t, true, bounds[1].IsVector())
 	require.Equal(t, 32, bounds[1].VectorLen())
+}
+
+func Test2DWildcardSSZSize(t *testing.T) {
+	tag := "`protobuf:\"bytes,14,rep,name=transactions,proto3\" json:\"transactions,omitempty\" ssz-max:\"1048576,1073741824\" ssz-size:\"?,?\"`"
+	bounds, err := extractSSZDimensions(tag)
+	require.NoError(t, err)
+	require.Equal(t, 2, len(bounds))
+	require.Equal(t, true, bounds[0].IsList())
+	require.Equal(t, false, bounds[0].IsVector())
+	require.Equal(t, 1048576, bounds[0].ListLen())
+	require.Equal(t, true, bounds[1].IsList())
+	require.Equal(t, false, bounds[1].IsVector())
+	require.Equal(t, 1073741824, bounds[1].ListLen())
 }

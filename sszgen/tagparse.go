@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 	"text/scanner"
+
+	"github.com/pkg/errors"
 )
 
 type tokenState int
@@ -17,7 +19,7 @@ const (
 )
 
 type TagParser struct {
-	sc scanner.Scanner
+	sc     scanner.Scanner
 	buffer string
 }
 
@@ -80,33 +82,36 @@ func extractSSZDimensions(tag string) ([]*SSZDimension, error) {
 	tp := &TagParser{}
 	tp.Init(tag)
 	tags := tp.GetSSZTags()
-	sszSizes, sizeDefined := tags["ssz-size"]
-	sszMax, maxDefined:= tags["ssz-max"]
+	szStr, sizeDefined := tags["ssz-size"]
+	sizes := strings.Split(szStr, ",")
+	maxStr, maxDefined := tags["ssz-max"]
+	dims := make([]*SSZDimension, 0)
+	maxes := strings.Split(maxStr, ",")
 	if !sizeDefined {
 		if !maxDefined {
 			return nil, fmt.Errorf("No ssz-size or ssz-max tags found for element.")
 		}
-		max, err := strconv.Atoi(sszMax)
-		if err != nil {
-			return nil, err
+		for _, m := range maxes {
+			max, err := strconv.Atoi(m)
+			if err != nil {
+				return nil, errors.Wrapf(err, "error parsing ssz-size=%s, ssz-max=%s", szStr, maxStr)
+			}
+			dims = append(dims, &SSZDimension{ListLength: &max})
 		}
-		return []*SSZDimension{{ListLength: &max}}, nil
+		return dims, nil
 	}
-	dims := make([]*SSZDimension, 0)
-	for _, sz := range strings.Split(sszSizes, ",") {
-		if sz == "?" {
-			if sszMax != "" {
-				max, err := strconv.Atoi(sszMax)
-				if err != nil {
-					return nil, err
-				}
-				dims = append(dims, &SSZDimension{ListLength: &max})
-				sszMax = ""
-			} else {
+	for i := 0; i < len(sizes); i++ {
+		if sizes[i] == "?" {
+			if len(maxes) <= i {
 				return nil, fmt.Errorf("More than one wildcard in ssz-size, or ssz-max undefined in tag %s", tag)
 			}
+			max, err := strconv.Atoi(maxes[i])
+			if err != nil {
+				return nil, err
+			}
+			dims = append(dims, &SSZDimension{ListLength: &max})
 		} else {
-			vsize, err := strconv.Atoi(sz)
+			vsize, err := strconv.Atoi(sizes[i])
 			if err != nil {
 				return nil, err
 			}
@@ -119,7 +124,7 @@ func extractSSZDimensions(tag string) ([]*SSZDimension, error) {
 
 type SSZDimension struct {
 	VectorLength *int
-	ListLength *int
+	ListLength   *int
 }
 
 func (dim *SSZDimension) IsVector() bool {
@@ -140,7 +145,7 @@ func (dim *SSZDimension) VectorLen() int {
 
 type SSZListBounds struct {
 	SSZSize []*int
-	SSZMax *int
+	SSZMax  *int
 }
 
 func trimQuotes(s string) string {

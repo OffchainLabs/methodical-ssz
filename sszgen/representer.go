@@ -5,6 +5,7 @@ import (
 	"go/ast"
 
 	"github.com/kasey/methodical-ssz/sszgen/types"
+	"github.com/pkg/errors"
 )
 
 type Representer struct {
@@ -126,7 +127,7 @@ func (r *Representer) expandRepresentation(ts *ParseNode) (types.ValRep, error) 
 func (r *Representer) expandArrayHead(art *ast.ArrayType, ts *ParseNode) (types.ValRep, error) {
 	dims, err := extractSSZDimensions(ts.Tag)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "name=%s, package=%s, tag=%s", ts.Name, ts.PackagePath, ts.Tag)
 	}
 	return r.expandArray(dims, art, ts)
 }

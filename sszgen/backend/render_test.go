@@ -90,3 +90,9 @@ func TestExtractImportsFromContainerFields(t *testing.T) {
 	require.Equal(t, "prysmaticlabs_prysm_proto_eth_v1alpha1", imports["github.com/prysmaticlabs/prysm/proto/eth/v1alpha1"])
 	require.Equal(t, "prysmaticlabs_go_bitfield", imports["github.com/prysmaticlabs/go-bitfield"])
 }
+
+func TestrenderedPackageName(t *testing.T) {
+       before := "github.com/prysmaticlabs/prysm/v3/proto/eth/v1"
+       after := "v1"
+       require.Equal(t, after, renderedPackageName(before))
+}

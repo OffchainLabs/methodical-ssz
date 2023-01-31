@@ -120,7 +120,7 @@ func (g *Generator) Render() ([]byte, error) {
 		Imports string
 		Blocks  string
 	}{
-		Package: g.packageName,
+		Package: renderedPackageName(g.packageName),
 		Imports: final.renderImportPairs(),
 		Blocks:  final.renderBlocks(),
 	})
@@ -224,4 +224,11 @@ func extractImportsFromContainerFields(cfs []types.ContainerField, targetPackage
 		imports[pkg] = importAlias(pkg)
 	}
 	return imports
+}
+
+// renderedPackageName reduces the fully qualified package name to the relative package name, ie
+// github.com/prysmaticlabs/prysm/v3/proto/eth/v1 -> v1
+func renderedPackageName(n string) string {
+       parts := strings.Split(n, "/")
+       return parts[len(parts)-1]
 }

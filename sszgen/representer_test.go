@@ -359,6 +359,24 @@ func TestBitlist(t *testing.T) {
 	require.Equal(t, true, ok, "Expected the result to be a ValueByte type, got %v", typename(underlyingVec.ElementValue))
 }
 
+func TestFixedSizeArray(t *testing.T) {
+	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
+	typeName := "FixedSizeArray"
+	pp, err := NewPackageParser(packageName, []string{typeName})
+	require.NoError(t, err)
+
+	td := pp.results[0]
+	val, err := ParseTypeDef(td)
+	require.NoError(t, err)
+	require.Equal(t, typeName, val.TypeName())
+	container, ok := val.(*types.ValueOverlay)
+	require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(container))
+
+	underlying := container.Underlying
+	c2, ok := underlying.(*types.ValueVector)
+	require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(c2))
+}
+
 func typename(v interface{}) string {
 	ty := reflect.TypeOf(v)
 	if ty.Kind() == reflect.Ptr {

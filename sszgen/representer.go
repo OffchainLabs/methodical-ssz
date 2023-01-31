@@ -39,7 +39,8 @@ func ParseTypeDef(typ *TypeDef) (sszgenTypes.ValRep, error) {
 func expand(f *FieldDef, pkg string) (sszgenTypes.ValRep, error) {
 	switch ty := f.typ.(type) {
 	case *types.Array:
-		return expandArrayHead(f, pkg)
+		size := int(ty.Len())
+		return expandArray([]*SSZDimension{{VectorLength: &size}}, f, pkg)
 	case *types.Slice:
 		return expandArrayHead(f, pkg)
 	case *types.Pointer:

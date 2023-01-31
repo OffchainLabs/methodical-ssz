@@ -60,7 +60,7 @@ var generate = &cli.Command{
 		g := backend.NewGenerator(sourcePackage, sourcePackage)
 		for _, s := range parser.TypeDefs() {
 			fmt.Printf("Generating methods for %s/%s\n", s.PackageName, s.Name)
-			typeRep, err := sszgen.ParseStruct(s)
+			typeRep, err := sszgen.ParseTypeDef(s)
 			if err != nil {
 				return err
 			}

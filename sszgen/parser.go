@@ -47,12 +47,16 @@ func (pp *packageParser) parse() error {
 	}
 
 	for _, typeName := range pp.fieldNames {
-		typ, err := lookupStructType(pp.pkg.Scope(), typeName)
+		typ, err := lookupType(pp.pkg.Scope(), typeName)
 		if err != nil {
-			return fmt.Errorf("can't find %s in %q: %v", typeName, pp.pkg.Path(), err)
+			return err
 		}
-
-		mtyp := newMarshalerType(fileSet, importer, typ, pp.packagePath)
+		var mtyp *TypeDef
+		if _, ok := typ.Underlying().(*types.Struct); ok {
+			mtyp = newStructDef(fileSet, importer, typ, pp.packagePath)
+		} else {
+			mtyp = newPrimitiveDef(fileSet, importer, typ, pp.packagePath)
+		}
 		pp.results = append(pp.results, mtyp)
 	}
 	return nil

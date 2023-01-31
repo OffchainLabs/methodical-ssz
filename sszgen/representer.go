@@ -8,26 +8,32 @@ import (
 	"github.com/pkg/errors"
 )
 
-func ParseStruct(typ *TypeDef) (sszgenTypes.ValRep, error) {
-	vr := &sszgenTypes.ValueContainer{
-		Name:    typ.Name,
-		Package: typ.PackageName,
+func ParseTypeDef(typ *TypeDef) (sszgenTypes.ValRep, error) {
+	if typ.IsStruct {
+		vr := &sszgenTypes.ValueContainer{
+			Name:    typ.Name,
+			Package: typ.PackageName,
+		}
+		for _, f := range typ.Fields {
+			rep, err := expand(f, typ.PackageName)
+			if err != nil {
+				return nil, err
+			}
+			vr.Append(f.name, rep)
+		}
+		return vr, nil
 	}
-	for _, f := range typ.Fields {
-		// this filters out internal protobuf fields, but also serializers like us
-		// can safely ignore unexported fields in general. We also ignore embedded
-		// fields because I'm not sure if we should support them yet.
-		if f.name == "" {
-			continue
-		}
-		rep, err := expand(f, typ.PackageName)
-		if err != nil {
-			return nil, err
-		}
-		vr.Append(f.name, rep)
+	// PrimitiveType is stored in Fields[0]
+	rep, err := expand(typ.Fields[0], typ.PackageName)
+	if err != nil {
+		return nil, err
+	}
+	vr := &sszgenTypes.ValueOverlay{
+		Name:       typ.Name,
+		Package:    typ.PackageName,
+		Underlying: rep,
 	}
 	return vr, nil
-
 }
 
 func expand(f *FieldDef, pkg string) (sszgenTypes.ValRep, error) {
@@ -42,10 +48,15 @@ func expand(f *FieldDef, pkg string) (sszgenTypes.ValRep, error) {
 			return nil, err
 		}
 		return &sszgenTypes.ValuePointer{Referent: vr}, nil
-	case *types.Basic:
-		return expandIdent(ty.Kind(), f.name)
 	case *types.Named:
-		return expand(&FieldDef{name: f.name, tag: f.tag, typ: ty.Underlying()}, pkg)
+		exp, err := expand(&FieldDef{name: f.name, tag: f.tag, typ: ty.Underlying()}, pkg)
+		return &sszgenTypes.ValueOverlay{
+			Name:       ty.Obj().Name(),
+			Package:    pkg,
+			Underlying: exp,
+		}, err
+	case *types.Basic:
+		return expandIdent(ty.Kind(), ty.Name())
 	case *types.Struct:
 		container := sszgenTypes.ValueContainer{
 			Name:    f.name,

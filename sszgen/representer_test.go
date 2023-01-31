@@ -1,43 +1,92 @@
 package sszgen
 
 import (
+	"reflect"
 	"testing"
 
+	"github.com/kasey/methodical-ssz/sszgen/types"
 	"github.com/prysmaticlabs/prysm/v3/testing/require"
 )
 
 func TestGetSimpleRepresentation(t *testing.T) {
 	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
-	//sourceFiles := []string{"testdata/types.pb.go"}
 	pp, err := NewPackageParser(packageName, []string{"NoImports"})
 	require.NoError(t, err)
 	for _, td := range pp.results {
-		_, err := ParseStruct(td)
+		_, err := ParseTypeDef(td)
 		require.NoError(t, err)
 	}
 }
 
-/*
-func setupSimpleRepresenter() *Representer {
-	packageName := "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
-	sourceFiles := []string{"testdata/simple.go"}
-	pp, _ := NewPackageParser(packageName, sourceFiles)
-	pi := newTestIndexer()
-	pi.index[packageName] = pp
-	return NewRepresenter(pi)
+func TestBeaconState(t *testing.T) {
+	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
+	pp, err := NewPackageParser(packageName, []string{"BeaconState"})
+	require.NoError(t, err)
+	for _, td := range pp.results {
+		_, err := ParseTypeDef(td)
+		require.NoError(t, err)
+	}
 }
 
 func TestPrimitiveAliasRepresentation(t *testing.T) {
-	packageName := "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
-	rep := setupSimpleRepresenter()
+	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
 	typeName := "AliasedPrimitive"
-	r, err := rep.GetDeclaration(packageName, typeName)
+	pp, err := NewPackageParser(packageName, []string{typeName})
 	require.NoError(t, err)
-	require.Equal(t, typeName, r.TypeName())
-	overlay, ok := r.(*types.ValueOverlay)
-	require.Equal(t, true, ok, "type declaration over primitive type should result in a ValueOverlay")
-	require.Equal(t, "uint64", overlay.Underlying.TypeName())
+	for _, td := range pp.results {
+		val, err := ParseTypeDef(td)
+		require.NoError(t, err)
+		require.Equal(t, typeName, val.TypeName())
+		overlay, ok := val.(*types.ValueOverlay)
+		require.Equal(t, true, ok, "type declaration over primitive type should result in a ValueOverlay")
+		require.Equal(t, "uint64", overlay.Underlying.TypeName())
+	}
 }
+
+// TestSimpleStructRepresentation ensures that a type declaration like:
+// type AliasedPrimitive uint64
+// will be represented like ValueOverlay{Name: "AliasedPrimitive", Underlying: ValueUint{Name: "uint64"}}
+func TestSimpleStructRepresentation(t *testing.T) {
+	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
+	typeName := "NoImports"
+	pp, err := NewPackageParser(packageName, []string{typeName})
+	require.NoError(t, err)
+
+	td := pp.results[0]
+	val, err := ParseTypeDef(td)
+	require.NoError(t, err)
+	require.Equal(t, typeName, val.TypeName())
+	container, ok := val.(*types.ValueContainer)
+	require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(container))
+
+	// test simple "overlay" values
+	overlayValRep, err := container.GetField("MuhPrim")
+	require.NoError(t, err)
+	overlay, ok := overlayValRep.(*types.ValueOverlay)
+	require.Equal(t, true, ok, "Expected the result to be a ValueOverlay type, got %v", typename(overlayValRep))
+	require.Equal(t, "AliasedPrimitive", overlay.TypeName())
+	require.Equal(t, "uint64", overlay.Underlying.TypeName())
+
+	uintValRep, err := container.GetField("GenesisTime")
+	require.NoError(t, err)
+	require.Equal(t, true, ok, "Expected \"GenesisTime\" to be in container")
+	require.Equal(t, "uint64", uintValRep.TypeName())
+	uintType, ok := uintValRep.(*types.ValueUint)
+	require.Equal(t, true, ok, "Expected \"GenesisTime\" to be a ValueUint, got %v", typename(uintValRep))
+	require.Equal(t, types.UintSize(64), uintType.Size)
+}
+
+func typename(v interface{}) string {
+	ty := reflect.TypeOf(v)
+	if ty.Kind() == reflect.Ptr {
+		return "*" + ty.Elem().Name()
+	} else {
+		return ty.Name()
+	}
+}
+
+/*
+
 
 // TestSimpleStructRepresentation ensures that a type declaration like:
 // type AliasedPrimitive uint64

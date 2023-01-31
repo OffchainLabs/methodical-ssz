@@ -41,18 +41,6 @@ func walkNamedTypes(typ types.Type, callback func(*types.Named)) {
 	}
 }
 
-func lookupStructType(scope *types.Scope, name string) (*types.Named, error) {
-	typ, err := lookupType(scope, name)
-	if err != nil {
-		return nil, err
-	}
-	_, ok := typ.Underlying().(*types.Struct)
-	if !ok {
-		return nil, errors.New("not a struct type")
-	}
-	return typ, nil
-}
-
 func lookupType(scope *types.Scope, name string) (*types.Named, error) {
 	obj := scope.Lookup(name)
 	if obj == nil {

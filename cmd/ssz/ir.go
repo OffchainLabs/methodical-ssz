@@ -53,7 +53,7 @@ var ir = &cli.Command{
 
 		renderedTypes := make([]string, 0)
 		for _, s := range parser.TypeDefs() {
-			typeRep, err := sszgen.ParseStruct(s)
+			typeRep, err := sszgen.ParseTypeDef(s)
 			if err != nil {
 				return err
 			}

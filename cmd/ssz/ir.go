@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -35,23 +34,15 @@ var ir = &cli.Command{
 		if c.NArg() > 0 {
 			sourcePackage = c.Args().Get(0)
 		}
-		index := sszgen.NewPackageIndex()
-		rep := sszgen.NewRepresenter(index)
 
 		var err error
-		var specs []*sszgen.DeclarationRef
+		var fields []string
 		if len(typeNames) > 0 {
-			for _, n := range strings.Split(strings.TrimSpace(typeNames), ",") {
-				specs = append(specs, &sszgen.DeclarationRef{Package: sourcePackage, Name: n})
-			}
-		} else {
-			specs, err = index.DeclarationRefs(sourcePackage)
-			if err != nil {
-				return err
-			}
+			fields = strings.Split(strings.TrimSpace(typeNames), ",")
 		}
-		if len(specs) == 0 {
-			return fmt.Errorf("Could not find any codegen targets in source package %s", sourcePackage)
+		parser, err := sszgen.NewPackageParser(sourcePackage, fields)
+		if err != nil {
+			return err
 		}
 
 		outFh, err := os.Create(output)
@@ -61,8 +52,8 @@ var ir = &cli.Command{
 		}
 
 		renderedTypes := make([]string, 0)
-		for _, s := range specs {
-			typeRep, err := rep.GetDeclaration(s.Package, s.Name)
+		for _, s := range parser.TypeDefs() {
+			typeRep, err := sszgen.ParseStruct(s)
 			if err != nil {
 				return err
 			}

@@ -2,168 +2,120 @@ package sszgen
 
 import (
 	"fmt"
-	"go/ast"
+	"go/types"
 
-	"github.com/kasey/methodical-ssz/sszgen/types"
+	sszgenTypes "github.com/kasey/methodical-ssz/sszgen/types"
 	"github.com/pkg/errors"
 )
 
-type Representer struct {
-	index *PackageIndex
-}
-
-func NewRepresenter(pi *PackageIndex) *Representer {
-	return &Representer{index: pi}
-}
-
-type typeSpecMutator func(*ParseNode)
-
-// this is used to copy a tag from a field down into a declaration
-// representation. This is usedTag to push tag data down into declaration parsing,
-// so that ssz-size/ssz-max can be applied to list/vector value types.
-func typeSpecMutatorCopyTag(source *ParseNode) typeSpecMutator {
-	return func(target *ParseNode) {
-		target.Tag = source.Tag
+func ParseStruct(typ *TypeDef) (sszgenTypes.ValRep, error) {
+	vr := &sszgenTypes.ValueContainer{
+		Name:    typ.Name,
+		Package: typ.PackageName,
 	}
-}
-
-func (r *Representer) GetDeclaration(packagePath, structName string, mutators ...typeSpecMutator) (types.ValRep, error) {
-	ts, err := r.index.GetType(packagePath, structName)
-	if err != nil {
-		return nil, err
-	}
-	// apply mutators to replicate any important ParseNode properties
-	// from outer ParseNode
-	for _, mut := range mutators {
-		mut(ts)
-	}
-	switch ty := ts.typeSpec.Type.(type) {
-	case *ast.StructType:
-		vr := &types.ValueContainer{
-			Name:    ts.Name,
-			Package: packagePath,
+	for _, f := range typ.Fields {
+		// this filters out internal protobuf fields, but also serializers like us
+		// can safely ignore unexported fields in general. We also ignore embedded
+		// fields because I'm not sure if we should support them yet.
+		if f.name == "" {
+			continue
 		}
-		for _, f := range ty.Fields.List {
-			// this filters out internal protobuf fields, but also serializers like us
-			// can safely ignore unexported fields in general. We also ignore embedded
-			// fields because I'm not sure if we should support them yet.
-			if f.Names == nil || !ast.IsExported(f.Names[0].Name) {
+		rep, err := expand(f, typ.PackageName)
+		if err != nil {
+			return nil, err
+		}
+		vr.Append(f.name, rep)
+	}
+	return vr, nil
+
+}
+
+func expand(f *FieldDef, pkg string) (sszgenTypes.ValRep, error) {
+	switch ty := f.typ.(type) {
+	case *types.Array:
+		return expandArrayHead(f, pkg)
+	case *types.Slice:
+		return expandArrayHead(f, pkg)
+	case *types.Pointer:
+		vr, err := expand(&FieldDef{name: f.name, tag: f.tag, typ: ty.Elem()}, pkg)
+		if err != nil {
+			return nil, err
+		}
+		return &sszgenTypes.ValuePointer{Referent: vr}, nil
+	case *types.Basic:
+		return expandIdent(ty.Kind(), f.name)
+	case *types.Named:
+		return expand(&FieldDef{name: f.name, tag: f.tag, typ: ty.Underlying()}, pkg)
+	case *types.Struct:
+		container := sszgenTypes.ValueContainer{
+			Name:    f.name,
+			Package: pkg,
+		}
+		for i := 0; i < ty.NumFields(); i++ {
+			field := ty.Field(i)
+			if field.Name() == "" || !field.Exported() {
 				continue
 			}
-			fieldName := f.Names[0].Name
-			s := &ParseNode{
-				FileParser:     ts.FileParser,
-				PackageParser:  ts.PackageParser,
-				typeExpression: f.Type,
-			}
-			if f.Tag != nil {
-				s.Tag = f.Tag.Value
-			}
-			rep, err := r.expandRepresentation(s)
+			rep, err := expand(&FieldDef{name: field.Name(), tag: ty.Tag(i), typ: field.Type()}, pkg)
 			if err != nil {
 				return nil, err
 			}
-			vr.Append(fieldName, rep)
+			container.Append(f.name, rep)
 		}
-		return vr, nil
-	case *ast.Ident:
-		// in this case our type is like an "overlay" over a primitive, ie
-		// type IntWithMethods int
-		// the ValueOverlay value type exists to represent this situation.
-		// These values require some special handling in codegen because
-		// they must be cast to/from their underlying types when working
-		// with their byte representation for un/marshaling, etc
-		underlying, err := r.expandIdent(ty, ts)
-		if err != nil {
-			return nil, err
-		}
-		// the underlying ValRep will be a primitive value and its .TypeName()
-		// will reflect its storage type, not the overlay name
-		return &types.ValueOverlay{Name: ts.Name, Package: packagePath, Underlying: underlying}, nil
-	case *ast.ArrayType:
-		// we can also have an "overlay" array, like the Bitlist types
-		// from github.com/prysmaticlabs/go-bitfield
-		//underlying, err := r.expandArray()
-		underlying, err := r.expandArrayHead(ty, ts)
-		if err != nil {
-			return nil, err
-		}
-		return &types.ValueOverlay{Name: ts.Name, Package: packagePath, Underlying: underlying}, nil
+		return &container, nil
 	default:
-		return nil, fmt.Errorf("Unsupported ast.Expr type for %v", ts.TypeExpression())
+		return nil, fmt.Errorf("unsupported type for %v with name: %v", ty, f.name)
 	}
 }
 
-func (r *Representer) expandRepresentation(ts *ParseNode) (types.ValRep, error) {
-	switch ty := ts.typeExpression.(type) {
-	case *ast.ArrayType:
-		return r.expandArrayHead(ty, ts)
-	case *ast.StarExpr:
-		referentTS := &ParseNode{
-			FileParser:     ts.FileParser,
-			PackageParser:  ts.PackageParser,
-			typeExpression: ty.X,
-		}
-		vr, err := r.expandRepresentation(referentTS)
-		if err != nil {
-			return nil, err
-		}
-		return &types.ValuePointer{Referent: vr}, nil
-	case *ast.SelectorExpr:
-		packageAliasIdent := ty.X.(*ast.Ident)
-		pa := packageAliasIdent.Name
-		path, err := ts.FileParser.ResolveAlias(pa)
-		if err != nil {
-			return nil, err
-		}
-		return r.GetDeclaration(path, ty.Sel.Name, typeSpecMutatorCopyTag(ts))
-	case *ast.Ident:
-		return r.expandIdent(ty, ts)
-	default:
-		return nil, fmt.Errorf("Unsupported ast.Expr type for %v", ts.TypeExpression())
-	}
-}
-
-func (r *Representer) expandArrayHead(art *ast.ArrayType, ts *ParseNode) (types.ValRep, error) {
-	dims, err := extractSSZDimensions(ts.Tag)
+func expandArrayHead(f *FieldDef, pkg string) (sszgenTypes.ValRep, error) {
+	dims, err := extractSSZDimensions(f.tag)
 	if err != nil {
-		return nil, errors.Wrapf(err, "name=%s, package=%s, tag=%s", ts.Name, ts.PackagePath, ts.Tag)
+		return nil, errors.Wrapf(err, "name=%s, package=%s, tag=%s", f.name, pkg, f.tag)
 	}
-	return r.expandArray(dims, art, ts)
+	return expandArray(dims, f, pkg)
 }
 
-func (r *Representer) expandArray(dims []*SSZDimension, art *ast.ArrayType, ts *ParseNode) (types.ValRep, error) {
+func expandArray(dims []*SSZDimension, f *FieldDef, pkg string) (sszgenTypes.ValRep, error) {
 	if len(dims) == 0 {
-		return nil, fmt.Errorf("do not have dimension information for type %v", ts)
+		return nil, fmt.Errorf("do not have dimension information for type %v", f.name)
 	}
 	d := dims[0]
-	var elv types.ValRep
-	var err error
-	switch elt := art.Elt.(type) {
-	case *ast.ArrayType:
-		elv, err = r.expandArray(dims[1:], elt, ts)
+	var (
+		elv  sszgenTypes.ValRep
+		err  error
+		elem types.Type
+	)
+	// at this point f.typ is either and array or a slice
+	if arr, ok := f.typ.(*types.Array); ok {
+		elem = arr.Elem()
+	} else if arr, ok := f.typ.(*types.Slice); ok {
+		elem = arr.Elem()
+	} else {
+		return nil, fmt.Errorf("invalid typ in expand array: %v with name: %v ", f.typ, f.name)
+	}
+
+	switch elt := elem.(type) {
+	case *types.Array:
+		elv, err = expandArray(dims[1:], &FieldDef{typ: elt.Elem()}, pkg)
 		if err != nil {
 			return nil, err
 		}
 	default:
-		elv, err = r.expandRepresentation(&ParseNode{
-			FileParser:     ts.FileParser,
-			PackageParser:  ts.PackageParser,
-			typeExpression: elt,
-		})
+		elv, err = expand(&FieldDef{name: f.name, tag: f.tag, typ: elt}, pkg)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if d.IsVector() {
-		return &types.ValueVector{
+		return &sszgenTypes.ValueVector{
 			ElementValue: elv,
 			Size:         d.VectorLen(),
 		}, nil
 	}
 	if d.IsList() {
-		return &types.ValueList{
+		return &sszgenTypes.ValueList{
 			ElementValue: elv,
 			MaxSize:      d.ListLen(),
 		}, nil
@@ -171,25 +123,25 @@ func (r *Representer) expandArray(dims []*SSZDimension, art *ast.ArrayType, ts *
 	return nil, nil
 }
 
-func (r *Representer) expandIdent(ident *ast.Ident, ts *ParseNode) (types.ValRep, error) {
-	switch ident.Name {
-	case "bool":
-		return &types.ValueBool{Name: ident.Name}, nil
-	case "byte":
-		return &types.ValueByte{Name: ident.Name}, nil
-	case "uint8":
-		return &types.ValueUint{Size: 8, Name: ident.Name}, nil
-	case "uint16":
-		return &types.ValueUint{Size: 16, Name: ident.Name}, nil
-	case "uint32":
-		return &types.ValueUint{Size: 32, Name: ident.Name}, nil
-	case "uint64":
-		return &types.ValueUint{Size: 64, Name: ident.Name}, nil
-	case "uint128":
-		return &types.ValueUint{Size: 128, Name: ident.Name}, nil
-	case "uint256":
-		return &types.ValueUint{Size: 256, Name: ident.Name}, nil
+func expandIdent(ident types.BasicKind, name string) (sszgenTypes.ValRep, error) {
+	switch ident {
+	case types.Bool:
+		return &sszgenTypes.ValueBool{Name: name}, nil
+	case types.Byte:
+		return &sszgenTypes.ValueByte{Name: name}, nil
+	case types.Uint16:
+		return &sszgenTypes.ValueUint{Size: 16, Name: name}, nil
+	case types.Uint32:
+		return &sszgenTypes.ValueUint{Size: 32, Name: name}, nil
+	case types.Uint64:
+		return &sszgenTypes.ValueUint{Size: 64, Name: name}, nil
+		/*
+			case "uint128":
+				return &sszgenTypes.ValueUint{Size: 128, Name: ident.name}, nil
+			case "uint256":
+				return &sszgenTypes.ValueUint{Size: 256, Name: ident.name}, nil
+		*/
 	default:
-		return r.GetDeclaration(ts.PackageParser.Path(), ident.Name, typeSpecMutatorCopyTag(ts))
+		return nil, fmt.Errorf("unknown ident: %v", name)
 	}
 }

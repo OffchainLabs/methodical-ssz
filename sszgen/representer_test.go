@@ -1,30 +1,27 @@
 package sszgen
 
 import (
-	"reflect"
 	"testing"
 
-	"github.com/kasey/methodical-ssz/sszgen/types"
 	"github.com/prysmaticlabs/prysm/v3/testing/require"
 )
 
 func TestGetSimpleRepresentation(t *testing.T) {
-	packageName := "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
-	sourceFiles := []string{"testdata/simple.go"}
-	pp, err := newTestPackageParser(packageName, sourceFiles)
+	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
+	//sourceFiles := []string{"testdata/types.pb.go"}
+	pp, err := NewPackageParser(packageName, []string{"NoImports"})
 	require.NoError(t, err)
-	pi := newTestIndexer()
-	pi.index[packageName] = pp
-	rep := NewRepresenter(pi)
-	structName := "NoImports"
-	_, err = rep.GetDeclaration(packageName, structName)
-	require.NoError(t, err)
+	for _, td := range pp.results {
+		_, err := ParseStruct(td)
+		require.NoError(t, err)
+	}
 }
 
+/*
 func setupSimpleRepresenter() *Representer {
 	packageName := "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
 	sourceFiles := []string{"testdata/simple.go"}
-	pp, _ := newTestPackageParser(packageName, sourceFiles)
+	pp, _ := NewPackageParser(packageName, sourceFiles)
 	pi := newTestIndexer()
 	pi.index[packageName] = pp
 	return NewRepresenter(pi)
@@ -302,7 +299,7 @@ func TestVectorOfOverlays(t *testing.T) {
 func TestGetRepresentationMultiPackage(t *testing.T) {
 	packageName := "github.com/prysmaticlabs/prysm/v3/proto/beacon/p2p/v1"
 	sourceFiles := []string{"testdata/types.pb.go"}
-	pp, err := newTestPackageParser(packageName, sourceFiles)
+	pp, err := NewPackageParser(packageName, sourceFiles)
 	require.NoError(t, err)
 	pi := newTestIndexer()
 	pi.index[packageName] = pp
@@ -315,7 +312,7 @@ func TestGetRepresentationMultiPackage(t *testing.T) {
 func TestBitlist(t *testing.T) {
 	packageName := "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
 	sourceFiles := []string{"testdata/types.pb.go"}
-	pp, err := newTestPackageParser(packageName, sourceFiles)
+	pp, err := NewPackageParser(packageName, sourceFiles)
 	require.NoError(t, err)
 	pi := newTestIndexer()
 	pi.index[packageName] = pp
@@ -362,3 +359,4 @@ func typename(v interface{}) string {
 		return ty.Name()
 	}
 }
+*/

@@ -76,58 +76,19 @@ func TestSimpleStructRepresentation(t *testing.T) {
 	require.Equal(t, types.UintSize(64), uintType.Size)
 }
 
-func typename(v interface{}) string {
-	ty := reflect.TypeOf(v)
-	if ty.Kind() == reflect.Ptr {
-		return "*" + ty.Elem().Name()
-	} else {
-		return ty.Name()
-	}
-}
-
-/*
-
-
-// TestSimpleStructRepresentation ensures that a type declaration like:
-// type AliasedPrimitive uint64
-// will be represented like ValueOverlay{Name: "AliasedPrimitive", Underlying: ValueUint{Name: "uint64"}}
-func TestSimpleStructRepresentation(t *testing.T) {
-	packageName := "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
-	rep := setupSimpleRepresenter()
-	typeName := "NoImports"
-	r, err := rep.GetDeclaration(packageName, typeName)
-	require.NoError(t, err)
-	require.Equal(t, typeName, r.TypeName())
-	container, ok := r.(*types.ValueContainer)
-	require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(r))
-
-	// test simple "overlay" values
-	overlayValRep, err := container.GetField("MuhPrim")
-	require.NoError(t, err)
-	overlay, ok := overlayValRep.(*types.ValueOverlay)
-	require.Equal(t, true, ok, "Expected the result to be a ValueOverlay type, got %v", typename(overlayValRep))
-	require.Equal(t, "AliasedPrimitive", overlay.TypeName())
-	require.Equal(t, overlay.Underlying.TypeName(), "uint64")
-
-	uintValRep, err := container.GetField("GenesisTime")
-	require.NoError(t, err)
-	require.Equal(t, true, ok, "Expected \"GenesisTime\" to be in container")
-	require.Equal(t, "uint64", uintValRep.TypeName())
-	uintType, ok := uintValRep.(*types.ValueUint)
-	require.Equal(t, true, ok, "Expected \"GenesisTime\" to be a ValueUint, got %v", typename(uintValRep))
-	require.Equal(t, types.UintSize(64), uintType.Size)
-}
-
 // Tests that 1 and 2 dimensional vectors are represented as expected
 func TestStructVectors(t *testing.T) {
-	packageName := "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
-	rep := setupSimpleRepresenter()
+	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
 	typeName := "NoImports"
-	r, err := rep.GetDeclaration(packageName, typeName)
+	pp, err := NewPackageParser(packageName, []string{typeName})
 	require.NoError(t, err)
-	require.Equal(t, typeName, r.TypeName())
-	container, ok := r.(*types.ValueContainer)
-	require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(r))
+
+	td := pp.results[0]
+	val, err := ParseTypeDef(td)
+	require.NoError(t, err)
+	require.Equal(t, typeName, val.TypeName())
+	container, ok := val.(*types.ValueContainer)
+	require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(container))
 
 	vectorValRep, err := container.GetField("GenesisValidatorsRoot")
 	require.NoError(t, err)
@@ -155,14 +116,17 @@ func TestStructVectors(t *testing.T) {
 
 // tests that ssz dimensions are assigned correctly with a vector nested in a list
 func TestVectorInListInStruct(t *testing.T) {
-	packageName := "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
-	rep := setupSimpleRepresenter()
+	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
 	typeName := "NoImports"
-	r, err := rep.GetDeclaration(packageName, typeName)
+	pp, err := NewPackageParser(packageName, []string{typeName})
 	require.NoError(t, err)
-	require.Equal(t, typeName, r.TypeName())
-	container, ok := r.(*types.ValueContainer)
-	require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(r))
+
+	td := pp.results[0]
+	val, err := ParseTypeDef(td)
+	require.NoError(t, err)
+	require.Equal(t, typeName, val.TypeName())
+	container, ok := val.(*types.ValueContainer)
+	require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(container))
 
 	listValRep, err := container.GetField("HistoricalRoots")
 	require.NoError(t, err)
@@ -182,14 +146,17 @@ func TestVectorInListInStruct(t *testing.T) {
 }
 
 func TestContainerField(t *testing.T) {
-	packageName := "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
-	rep := setupSimpleRepresenter()
+	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
 	typeName := "NoImports"
-	r, err := rep.GetDeclaration(packageName, typeName)
+	pp, err := NewPackageParser(packageName, []string{typeName})
 	require.NoError(t, err)
-	require.Equal(t, typeName, r.TypeName())
-	container, ok := r.(*types.ValueContainer)
-	require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(r))
+
+	td := pp.results[0]
+	val, err := ParseTypeDef(td)
+	require.NoError(t, err)
+	require.Equal(t, typeName, val.TypeName())
+	container, ok := val.(*types.ValueContainer)
+	require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(container))
 
 	fieldValRep, err := container.GetField("ContainerField")
 	require.NoError(t, err)
@@ -209,14 +176,17 @@ func TestContainerField(t *testing.T) {
 }
 
 func TestListContainers(t *testing.T) {
-	packageName := "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
-	rep := setupSimpleRepresenter()
+	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
 	typeName := "NoImports"
-	r, err := rep.GetDeclaration(packageName, typeName)
+	pp, err := NewPackageParser(packageName, []string{typeName})
 	require.NoError(t, err)
-	require.Equal(t, typeName, r.TypeName())
-	container, ok := r.(*types.ValueContainer)
-	require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(r))
+
+	td := pp.results[0]
+	val, err := ParseTypeDef(td)
+	require.NoError(t, err)
+	require.Equal(t, typeName, val.TypeName())
+	container, ok := val.(*types.ValueContainer)
+	require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(container))
 
 	conlistValRep, err := container.GetField("ContainerList")
 	require.NoError(t, err)
@@ -260,14 +230,17 @@ func TestListContainers(t *testing.T) {
 }
 
 func TestListOfOverlays(t *testing.T) {
-	packageName := "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
-	rep := setupSimpleRepresenter()
+	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
 	typeName := "NoImports"
-	r, err := rep.GetDeclaration(packageName, typeName)
+	pp, err := NewPackageParser(packageName, []string{typeName})
 	require.NoError(t, err)
-	require.Equal(t, typeName, r.TypeName())
-	container, ok := r.(*types.ValueContainer)
-	require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(r))
+
+	td := pp.results[0]
+	val, err := ParseTypeDef(td)
+	require.NoError(t, err)
+	require.Equal(t, typeName, val.TypeName())
+	container, ok := val.(*types.ValueContainer)
+	require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(container))
 
 	overlayListRep, err := container.GetField("OverlayList")
 	require.NoError(t, err)
@@ -302,14 +275,17 @@ func TestListOfOverlays(t *testing.T) {
 }
 
 func TestVectorOfOverlays(t *testing.T) {
-	packageName := "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
-	rep := setupSimpleRepresenter()
+	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
 	typeName := "NoImports"
-	r, err := rep.GetDeclaration(packageName, typeName)
+	pp, err := NewPackageParser(packageName, []string{typeName})
 	require.NoError(t, err)
-	require.Equal(t, typeName, r.TypeName())
-	container, ok := r.(*types.ValueContainer)
-	require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(r))
+
+	td := pp.results[0]
+	val, err := ParseTypeDef(td)
+	require.NoError(t, err)
+	require.Equal(t, typeName, val.TypeName())
+	container, ok := val.(*types.ValueContainer)
+	require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(container))
 
 	overlayVectorRep, err := container.GetField("OverlayVector")
 	require.NoError(t, err)
@@ -343,35 +319,18 @@ func TestVectorOfOverlays(t *testing.T) {
 	require.Equal(t, types.UintSize(64), underlyingRef.Size)
 }
 
-// Test cross-package traversal
-
-func TestGetRepresentationMultiPackage(t *testing.T) {
-	packageName := "github.com/prysmaticlabs/prysm/v3/proto/beacon/p2p/v1"
-	sourceFiles := []string{"testdata/types.pb.go"}
-	pp, err := NewPackageParser(packageName, sourceFiles)
-	require.NoError(t, err)
-	pi := newTestIndexer()
-	pi.index[packageName] = pp
-	rep := NewRepresenter(pi)
-	structName := "BeaconState"
-	_, err = rep.GetDeclaration(packageName, structName)
-	require.NoError(t, err)
-}
-
 func TestBitlist(t *testing.T) {
-	packageName := "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
-	sourceFiles := []string{"testdata/types.pb.go"}
-	pp, err := NewPackageParser(packageName, sourceFiles)
-	require.NoError(t, err)
-	pi := newTestIndexer()
-	pi.index[packageName] = pp
-	rep := NewRepresenter(pi)
-	structName := "TestBitlist"
-	testBitlist, err := rep.GetDeclaration(packageName, structName)
+	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
+	typeName := "TestBitlist"
+	pp, err := NewPackageParser(packageName, []string{typeName})
 	require.NoError(t, err)
 
-	container, ok := testBitlist.(*types.ValueContainer)
-	require.Equal(t, true, ok, "Expected \"TestBitlist\" to be type ValueContainer, got %v", typename(testBitlist))
+	td := pp.results[0]
+	val, err := ParseTypeDef(td)
+	require.NoError(t, err)
+	require.Equal(t, typeName, val.TypeName())
+	container, ok := val.(*types.ValueContainer)
+	require.Equal(t, true, ok, "Expected \"TestBitlist\" to be type ValueContainer, got %v", typename(val))
 
 	overlayValRep, err := container.GetField("AggregationBits")
 	require.NoError(t, err)
@@ -408,4 +367,3 @@ func typename(v interface{}) string {
 		return ty.Name()
 	}
 }
-*/

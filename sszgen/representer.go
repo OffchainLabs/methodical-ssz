@@ -48,15 +48,6 @@ func expand(f *FieldDef, pkg string) (sszgenTypes.ValRep, error) {
 			return nil, err
 		}
 		return &sszgenTypes.ValuePointer{Referent: vr}, nil
-	case *types.Named:
-		exp, err := expand(&FieldDef{name: f.name, tag: f.tag, typ: ty.Underlying()}, pkg)
-		return &sszgenTypes.ValueOverlay{
-			Name:       ty.Obj().Name(),
-			Package:    pkg,
-			Underlying: exp,
-		}, err
-	case *types.Basic:
-		return expandIdent(ty.Kind(), ty.Name())
 	case *types.Struct:
 		container := sszgenTypes.ValueContainer{
 			Name:    f.name,
@@ -74,6 +65,21 @@ func expand(f *FieldDef, pkg string) (sszgenTypes.ValRep, error) {
 			container.Append(f.name, rep)
 		}
 		return &container, nil
+	case *types.Named:
+		exp, err := expand(&FieldDef{name: ty.Obj().Name(), tag: f.tag, typ: ty.Underlying()}, pkg)
+		switch ty.Underlying().(type) {
+		case *types.Struct:
+			return exp, err
+		default:
+			return &sszgenTypes.ValueOverlay{
+				Name:       ty.Obj().Name(),
+				Package:    pkg,
+				Underlying: exp,
+			}, err
+		}
+
+	case *types.Basic:
+		return expandIdent(ty.Kind(), ty.Name())
 	default:
 		return nil, fmt.Errorf("unsupported type for %v with name: %v", ty, f.name)
 	}
@@ -106,14 +112,13 @@ func expandArray(dims []*SSZDimension, f *FieldDef, pkg string) (sszgenTypes.Val
 		return nil, fmt.Errorf("invalid typ in expand array: %v with name: %v ", f.typ, f.name)
 	}
 
-	switch elt := elem.(type) {
-	case *types.Array:
-		elv, err = expandArray(dims[1:], &FieldDef{typ: elt.Elem()}, pkg)
+	if len(dims) > 1 {
+		elv, err = expandArray(dims[1:], &FieldDef{typ: elem.Underlying()}, pkg)
 		if err != nil {
 			return nil, err
 		}
-	default:
-		elv, err = expand(&FieldDef{name: f.name, tag: f.tag, typ: elt}, pkg)
+	} else {
+		elv, err = expand(&FieldDef{name: f.name, tag: f.tag, typ: elem}, pkg)
 		if err != nil {
 			return nil, err
 		}

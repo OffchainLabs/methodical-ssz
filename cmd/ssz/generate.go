@@ -39,26 +39,13 @@ var generate = &cli.Command{
 			return fmt.Errorf("error: mising required <input package> argument")
 		}
 		var err error
-		index := sszgen.NewPackageIndex()
-		packageName, err := index.GetPackageName(sourcePackage)
+		var fields []string
+		if len(typeNames) > 0 {
+			fields = strings.Split(strings.TrimSpace(typeNames), ",")
+		}
+		parser, err := sszgen.NewPackageParser(sourcePackage, fields)
 		if err != nil {
 			return err
-		}
-		rep := sszgen.NewRepresenter(index)
-
-		var specs []*sszgen.DeclarationRef
-		if len(typeNames) > 0 {
-			for _, n := range strings.Split(strings.TrimSpace(typeNames), ",") {
-				specs = append(specs, &sszgen.DeclarationRef{Package: sourcePackage, Name: n})
-			}
-		} else {
-			specs, err = index.DeclarationRefs(sourcePackage)
-			if err != nil {
-				return err
-			}
-		}
-		if len(specs) == 0 {
-			return fmt.Errorf("Could not find any codegen targets in source package %s", sourcePackage)
 		}
 
 		if output == "" {
@@ -70,10 +57,10 @@ var generate = &cli.Command{
 			return err
 		}
 
-		g := backend.NewGenerator(packageName, sourcePackage)
-		for _, s := range specs {
-			fmt.Printf("Generating methods for %s/%s\n", s.Package, s.Name)
-			typeRep, err := rep.GetDeclaration(s.Package, s.Name)
+		g := backend.NewGenerator(sourcePackage, sourcePackage)
+		for _, s := range parser.TypeDefs() {
+			fmt.Printf("Generating methods for %s/%s\n", s.PackageName, s.Name)
+			typeRep, err := sszgen.ParseTypeDef(s)
 			if err != nil {
 				return err
 			}

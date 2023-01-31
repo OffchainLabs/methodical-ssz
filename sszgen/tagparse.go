@@ -89,7 +89,7 @@ func extractSSZDimensions(tag string) ([]*SSZDimension, error) {
 	maxes := strings.Split(maxStr, ",")
 	if !sizeDefined {
 		if !maxDefined {
-			return nil, fmt.Errorf("No ssz-size or ssz-max tags found for element.")
+			return nil, fmt.Errorf("no ssz-size or ssz-max tags found for element")
 		}
 		for _, m := range maxes {
 			max, err := strconv.Atoi(m)
@@ -103,7 +103,7 @@ func extractSSZDimensions(tag string) ([]*SSZDimension, error) {
 	for i := 0; i < len(sizes); i++ {
 		if sizes[i] == "?" {
 			if len(maxes) <= i {
-				return nil, fmt.Errorf("More than one wildcard in ssz-size, or ssz-max undefined in tag %s", tag)
+				return nil, fmt.Errorf("more than one wildcard in ssz-size, or ssz-max undefined in tag %s", tag)
 			}
 			max, err := strconv.Atoi(maxes[i])
 			if err != nil {
@@ -118,7 +118,6 @@ func extractSSZDimensions(tag string) ([]*SSZDimension, error) {
 			dims = append(dims, &SSZDimension{VectorLength: &vsize})
 		}
 	}
-
 	return dims, nil
 }
 

@@ -2,7 +2,6 @@ package sszgen
 
 import (
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 	"text/scanner"
@@ -80,10 +79,12 @@ func (tp TagParser) GetSSZTags() map[string]string {
 var nilInt *int
 
 func extractSSZDimensions(tag string) ([]*SSZDimension, error) {
-	rtag := reflect.StructTag(tag)
-	maxStr, maxDefined := rtag.Lookup("ssz-max")
-	szStr, sizeDefined := rtag.Lookup("ssz-size")
+	tp := &TagParser{}
+	tp.Init(tag)
+	tags := tp.GetSSZTags()
+	szStr, sizeDefined := tags["ssz-size"]
 	sizes := strings.Split(szStr, ",")
+	maxStr, maxDefined := tags["ssz-max"]
 	dims := make([]*SSZDimension, 0)
 	maxes := strings.Split(maxStr, ",")
 	if !sizeDefined {
@@ -117,7 +118,6 @@ func extractSSZDimensions(tag string) ([]*SSZDimension, error) {
 			dims = append(dims, &SSZDimension{VectorLength: &vsize})
 		}
 	}
-
 	return dims, nil
 }
 

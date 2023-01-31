@@ -69,7 +69,7 @@ func expand(f *FieldDef, pkg string) (sszgenTypes.ValRep, error) {
 }
 
 func expandArrayHead(f *FieldDef, pkg string) (sszgenTypes.ValRep, error) {
-	dims, err := extractSSZDimensions(f.tag)
+	dims, err := extractSSZDimensions(fmt.Sprintf("`%v`", f.tag))
 	if err != nil {
 		return nil, errors.Wrapf(err, "name=%s, package=%s, tag=%s", f.name, pkg, f.tag)
 	}

@@ -11,7 +11,7 @@ func main() {
 	app := &cli.App{
 		Usage: "ssz support for prysm",
 		// TODO: implement benchmark
-		Commands: []*cli.Command{ /*benchmark,*/ generate, ir},
+		Commands: []*cli.Command{ /*benchmark,*/ generate, ir, tests},
 	}
 
 	err := app.Run(os.Args)

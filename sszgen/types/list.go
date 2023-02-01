@@ -2,7 +2,7 @@ package types
 
 type ValueList struct {
 	ElementValue ValRep
-	MaxSize int
+	MaxSize      int
 }
 
 func (vl *ValueList) TypeName() string {

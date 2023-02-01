@@ -2,7 +2,7 @@ package types
 
 type ValueVector struct {
 	ElementValue ValRep
-	Size int
+	Size         int
 }
 
 func (vv *ValueVector) TypeName() string {

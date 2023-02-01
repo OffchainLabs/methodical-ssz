@@ -59,7 +59,7 @@ func GenerateSizeSSZ(g *generateContainer) *generatedCode {
 		panic(err)
 	}
 	return &generatedCode{
-		blocks:  []string{string(buf.Bytes())},
+		blocks:  []string{buf.String()},
 		imports: extractImportsFromContainerFields(g.Contents, g.targetPackage),
 	}
 }

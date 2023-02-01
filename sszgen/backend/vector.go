@@ -61,7 +61,7 @@ func (g *generateVector) generateUnmarshalValue(fieldName string, sliceName stri
 		if err != nil {
 			panic(err)
 		}
-		return string(buf.Bytes())
+		return buf.String()
 	}
 }
 
@@ -104,7 +104,7 @@ func (g *generateVector) generateFixedMarshalValue(fieldName string) string {
 	if err != nil {
 		panic(err)
 	}
-	return string(buf.Bytes())
+	return buf.String()
 }
 
 var generateVectorHTRPutterTmpl = `{

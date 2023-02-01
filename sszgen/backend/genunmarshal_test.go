@@ -10,7 +10,7 @@ import (
 )
 
 func TestGenerateUnmarshalSSZ(t *testing.T) {
-    t.Skip("fixtures need to be updated")
+	t.Skip("fixtures need to be updated")
 	b, err := os.ReadFile("testdata/TestGenerateUnmarshalSSZ.expected")
 	require.NoError(t, err)
 	expected := string(b)

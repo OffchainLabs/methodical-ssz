@@ -65,11 +65,11 @@ func isPointer(typ types.Type) bool {
 
 func underlyingSlice(typ types.Type) *types.Slice {
 	for {
-		switch typ.(type) {
+		switch t := typ.(type) {
 		case *types.Named:
 			typ = typ.Underlying()
 		case *types.Slice:
-			return typ.(*types.Slice)
+			return t
 		default:
 			return nil
 		}
@@ -78,11 +78,11 @@ func underlyingSlice(typ types.Type) *types.Slice {
 
 func underlyingMap(typ types.Type) *types.Map {
 	for {
-		switch typ.(type) {
+		switch t := typ.(type) {
 		case *types.Named:
 			typ = typ.Underlying()
 		case *types.Map:
-			return typ.(*types.Map)
+			return t
 		default:
 			return nil
 		}

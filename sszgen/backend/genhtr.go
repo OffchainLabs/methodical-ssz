@@ -62,7 +62,7 @@ func GenerateHashTreeRoot(g *generateContainer) *generatedCode {
 	// TODO: allow GenerateHashTreeRoot to return an error since template.Execute
 	// can technically return an error (get rid of the panics)
 	return &generatedCode{
-		blocks:  []string{string(buf.Bytes())},
+		blocks:  []string{buf.String()},
 		imports: extractImportsFromContainerFields(g.Contents, g.targetPackage),
 	}
 }

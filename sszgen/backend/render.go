@@ -108,7 +108,7 @@ func (g *Generator) Render() ([]byte, error) {
 	final := &generatedCode{
 		imports: map[string]string{
 			"github.com/prysmaticlabs/fastssz": "ssz",
-			"fmt":                         "",
+			"fmt":                              "",
 		},
 	}
 	for _, gc := range g.gc {

@@ -46,10 +46,10 @@ var ir = &cli.Command{
 		}
 
 		outFh, err := os.Create(output)
-		defer outFh.Close()
 		if err != nil {
 			return err
 		}
+		defer outFh.Close()
 
 		renderedTypes := make([]string, 0)
 		for _, s := range parser.TypeDefs() {

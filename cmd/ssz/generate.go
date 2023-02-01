@@ -52,10 +52,10 @@ var generate = &cli.Command{
 			output = "methodical.ssz.go"
 		}
 		outFh, err := os.Create(output)
-		defer outFh.Close()
 		if err != nil {
 			return err
 		}
+		defer outFh.Close()
 
 		g := backend.NewGenerator(sourcePackage, sourcePackage)
 		for _, s := range parser.TypeDefs() {

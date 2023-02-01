@@ -11,7 +11,7 @@ import (
 // cases left to satisfy:
 // list-vector-byte
 func TestGenerateHashTreeRoot(t *testing.T) {
-    t.Skip("fixtures need to be updated")
+	t.Skip("fixtures need to be updated")
 	b, err := os.ReadFile("testdata/TestGenerateHashTreeRoot.expected")
 	require.NoError(t, err)
 	expected := string(b)
@@ -44,7 +44,7 @@ func TestHTROverlayCoerce(t *testing.T) {
 }
 
 func TestHTRContainer(t *testing.T) {
-    t.Skip("fixtures need to be updated")
+	t.Skip("fixtures need to be updated")
 	pkg := "derp"
 	expected := `if err := b.Fork.HashTreeRootWith(hh); err != nil {
 		return err
@@ -56,7 +56,7 @@ func TestHTRContainer(t *testing.T) {
 }
 
 func TestHTRByteVector(t *testing.T) {
-    t.Skip("fixtures need to be updated")
+	t.Skip("fixtures need to be updated")
 	pkg := "derp"
 	fieldName := "c.GenesisValidatorsRoot"
 	expected := `{

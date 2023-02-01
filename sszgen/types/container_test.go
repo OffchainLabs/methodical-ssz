@@ -7,11 +7,11 @@ import (
 )
 
 var testFixderp ValRep = &ValueContainer{
-	Name: "derp",
+	Name:    "derp",
 	Package: "derp",
 	Contents: []ContainerField{
 		{
-			Key: "sup",
+			Key:   "sup",
 			Value: nil,
 		},
 	},

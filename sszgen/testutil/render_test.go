@@ -8,7 +8,7 @@ import (
 )
 
 func TestRenderIntermediate(t *testing.T) {
-    t.Skip("TODO: investigate this failure")
+	t.Skip("TODO: investigate this failure")
 	s := &types.ValueContainer{
 		Name:    "testing",
 		Package: "github.com/prysmaticlabs/derp",

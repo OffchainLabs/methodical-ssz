@@ -35,17 +35,17 @@ func actionSpectests(cl *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	cases, err := specs.ExtractCases(r, specs.TestIdent{Preset: &specs.Mainnet})
+	cases, err := specs.ExtractCases(r, specs.TestIdent{Preset: specs.Mainnet})
 	if err != nil {
 		return err
 	}
-	for _, c := range cases {
-		fmt.Printf("%s\n", c.Ident)
+	for ident, _ := range cases {
+		fmt.Printf("%s\n", ident)
 	}
 	return nil
 }
 
-func loadArchive(uri string) (io.Reader, error){
+func loadArchive(uri string) (io.Reader, error) {
 	u, err := url.Parse(uri)
 	if err != nil {
 		return nil, err

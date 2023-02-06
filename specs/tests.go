@@ -23,6 +23,18 @@ var (
 	valueFilename      = "value.yaml"
 )
 
+func IdentFilter(ident TestIdent) func([]TestIdent) []TestIdent {
+	return func(maybe []TestIdent) []TestIdent {
+		matches := make([]TestIdent, 0)
+		for _, m := range maybe {
+			if ident.Match(m) {
+				matches = append(matches, m)
+			}
+		}
+		return matches
+	}
+}
+
 func ExtractCases(tgz io.Reader, filter TestIdent) (map[TestIdent]TestCase, error) {
 	cases := make(map[TestIdent]TestCase)
 	uncompressed, err := gzip.NewReader(tgz)

@@ -10,6 +10,18 @@ import (
 
 type Fork string
 
+var ErrUnknownFork = errors.New("unknown fork name")
+
+func (f *Fork) UnmarshalText(t []byte) error {
+	s := string(t)
+	sf := stringToFork(s)
+	if sf == ForkUnknown {
+		return errors.Wrap(ErrUnknownFork, s)
+	}
+	*f = sf
+	return nil
+}
+
 var (
 	ForkUnknown Fork = ""
 	Phase0      Fork = "phase0"
@@ -44,6 +56,18 @@ var (
 	Mainnet       Preset = "mainnet"
 )
 
+var ErrUnknownPreset = errors.New("unknown preset name")
+
+func (p *Preset) UnmarshalText(t []byte) error {
+	s := string(t)
+	sp := stringToPreset(s)
+	if sp == PresetUnknown {
+		return errors.Wrap(ErrUnknownPreset, s)
+	}
+	*p = sp
+	return nil
+}
+
 func stringToPreset(s string) Preset {
 	switch s {
 	case string(Minimal):
@@ -56,10 +80,10 @@ func stringToPreset(s string) Preset {
 }
 
 type TestIdent struct {
-	Preset   Preset
-	Fork     Fork
-	TypeName string
-	Offset   int
+	Preset   Preset `json:"preset"`
+	Fork     Fork `json:"fork"`
+	TypeName string `json:"type_name"`
+	Offset   int `json:"offset"`
 }
 
 func (ti TestIdent) String() string {

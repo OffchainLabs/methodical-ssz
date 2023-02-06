@@ -15,7 +15,7 @@ import (
 var releaseURI string
 var tests = &cli.Command{
 	Name:  "spectest",
-	Usage: "run spectests against generated types",
+	Usage: "generate go test methods to execute spectests against generated types",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:        "release-uri",

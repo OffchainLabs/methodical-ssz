@@ -4,17 +4,29 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"io"
+	"os"
+	"path"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/golang/snappy"
 	"github.com/pkg/errors"
+	"github.com/spf13/afero"
 	"gopkg.in/yaml.v3"
 )
 
-type TestCase struct {
-	Root       [32]byte
-	Serialized []byte
-	Yaml       []byte
+type Fixture struct {
+	Directory  string
+	Root       FixtureFile
+	Serialized FixtureFile
+	Yaml       FixtureFile
+}
+
+type FixtureFile struct {
+	Contents []byte
+	FileMode os.FileMode
+}
+
+func (f *Fixture) writeRoot(fs afero.Fs) error {
+	return afero.WriteFile(fs, path.Join(f.Directory, rootFilename), f.Root.Contents, f.Root.FileMode)
 }
 
 var (
@@ -35,8 +47,24 @@ func IdentFilter(ident TestIdent) func([]TestIdent) []TestIdent {
 	}
 }
 
-func ExtractCases(tgz io.Reader, filter TestIdent) (map[TestIdent]TestCase, error) {
-	cases := make(map[TestIdent]TestCase)
+func GroupByFork(ti []TestIdent) map[Fork][]TestIdent {
+	m := make(map[Fork][]TestIdent)
+	for _, t := range ti {
+		m[t.Fork] = append(m[t.Fork], t)
+	}
+	return m
+}
+
+func GroupByType(ti []TestIdent) map[string][]TestIdent {
+	m := make(map[string][]TestIdent)
+	for _, t := range ti {
+		m[t.Name] = append(m[t.Name], t)
+	}
+	return m
+}
+
+func ExtractCases(tgz io.Reader, filter TestIdent) (map[TestIdent]Fixture, error) {
+	cases := make(map[TestIdent]Fixture)
 	uncompressed, err := gzip.NewReader(tgz)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to read gzip-compressed stream")
@@ -59,7 +87,7 @@ func ExtractCases(tgz io.Reader, filter TestIdent) (map[TestIdent]TestCase, erro
 		}
 		c, ok := cases[ident]
 		if !ok {
-			c = TestCase{}
+			c = Fixture{Directory: path.Dir(header.Name)}
 		}
 		f, err := io.ReadAll(tr)
 		if err != nil {
@@ -67,26 +95,18 @@ func ExtractCases(tgz io.Reader, filter TestIdent) (map[TestIdent]TestCase, erro
 		}
 		switch fname {
 		case rootFilename:
-			r, err := decodeRootFile(f)
-			if err != nil {
-				return nil, errors.Wrapf(err, "error decoding contents of %s from spectest tarball", header.Name)
-			}
-			c.Root = r
+			c.Root = FixtureFile{Contents: f, FileMode: os.FileMode(header.Mode)}
 		case serializedFilename:
-			s, err := snappy.Decode(nil, f)
-			if err != nil {
-				return nil, errors.Wrapf(err, "err decoding %s from spectest tarball as snappy-encoding", header.Name)
-			}
-			c.Serialized = s
+			c.Serialized = FixtureFile{Contents: f, FileMode: os.FileMode(header.Mode)}
 		case valueFilename:
-			c.Yaml = f
+			c.Yaml = FixtureFile{Contents: f, FileMode: os.FileMode(header.Mode)}
 		}
 		cases[ident] = c
 	}
 	return cases, nil
 }
 
-func decodeRootFile(f []byte) ([32]byte, error) {
+func DecodeRootFile(f []byte) ([32]byte, error) {
 	root := [32]byte{}
 	ry := &struct {
 		Root string `json:"root"`
@@ -100,4 +120,17 @@ func decodeRootFile(f []byte) ([32]byte, error) {
 	}
 	copy(root[:], br)
 	return root, nil
+}
+
+func RootAndSerializedFromFixture(fs afero.Fs, dir string) ([32]byte, []byte, error) {
+	rootBytes, err := afero.ReadFile(fs, path.Join(dir, rootFilename))
+	if err != nil {
+		return [32]byte{}, []byte{}, err
+	}
+	root, err := DecodeRootFile(rootBytes)
+	if err != nil {
+		return [32]byte{}, []byte{}, err
+	}
+	serialized, err := afero.ReadFile(fs, path.Join(dir, serializedFilename))
+	return root, serialized, nil
 }

@@ -27,8 +27,8 @@ func (g *generateVector) generateUnmarshalValue(fieldName string, sliceName stri
 			loopVar = fieldName + "i"
 		}
 		t := `{
-	var tmp {{ .TypeName }}
-	{{.FieldName}} = make([]{{.TypeName}}, {{.NumElements}})
+	var tmp {{ .Name }}
+	{{.FieldName}} = make([]{{.Name}}, {{.NumElements}})
 	for {{ .LoopVar }} := 0; {{ .LoopVar }} < {{ .NumElements }}; {{ .LoopVar }} ++ {
 		tmpSlice := {{ .SliceName }}[{{ .LoopVar }}*{{ .NestedFixedSize }}:(1+{{ .LoopVar }})*{{ .NestedFixedSize }}]
 {{ .NestedUnmarshal }}

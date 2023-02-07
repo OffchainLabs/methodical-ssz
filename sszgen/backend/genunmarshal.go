@@ -9,7 +9,7 @@ import (
 	"github.com/kasey/methodical-ssz/sszgen/types"
 )
 
-var generateUnmarshalSSZTmpl = `func ({{.Receiver}} {{.Type}}) XXUnmarshalSSZ(buf []byte) error {
+var generateUnmarshalSSZTmpl = `func ({{.Receiver}} {{.Type}}) UnmarshalSSZ(buf []byte) error {
 	var err error
 	size := uint64(len(buf))
 	if size {{ .SizeInequality }} {{ .FixedOffset }} {

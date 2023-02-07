@@ -8,46 +8,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type Fork string
-
-var ErrUnknownFork = errors.New("unknown fork name")
-
-func (f *Fork) UnmarshalText(t []byte) error {
-	s := string(t)
-	sf := stringToFork(s)
-	if sf == ForkUnknown {
-		return errors.Wrap(ErrUnknownFork, s)
-	}
-	*f = sf
-	return nil
-}
-
-var (
-	ForkUnknown Fork = ""
-	Phase0      Fork = "phase0"
-	Altair      Fork = "altair"
-	Bellatrix   Fork = "bellatrix"
-	Capella     Fork = "capella"
-	EIP4844     Fork = "eip4844"
-)
-
-func stringToFork(s string) Fork {
-	switch s {
-	case string(Phase0):
-		return Phase0
-	case string(Altair):
-		return Altair
-	case string(Bellatrix):
-		return Bellatrix
-	case string(Capella):
-		return Capella
-	case string(EIP4844):
-		return EIP4844
-	default:
-		return ForkUnknown
-	}
-}
-
 type Preset string
 
 var (
@@ -80,14 +40,14 @@ func stringToPreset(s string) Preset {
 }
 
 type TestIdent struct {
-	Preset   Preset `json:"preset"`
-	Fork     Fork `json:"fork"`
-	TypeName string `json:"type_name"`
-	Offset   int `json:"offset"`
+	Preset Preset `json:"preset"`
+	Fork   Fork   `json:"fork"`
+	Name   string `json:"name"`
+	Offset int    `json:"offset"`
 }
 
 func (ti TestIdent) String() string {
-	return fmt.Sprintf("%s:%s:%s:%d", ti.Preset, ti.Fork, ti.TypeName, ti.Offset)
+	return fmt.Sprintf("%s:%s:%s:%d", ti.Preset, ti.Fork, ti.Name, ti.Offset)
 }
 
 var layout = struct {
@@ -111,7 +71,7 @@ var layout = struct {
 }
 
 func (ti TestIdent) Match(other TestIdent) bool {
-	if other.Preset == PresetUnknown || other.Fork == ForkUnknown || other.TypeName == "" {
+	if other.Preset == PresetUnknown || other.Fork == ForkUnknown || other.Name == "" {
 		return false
 	}
 	if ti.Preset != PresetUnknown && ti.Preset != other.Preset {
@@ -120,7 +80,7 @@ func (ti TestIdent) Match(other TestIdent) bool {
 	if ti.Fork != ForkUnknown && ti.Fork != other.Fork {
 		return false
 	}
-	if ti.TypeName != "" && ti.TypeName != other.TypeName {
+	if ti.Name != "" && ti.Name != other.Name {
 		return false
 	}
 	return true
@@ -144,9 +104,9 @@ func ParsePath(p string) (TestIdent, string, error) {
 		offset = a
 	}
 	return TestIdent{
-		Preset:   stringToPreset(parts[layout.preset]),
-		Fork:     stringToFork(parts[layout.fork]),
-		TypeName: parts[layout.typeName],
-		Offset:   offset,
+		Preset: stringToPreset(parts[layout.preset]),
+		Fork:   stringToFork(parts[layout.fork]),
+		Name:   parts[layout.typeName],
+		Offset: offset,
 	}, parts[layout.fileName], nil
 }

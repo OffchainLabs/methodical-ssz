@@ -5,12 +5,13 @@
 package sszgen
 
 import (
-	"errors"
 	"fmt"
 	"go/types"
 	"io"
 	"sort"
 	"strconv"
+
+	"github.com/pkg/errors"
 )
 
 // walkNamedTypes runs the callback for all named types contained in the given type.
@@ -43,9 +44,12 @@ func walkNamedTypes(typ types.Type, callback func(*types.Named)) {
 }
 
 func lookupType(scope *types.Scope, name string) (*types.Named, error) {
+	if name == "" {
+		return nil, errors.Wrap(errors.New("no such identifier"), "empty name lookup")
+	}
 	obj := scope.Lookup(name)
 	if obj == nil {
-		return nil, errors.New("no such identifier")
+		return nil, errors.Wrap(errors.New("no such identifier"), name)
 	}
 	typ, ok := obj.(*types.TypeName)
 	if !ok {

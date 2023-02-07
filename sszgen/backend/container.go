@@ -14,7 +14,7 @@ type generateContainer struct {
 }
 
 func (g *generateContainer) generateHTRPutter(fieldName string) string {
-	tmpl := `if err := %s.XXHashTreeRootWith(hh); err != nil {
+	tmpl := `if err := %s.HashTreeRootWith(hh); err != nil {
 		return err
 	}`
 	return fmt.Sprintf(tmpl, fieldName)
@@ -25,7 +25,7 @@ func (g *generateContainer) variableSizeSSZ(fieldName string) string {
 }
 
 func (g *generateContainer) generateUnmarshalValue(fieldName string, sliceName string) string {
-	t := `if err = %s.XXUnmarshalSSZ(%s); err != nil {
+	t := `if err = %s.UnmarshalSSZ(%s); err != nil {
 		return err
 	}`
 	return fmt.Sprintf(t, fieldName, sliceName)
@@ -41,7 +41,7 @@ offset += %s.SizeSSZ()`, fieldName)
 
 // method that generates code which calls the MarshalSSZ method of the field
 func (g *generateContainer) generateDelegateFieldMarshalSSZ(fieldName string) string {
-	return fmt.Sprintf(`if dst, err = %s.XXMarshalSSZTo(dst); err != nil {
+	return fmt.Sprintf(`if dst, err = %s.MarshalSSZTo(dst); err != nil {
 		return nil, err
 	}`, fieldName)
 }

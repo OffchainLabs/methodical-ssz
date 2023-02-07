@@ -12,9 +12,9 @@ import (
 // nearest multiple of ChunkSize.
 const ChunkSize = 32
 
-var htrTmpl = `func ({{.Receiver}} {{.Type}}) XXHashTreeRoot() ([32]byte, error) {
+var htrTmpl = `func ({{.Receiver}} {{.Type}}) HashTreeRoot() ([32]byte, error) {
 	hh := ssz.DefaultHasherPool.Get()
-	if err := {{.Receiver}}.XXHashTreeRootWith(hh); err != nil {
+	if err := {{.Receiver}}.HashTreeRootWith(hh); err != nil {
 		ssz.DefaultHasherPool.Put(hh)
 		return [32]byte{}, err
 	}
@@ -23,7 +23,7 @@ var htrTmpl = `func ({{.Receiver}} {{.Type}}) XXHashTreeRoot() ([32]byte, error)
 	return root, err
 }
 
-func ({{.Receiver}} {{.Type}}) XXHashTreeRootWith(hh *ssz.Hasher) (err error) {
+func ({{.Receiver}} {{.Type}}) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	indx := hh.Index()
 	{{.HTRSteps}}
 	hh.Merkleize(indx)
@@ -47,13 +47,13 @@ func GenerateHashTreeRoot(g *generateContainer) *generatedCode {
 		}
 		htrSteps = append(htrSteps, htrp.generateHTRPutter(fieldName))
 	}
-	err  = htrTmpl.Execute(buf, struct{
+	err = htrTmpl.Execute(buf, struct {
 		Receiver string
-		Type string
+		Type     string
 		HTRSteps string
 	}{
 		Receiver: receiverName,
-		Type: fmt.Sprintf("*%s", g.TypeName()),
+		Type:     fmt.Sprintf("*%s", g.TypeName()),
 		HTRSteps: strings.Join(htrSteps, "\n"),
 	})
 	if err != nil {

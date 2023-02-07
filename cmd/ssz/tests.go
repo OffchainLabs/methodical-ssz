@@ -7,21 +7,34 @@ import (
 	"os"
 
 	"github.com/kasey/methodical-ssz/specs"
+	"github.com/kasey/methodical-ssz/sszgen"
+	"github.com/kasey/methodical-ssz/sszgen/backend"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"github.com/spf13/afero"
 	"github.com/urfave/cli/v2"
 )
 
-var releaseURI string
+var releaseURI, configPath string
 var tests = &cli.Command{
 	Name:  "spectest",
 	Usage: "generate go test methods to execute spectests against generated types",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:        "release-uri",
-			Value:       "",
 			Usage:       "url or file in file:// format pointing at a github.com/ethereum/consensus-spec-tests release",
 			Destination: &releaseURI,
+		},
+		&cli.StringFlag{
+			Name:        "config",
+			Usage:       "path to yaml file configuring spec test relationships, see readme or prysm example for format",
+			Required:    true,
+			Destination: &configPath,
+		},
+		&cli.StringFlag{
+			Name:        "output",
+			Usage:       "path to output directory where spec test package and copy of consensus types and ssz methods will be written",
+			Required:    true,
+			Destination: &output,
 		},
 	},
 	Action: func(c *cli.Context) error {
@@ -30,10 +43,20 @@ var tests = &cli.Command{
 }
 
 func actionSpectests(cl *cli.Context) error {
-	log.Infof("releaseURI=%s", releaseURI)
-	r, err := loadArchive(releaseURI)
+	fs := afero.NewBasePathFs(afero.NewOsFs(), output)
+	cfg, err := specs.ParseConfigFile(configPath)
 	if err != nil {
 		return err
+	}
+	types := cfg.GoTypes()
+	parser, err := sszgen.NewPackageParser(cfg.Package, types)
+	if err != nil {
+		return err
+	}
+
+	r, err := loadArchive(releaseURI)
+	if err != nil {
+		return errors.Wrapf(err, "failed to open spectest archive from uri %s", releaseURI)
 	}
 	cases, err := specs.ExtractCases(r, specs.TestIdent{Preset: specs.Mainnet})
 	if err != nil {
@@ -42,7 +65,21 @@ func actionSpectests(cl *cli.Context) error {
 	for ident, _ := range cases {
 		fmt.Printf("%s\n", ident)
 	}
-	return nil
+
+	g := backend.NewGenerator(cfg.Package, sourcePackage)
+	for _, s := range parser.TypeDefs() {
+		fmt.Printf("Generating methods for %s/%s\n", s.PackageName, s.Name)
+		typeRep, err := sszgen.ParseTypeDef(s)
+		if err != nil {
+			return err
+		}
+		g.Generate(typeRep)
+	}
+	rbytes, err := g.Render()
+	if err != nil {
+		return err
+	}
+	return afero.WriteFile(fs, "methodical.ssz.go", rbytes, 0666)
 }
 
 func loadArchive(uri string) (io.Reader, error) {

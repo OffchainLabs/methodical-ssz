@@ -7,7 +7,7 @@ import (
 	"text/template"
 )
 
-var sizeBodyTmpl = `func ({{.Receiver}} {{.Type}}) XXSizeSSZ() (int) {
+var sizeBodyTmpl = `func ({{.Receiver}} {{.Type}}) SizeSSZ() (int) {
 	size := {{.FixedSize}}
 	{{- .VariableSize }}
 	return size
@@ -42,15 +42,15 @@ func GenerateSizeSSZ(g *generateContainer) *generatedCode {
 		}
 	}
 
-	err = sizeTmpl.Execute(buf, struct{
-		Receiver string
-		Type string
-		FixedSize int
+	err = sizeTmpl.Execute(buf, struct {
+		Receiver     string
+		Type         string
+		FixedSize    int
 		VariableSize string
 	}{
-		Receiver: receiverName,
-		Type: fmt.Sprintf("*%s", g.TypeName()),
-		FixedSize: fixedSize,
+		Receiver:     receiverName,
+		Type:         fmt.Sprintf("*%s", g.TypeName()),
+		FixedSize:    fixedSize,
 		VariableSize: "\n" + strings.Join(variableComputations, "\n"),
 	})
 	// TODO: allow GenerateSizeSSZ to return an error since template.Execute

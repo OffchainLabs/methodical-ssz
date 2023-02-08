@@ -53,7 +53,7 @@ func lookupType(scope *types.Scope, name string) (*types.Named, types.Object, er
 	}
 	typ, ok := obj.(*types.TypeName)
 	if !ok {
-		return nil, nil, errors.New("not a type")
+		return nil, nil, errors.Wrap(errors.New("not a type"), name)
 	}
 	return typ.Type().(*types.Named), obj, nil
 }

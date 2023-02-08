@@ -32,6 +32,9 @@ func TestBeaconState(t *testing.T) {
 	}
 }
 
+// TestSimpleStructRepresentation ensures that a type declaration like:
+// type AliasedPrimitive uint64
+// will be represented like ValueOverlay{Name: "AliasedPrimitive", Underlying: ValueUint{Name: "uint64"}}
 func TestPrimitiveAliasRepresentation(t *testing.T) {
 	typeName := "AliasedPrimitive"
 	pp, err := NewPackageParser(packageName, []string{typeName})
@@ -46,9 +49,6 @@ func TestPrimitiveAliasRepresentation(t *testing.T) {
 	}
 }
 
-// TestSimpleStructRepresentation ensures that a type declaration like:
-// type AliasedPrimitive uint64
-// will be represented like ValueOverlay{Name: "AliasedPrimitive", Underlying: ValueUint{Name: "uint64"}}
 func TestSimpleStructRepresentation(t *testing.T) {
 	typeName := noImports
 	pp, err := NewPackageParser(packageName, []string{typeName})

@@ -195,12 +195,15 @@ func (g *generateVector) generateHTRPutter(fieldName string) string {
 			vpe.Merkleize = "hh.Merkleize(subIndx)"
 			return renderHtrVecPutter(vpe)
 		}
+	case *types.ValueContainer:
+		gc := &generateContainer{ValueContainer: v, targetPackage: g.targetPackage}
+		return gc.generateHTRPutter(fieldName)
 	case *types.ValueUint:
 		vpe.AppendCall = fmt.Sprintf("hh.AppendUint%d(%s)", v.Size, nestedFieldName)
 		vpe.Merkleize = "hh.Merkleize(subIndx)"
 		return renderHtrVecPutter(vpe)
 	default:
-		panic(fmt.Sprintf("unsupported type combination - vector of %v", v))
+		panic(fmt.Sprintf("unsupported type combination - %v vector of %v", fieldName, v))
 	}
 	return ""
 }

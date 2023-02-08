@@ -33,3 +33,7 @@ type AnotherContainerType struct {
 }
 
 type FixedSizeArray [32]byte
+
+type FixedContainer struct {
+	Array FixedSizeArray
+}

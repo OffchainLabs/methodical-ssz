@@ -30,10 +30,10 @@ func ({{.Receiver}} {{.Type}}) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	return nil
 }`
 
-func GenerateHashTreeRoot(g *generateContainer) *generatedCode {
+func GenerateHashTreeRoot(g *generateContainer) (*generatedCode, error) {
 	htrTmpl, err := template.New("GenerateHashTreeRoot").Parse(htrTmpl)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	buf := bytes.NewBuffer(nil)
 	htrSteps := make([]string, 0)
@@ -57,12 +57,12 @@ func GenerateHashTreeRoot(g *generateContainer) *generatedCode {
 		HTRSteps: strings.Join(htrSteps, "\n"),
 	})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	// TODO: allow GenerateHashTreeRoot to return an error since template.Execute
 	// can technically return an error (get rid of the panics)
 	return &generatedCode{
 		blocks:  []string{buf.String()},
 		imports: extractImportsFromContainerFields(g.Contents, g.targetPackage),
-	}
+	}, nil
 }

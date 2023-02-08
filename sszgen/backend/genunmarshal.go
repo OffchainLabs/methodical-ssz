@@ -21,7 +21,7 @@ var generateUnmarshalSSZTmpl = `func ({{.Receiver}} {{.Type}}) UnmarshalSSZ(buf 
 	return err
 }`
 
-func GenerateUnmarshalSSZ(g *generateContainer) *generatedCode {
+func GenerateUnmarshalSSZ(g *generateContainer) (*generatedCode, error) {
 	sizeInequality := "!="
 	if g.IsVariableSized() {
 		sizeInequality = "<"
@@ -68,7 +68,7 @@ func GenerateUnmarshalSSZ(g *generateContainer) *generatedCode {
 	sliceDeclarations := strings.Join([]string{ums.fixedSlices(), "", ums.variableSlices(g.fixedOffset())}, "\n")
 	unmTmpl, err := template.New("GenerateUnmarshalSSZTmpl").Parse(generateUnmarshalSSZTmpl)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	buf := bytes.NewBuffer(nil)
 	err = unmTmpl.Execute(buf, struct {
@@ -86,15 +86,13 @@ func GenerateUnmarshalSSZ(g *generateContainer) *generatedCode {
 		SliceDeclaration:  sliceDeclarations,
 		ValueUnmarshaling: strings.Join(unmarshalBlocks, "\n"),
 	})
-	// TODO: allow GenerateUnmarshalSSZ to return an error since template.Execute
-	// can technically return an error
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	return &generatedCode{
 		blocks:  []string{buf.String()},
 		imports: extractImportsFromContainerFields(g.Contents, g.targetPackage),
-	}
+	}, nil
 }
 
 type unmarshalStep struct {

@@ -13,10 +13,10 @@ var sizeBodyTmpl = `func ({{.Receiver}} {{.Type}}) SizeSSZ() (int) {
 	return size
 }`
 
-func GenerateSizeSSZ(g *generateContainer) *generatedCode {
+func GenerateSizeSSZ(g *generateContainer) (*generatedCode, error) {
 	sizeTmpl, err := template.New("GenerateSizeSSZ").Parse(sizeBodyTmpl)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	buf := bytes.NewBuffer(nil)
 
@@ -53,13 +53,11 @@ func GenerateSizeSSZ(g *generateContainer) *generatedCode {
 		FixedSize:    fixedSize,
 		VariableSize: "\n" + strings.Join(variableComputations, "\n"),
 	})
-	// TODO: allow GenerateSizeSSZ to return an error since template.Execute
-	// can technically return an error
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	return &generatedCode{
 		blocks:  []string{buf.String()},
 		imports: extractImportsFromContainerFields(g.Contents, g.targetPackage),
-	}
+	}, nil
 }

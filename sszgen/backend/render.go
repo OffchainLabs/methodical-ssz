@@ -59,28 +59,38 @@ func NewGenerator(packageName, packagePath string) *Generator {
 }
 
 // TODO Generate should be able to return an error
-func (g *Generator) Generate(vr types.ValRep) {
-	vc, ok := vr.(*types.ValueContainer)
-	if !ok {
-		panic("Can only generate method sets for container types at this time")
+func (g *Generator) Generate(vr types.ValRep) error {
+	if vc, ok := vr.(*types.ValueContainer); ok {
+		return g.genValueContainer(vc)
+
 	}
-	gc := &generateContainer{vc, g.packagePath}
-	sizeSSZ := GenerateSizeSSZ(gc)
-	if sizeSSZ != nil {
-		g.gc = append(g.gc, sizeSSZ)
+	if vo, ok := vr.(*types.ValueOverlay); ok {
+		return g.genValueOverlay(vo)
 	}
-	mSSZ := GenerateMarshalSSZ(gc)
-	if mSSZ != nil {
-		g.gc = append(g.gc, mSSZ)
+	return fmt.Errorf("can only generate method sets for container & overlay types at this time, type: %v", vr.TypeName())
+}
+
+func (g *Generator) genValueOverlay(vc *types.ValueOverlay) error {
+	// TODO (MariusVanDerWijden) implement for basic types
+	return nil
+}
+
+func (g *Generator) genValueContainer(vc *types.ValueContainer) error {
+	container := &generateContainer{vc, g.packagePath}
+	methods := []func(gc *generateContainer) (*generatedCode, error){
+		GenerateSizeSSZ,
+		GenerateMarshalSSZ,
+		GenerateUnmarshalSSZ,
+		GenerateHashTreeRoot,
 	}
-	uSSZ := GenerateUnmarshalSSZ(gc)
-	if uSSZ != nil {
-		g.gc = append(g.gc, uSSZ)
+	for _, method := range methods {
+		code, err := method(container)
+		if err != nil {
+			return err
+		}
+		g.gc = append(g.gc, code)
 	}
-	hSSZ := GenerateHashTreeRoot(gc)
-	if hSSZ != nil {
-		g.gc = append(g.gc, hSSZ)
-	}
+	return nil
 }
 
 var fileTemplate = `package {{.Package}}

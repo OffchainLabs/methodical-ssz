@@ -107,7 +107,7 @@ func (g *Generator) Render() ([]byte, error) {
 	}
 	final := &generatedCode{
 		imports: map[string]string{
-			"github.com/ferranbt/fastssz": "ssz",
+			"github.com/prysmaticlabs/fastssz": "ssz",
 			"fmt":                         "",
 		},
 	}

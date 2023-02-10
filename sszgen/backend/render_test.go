@@ -13,7 +13,7 @@ var generator_generateFixture = `package derp
 
 import (
 	"fmt"
-	ssz "github.com/ferranbt/fastssz"
+	ssz "github.com/prysmaticlabs/fastssz"
 	derp "github.com/prysmaticlabs/derp/derp"
 )
 
@@ -27,7 +27,7 @@ func TestGenerator_Generate(t *testing.T) {
 		blocks: []string{"func main() {\n\tfmt.printf(\"hello world\")\n}"},
 		imports: map[string]string{
 			"github.com/prysmaticlabs/derp/derp": "derp",
-			"github.com/ferranbt/fastssz":        "ssz",
+			"github.com/prysmaticlabs/fastssz":        "ssz",
 			"fmt":                                "",
 		},
 	}

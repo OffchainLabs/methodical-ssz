@@ -102,25 +102,25 @@ type TestCaseTpl struct {
 	structName string
 }
 
-func (tpl *TestCaseTpl) testdataDir() string {
+func (tpl *TestCaseTpl) FixtureDirectory() string {
 	return path.Join("testdata", tpl.fixture.Directory)
 }
 
 func (tpl *TestCaseTpl) rootPath() string {
-	return path.Join(tpl.testdataDir(), rootFilename)
+	return path.Join(tpl.FixtureDirectory(), rootFilename)
 }
 
 func (tpl *TestCaseTpl) yamlPath() string {
-	return path.Join(tpl.testdataDir(), valueFilename)
+	return path.Join(tpl.FixtureDirectory(), valueFilename)
 }
 
 func (tpl *TestCaseTpl) serializedPath() string {
-	return path.Join(tpl.testdataDir(), serializedFilename)
+	return path.Join(tpl.FixtureDirectory(), serializedFilename)
 }
 
 func (tpl *TestCaseTpl) ensureFixtures(fs afero.Fs) error {
 	f := tpl.fixture
-	if err := fs.MkdirAll(tpl.testdataDir(), os.ModePerm); err != nil {
+	if err := fs.MkdirAll(tpl.FixtureDirectory(), os.ModePerm); err != nil {
 		return errors.Wrapf(err, "failed to create fixture directory %s", f.Directory)
 	}
 	if err := ensure(fs, tpl.rootPath(), f.Root.Contents, f.Root.FileMode); err != nil {
@@ -152,10 +152,6 @@ func ensure(fs afero.Fs, path string, contents []byte, mode os.FileMode) error {
 func (tpl *TestCaseTpl) TestFuncName() string {
 	id := tpl.ident
 	return fmt.Sprintf("Test_%s_%s_%s_%d", id.Preset, id.Fork, tpl.structName, id.Offset)
-}
-
-func (tpl *TestCaseTpl) FixtureDirectory() string {
-	return tpl.fixture.Directory
 }
 
 func (tpl *TestCaseTpl) GoTypeName() string {

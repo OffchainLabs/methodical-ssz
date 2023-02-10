@@ -2,7 +2,7 @@ package ethereum_beacon_p2p_v1
 
 import (
 	"fmt"
-	ssz "github.com/ferranbt/fastssz"
+	ssz "github.com/prysmaticlabs/fastssz"
 	prysmaticlabs_eth2_types "github.com/prysmaticlabs/eth2-types"
 	prysmaticlabs_go_bitfield "github.com/prysmaticlabs/go-bitfield"
 	prysmaticlabs_prysm_proto_eth_v1alpha1 "github.com/prysmaticlabs/prysm/v3/proto/eth/v1alpha1"

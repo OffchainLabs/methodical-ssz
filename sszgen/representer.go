@@ -12,10 +12,10 @@ func ParseTypeDef(typ *TypeDef) (sszgenTypes.ValRep, error) {
 	if typ.IsStruct {
 		vr := &sszgenTypes.ValueContainer{
 			Name:    typ.Name,
-			Package: typ.PackageName,
+			Package: typ.orig.Obj().Pkg().Path(),
 		}
 		for _, f := range typ.Fields {
-			rep, err := expand(f, typ.PackageName)
+			rep, err := expand(f)
 			if err != nil {
 				return nil, err
 			}
@@ -24,27 +24,27 @@ func ParseTypeDef(typ *TypeDef) (sszgenTypes.ValRep, error) {
 		return vr, nil
 	}
 	// PrimitiveType is stored in Fields[0]
-	rep, err := expand(typ.Fields[0], typ.PackageName)
+	rep, err := expand(typ.Fields[0])
 	if err != nil {
 		return nil, err
 	}
 	vr := &sszgenTypes.ValueOverlay{
 		Name:       typ.Name,
-		Package:    typ.PackageName,
+		Package:    rep.PackagePath(),
 		Underlying: rep,
 	}
 	return vr, nil
 }
 
-func expand(f *FieldDef, pkg string) (sszgenTypes.ValRep, error) {
+func expand(f *FieldDef) (sszgenTypes.ValRep, error) {
 	switch ty := f.typ.(type) {
 	case *types.Array:
 		size := int(ty.Len())
-		return expandArray([]*SSZDimension{{VectorLength: &size}}, f, pkg)
+		return expandArray([]*SSZDimension{{VectorLength: &size}}, f)
 	case *types.Slice:
-		return expandArrayHead(f, pkg)
+		return expandArrayHead(f)
 	case *types.Pointer:
-		vr, err := expand(&FieldDef{name: f.name, tag: f.tag, typ: ty.Elem()}, pkg)
+		vr, err := expand(&FieldDef{name: f.name, tag: f.tag, typ: ty.Elem(), pkg: f.pkg})
 		if err != nil {
 			return nil, err
 		}
@@ -52,14 +52,14 @@ func expand(f *FieldDef, pkg string) (sszgenTypes.ValRep, error) {
 	case *types.Struct:
 		container := sszgenTypes.ValueContainer{
 			Name:    f.name,
-			Package: pkg,
+			Package: f.pkg.Path(),
 		}
 		for i := 0; i < ty.NumFields(); i++ {
 			field := ty.Field(i)
 			if field.Name() == "" || !field.Exported() {
 				continue
 			}
-			rep, err := expand(&FieldDef{name: field.Name(), tag: ty.Tag(i), typ: field.Type()}, pkg)
+			rep, err := expand(&FieldDef{name: field.Name(), tag: ty.Tag(i), typ: field.Type(), pkg: field.Pkg()})
 			if err != nil {
 				return nil, err
 			}
@@ -67,14 +67,14 @@ func expand(f *FieldDef, pkg string) (sszgenTypes.ValRep, error) {
 		}
 		return &container, nil
 	case *types.Named:
-		exp, err := expand(&FieldDef{name: ty.Obj().Name(), tag: f.tag, typ: ty.Underlying()}, pkg)
+		exp, err := expand(&FieldDef{name: ty.Obj().Name(), tag: f.tag, typ: ty.Underlying(), pkg: f.pkg})
 		switch ty.Underlying().(type) {
 		case *types.Struct:
 			return exp, err
 		default:
 			return &sszgenTypes.ValueOverlay{
 				Name:       ty.Obj().Name(),
-				Package:    pkg,
+				Package:    ty.Obj().Pkg().Path(),
 				Underlying: exp,
 			}, err
 		}
@@ -86,15 +86,15 @@ func expand(f *FieldDef, pkg string) (sszgenTypes.ValRep, error) {
 	}
 }
 
-func expandArrayHead(f *FieldDef, pkg string) (sszgenTypes.ValRep, error) {
+func expandArrayHead(f *FieldDef) (sszgenTypes.ValRep, error) {
 	dims, err := extractSSZDimensions(fmt.Sprintf("`%v`", f.tag))
 	if err != nil {
-		return nil, errors.Wrapf(err, "name=%s, package=%s, tag=%s", f.name, pkg, f.tag)
+		return nil, errors.Wrapf(err, "name=%s, package=%s, tag=%s", f.name, f.pkg.Path(), f.tag)
 	}
-	return expandArray(dims, f, pkg)
+	return expandArray(dims, f)
 }
 
-func expandArray(dims []*SSZDimension, f *FieldDef, pkg string) (sszgenTypes.ValRep, error) {
+func expandArray(dims []*SSZDimension, f *FieldDef) (sszgenTypes.ValRep, error) {
 	if len(dims) == 0 {
 		return nil, fmt.Errorf("do not have dimension information for type %v", f.name)
 	}
@@ -114,12 +114,12 @@ func expandArray(dims []*SSZDimension, f *FieldDef, pkg string) (sszgenTypes.Val
 	}
 
 	if len(dims) > 1 {
-		elv, err = expandArray(dims[1:], &FieldDef{typ: elem.Underlying()}, pkg)
+		elv, err = expandArray(dims[1:], &FieldDef{typ: elem.Underlying(), pkg: f.pkg})
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		elv, err = expand(&FieldDef{name: f.name, tag: f.tag, typ: elem}, pkg)
+		elv, err = expand(&FieldDef{name: f.name, tag: f.tag, typ: elem, pkg: f.pkg})
 		if err != nil {
 			return nil, err
 		}

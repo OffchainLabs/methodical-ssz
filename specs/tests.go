@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/golang/snappy"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"gopkg.in/yaml.v3"
@@ -134,15 +135,26 @@ func DecodeRootFile(f []byte) ([32]byte, error) {
 	return root, nil
 }
 
-func RootAndSerializedFromFixture(fs afero.Fs, dir string) ([32]byte, []byte, error) {
-	rootBytes, err := afero.ReadFile(fs, path.Join(dir, rootFilename))
+func RootAndSerializedFromFixture(dir string) ([32]byte, []byte, error) {
+	rpath := path.Join(dir, rootFilename)
+	rootBytes, err := os.ReadFile(rpath)
 	if err != nil {
-		return [32]byte{}, []byte{}, err
+		return [32]byte{}, nil, errors.Wrapf(err, "error reading expected root fixture file %s", rpath)
 	}
 	root, err := DecodeRootFile(rootBytes)
 	if err != nil {
-		return [32]byte{}, []byte{}, err
+		return [32]byte{}, nil, errors.Wrapf(err, "error decoding expected root fixture file %s, hex contents=%#x", rpath, rootBytes)
 	}
-	serialized, err := afero.ReadFile(fs, path.Join(dir, serializedFilename))
+
+	spath := path.Join(dir, serializedFilename)
+	snappySer, err := os.ReadFile(spath)
+	if err != nil {
+		return [32]byte{}, nil, errors.Wrapf(err, "error reading serialized fixture file %s", spath)
+	}
+	serialized, err := snappy.Decode(nil, snappySer)
+	if err != nil {
+		return [32]byte{}, nil, errors.Wrapf(err, "error snappy decoding serialized fixture file %s", spath)
+	}
+
 	return root, serialized, nil
 }

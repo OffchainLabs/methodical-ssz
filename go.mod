@@ -5,8 +5,9 @@ go 1.19
 require (
 	github.com/dave/jennifer v1.6.0
 	github.com/ethereum/go-ethereum v1.10.25
-	github.com/ferranbt/fastssz v0.0.0-20210526181520-7df50c8568f8
+	github.com/golang/snappy v0.0.4
 	github.com/pkg/errors v0.9.1
+	github.com/prysmaticlabs/fastssz v0.0.0-20220628121656-93dfe28febab
 	github.com/prysmaticlabs/go-bitfield v0.0.0-20210809151128-385d8c5e3fb7
 	github.com/prysmaticlabs/prysm/v3 v3.2.0
 	github.com/sirupsen/logrus v1.8.1
@@ -26,7 +27,6 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.1 // indirect
 	github.com/minio/sha256-simd v1.0.0 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
-	github.com/prysmaticlabs/fastssz v0.0.0-20220628121656-93dfe28febab // indirect
 	github.com/prysmaticlabs/gohashtree v0.0.2-alpha // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/thomaso-mirodin/intmath v0.0.0-20160323211736-5dc6d854e46e // indirect

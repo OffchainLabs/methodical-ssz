@@ -24,6 +24,7 @@ type FieldDef struct {
 	name string
 	typ  types.Type
 	tag  string
+	pkg  *types.Package
 }
 
 func newStructDef(fs *token.FileSet, imp types.Importer, typ *types.Named, packageName string) *TypeDef {
@@ -53,12 +54,28 @@ func newStructDef(fs *token.FileSet, imp types.Importer, typ *types.Named, packa
 			continue
 		}
 
-		mf := &FieldDef{
+		var mf *FieldDef
+		switch ftyp := f.Type().(type) {
+		case *types.Pointer:
+			fn, ok := ftyp.Elem().(*types.Named)
+			if ok {
+				obj := fn.Obj()
+				mf = &FieldDef{
+					name: f.Name(),
+					typ:  obj.Type(),
+					tag:  styp.Tag(i),
+					pkg:  obj.Pkg(),
+				}
+				mtyp.Fields = append(mtyp.Fields, mf)
+				continue
+			}
+		}
+		mf = &FieldDef{
 			name: f.Name(),
 			typ:  f.Type(),
 			tag:  styp.Tag(i),
+			pkg:  f.Pkg(),
 		}
-
 		mtyp.Fields = append(mtyp.Fields, mf)
 	}
 	return mtyp
@@ -83,6 +100,7 @@ func newPrimitiveDef(fs *token.FileSet, imp types.Importer, typ *types.Named, pa
 		name: typ.Underlying().String(),
 		typ:  typ.Underlying(),
 		tag:  "",
+		pkg:  typ.Obj().Pkg(),
 	}
 	mtyp.Fields = append(mtyp.Fields, fd)
 	return mtyp

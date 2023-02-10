@@ -112,9 +112,9 @@ var generateListGenerateUnmarshalValueFixedTmpl = `{
 	if numElem > {{ .MaxSize }} {
 		return fmt.Errorf("ssz-max exceeded: {{.FieldName}} has %d elements, ssz-max is {{.MaxSize}}", numElem)
 	}
-	{{.FieldName}} = make([]{{.Name}}, numElem)
+	{{.FieldName}} = make([]{{.TypeName}}, numElem)
 	for {{.LoopVar}} := 0; {{.LoopVar}} < numElem; {{.LoopVar}}++ {
-		var tmp {{.Name}}
+		var tmp {{.TypeName}}
 		{{.Initializer}}
 		tmpSlice := {{.SliceName}}[{{.LoopVar}}*{{.NestedFixedSize}}:(1+{{.LoopVar}})*{{.NestedFixedSize}}]
 	{{.NestedUnmarshal}}
@@ -138,9 +138,9 @@ if len({{.SliceName}}) > 3 {
 	for {{.LoopVar}} := 0; uint64({{.LoopVar}}) < listLen; {{.LoopVar}}++ {
 		listOffsets[{{.LoopVar}}] = ssz.ReadOffset({{.SliceName}}[{{.LoopVar}}*4:({{.LoopVar}}+1)*4])
 	}
-	{{.FieldName}} = make([]{{.Name}}, len(listOffsets))
+	{{.FieldName}} = make([]{{.TypeName}}, len(listOffsets))
 	for {{.LoopVar}} := 0; {{.LoopVar}} < len(listOffsets); {{.LoopVar}}++ {
-			var tmp {{.Name}}
+			var tmp {{.TypeName}}
 			{{.Initializer}}
 			var tmpSlice []byte
 			if {{.LoopVar}}+1 == len(listOffsets) {

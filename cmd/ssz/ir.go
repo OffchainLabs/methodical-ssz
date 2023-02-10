@@ -12,7 +12,7 @@ import (
 
 var ir = &cli.Command{
 	Name:      "ir",
-	ArgsUsage: "<input package, eg github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1>",
+	ArgsUsage: "<input package, eg github.com/prysmaticlabs/prysm/v3/proto/beacon/p2p/v1>",
 	Aliases:   []string{"gen"},
 	Usage:     "generate intermediate representation for a go struct type. This data structure is used by the backend code generator. Outputting it to a source file an be useful for generating test cases and debugging.",
 	Flags: []cli.Flag{

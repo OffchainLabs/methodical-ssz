@@ -3,7 +3,7 @@ package sszgen
 import (
 	"testing"
 
-	"github.com/prysmaticlabs/prysm/shared/testutil/require"
+	"github.com/prysmaticlabs/prysm/v3/testing/require"
 )
 
 func TestTokens(t *testing.T) {

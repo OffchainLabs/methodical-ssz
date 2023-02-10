@@ -42,7 +42,7 @@ defs:
 
 func TestHarnessYamlFull(t *testing.T) {
 	sr := loadPrysmRelations(t)
-	require.Equal(t, "github.com/prysmaticlabs/prysm/proto/prysm/v1alpha1", sr.Package)
+	require.Equal(t, "github.com/prysmaticlabs/prysm/v3/proto/prysm/v1alpha1", sr.Package)
 }
 
 func TestRelationsAtFork(t *testing.T) {

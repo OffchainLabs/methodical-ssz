@@ -15,7 +15,7 @@ import (
 var sourcePackage, output, typeNames string
 var generate = &cli.Command{
 	Name:      "generate",
-	ArgsUsage: "<input package, eg github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1>",
+	ArgsUsage: "<input package, eg github.com/prysmaticlabs/prysm/v3/proto/beacon/p2p/v1>",
 	Aliases:   []string{"gen"},
 	Usage:     "generate methodsets for a go struct type to support ssz ser/des",
 	Flags: []cli.Flag{

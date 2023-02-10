@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/kasey/methodical-ssz/sszgen/types"
-	"github.com/prysmaticlabs/prysm/shared/testutil/require"
+	"github.com/prysmaticlabs/prysm/v3/testing/require"
 )
 
 func TestRenderIntermediate(t *testing.T) {

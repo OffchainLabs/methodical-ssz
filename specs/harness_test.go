@@ -194,7 +194,7 @@ func TestCaseFileLayout(t *testing.T) {
 			},
 		},
 	}
-	require.NoError(t, GenerateSpecTests(cases, rels, fs))
+	require.NoError(t, WriteSpecTestFiles(cases, rels, fs))
 	entries, err := afero.ReadDir(fs, fix.Directory)
 	require.NoError(t, err)
 	searching := map[string]bool{

@@ -43,6 +43,9 @@ var tests = &cli.Command{
 }
 
 func actionSpectests(cl *cli.Context) error {
+	if err := os.MkdirAll(output, os.ModePerm); err != nil {
+		return errors.Wrapf(err, "failed to create output directory %s", output)
+	}
 	fs := afero.NewBasePathFs(afero.NewOsFs(), output)
 	cfg, err := specs.ParseConfigFile(configPath)
 	if err != nil {
@@ -66,7 +69,7 @@ func actionSpectests(cl *cli.Context) error {
 		fmt.Printf("%s\n", ident)
 	}
 
-	g := backend.NewGenerator(cfg.Package, sourcePackage)
+	g := backend.NewGenerator(cfg.Package, cfg.Package)
 	for _, s := range parser.TypeDefs() {
 		fmt.Printf("Generating methods for %s/%s\n", s.PackageName, s.Name)
 		typeRep, err := sszgen.ParseTypeDef(s)
@@ -79,7 +82,17 @@ func actionSpectests(cl *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	return afero.WriteFile(fs, "methodical.ssz.go", rbytes, 0666)
+	if err := afero.WriteFile(fs, "methodical.ssz.go", rbytes, 0666); err != nil {
+		return err
+	}
+	source, err := parser.TypeDefSourceCode()
+	if err != nil {
+		return err
+	}
+	if err := afero.WriteFile(fs, "structs.go", source, 0666); err != nil {
+		return err
+	}
+	return specs.WriteSpecTestFiles(cases, cfg, fs)
 }
 
 func loadArchive(uri string) (io.Reader, error) {

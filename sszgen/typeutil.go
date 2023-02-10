@@ -43,19 +43,19 @@ func walkNamedTypes(typ types.Type, callback func(*types.Named)) {
 	}
 }
 
-func lookupType(scope *types.Scope, name string) (*types.Named, error) {
+func lookupType(scope *types.Scope, name string) (*types.Named, types.Object, error) {
 	if name == "" {
-		return nil, errors.Wrap(errors.New("no such identifier"), "empty name lookup")
+		return nil, nil, errors.Wrap(errors.New("no such identifier"), "empty name lookup")
 	}
 	obj := scope.Lookup(name)
 	if obj == nil {
-		return nil, errors.Wrap(errors.New("no such identifier"), name)
+		return nil, nil, errors.Wrap(errors.New("no such identifier"), name)
 	}
 	typ, ok := obj.(*types.TypeName)
 	if !ok {
-		return nil, errors.New("not a type")
+		return nil, nil, errors.New("not a type")
 	}
-	return typ.Type().(*types.Named), nil
+	return typ.Type().(*types.Named), obj, nil
 }
 
 func isPointer(typ types.Type) bool {

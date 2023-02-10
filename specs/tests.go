@@ -47,10 +47,22 @@ func IdentFilter(ident TestIdent) func([]TestIdent) []TestIdent {
 	}
 }
 
-func GroupByFork(ti []TestIdent) map[Fork][]TestIdent {
+func GroupByFork(cases map[TestIdent]Fixture) map[Fork][]TestIdent {
 	m := make(map[Fork][]TestIdent)
-	for _, t := range ti {
-		m[t.Fork] = append(m[t.Fork], t)
+	for id, _ := range cases {
+		switch len(m[id.Fork]) {
+		case 0:
+			m[id.Fork] = []TestIdent{id}
+		case 1:
+			m[id.Fork] = append(m[id.Fork], id)
+		default:
+			for i, cur := range m[id.Fork] {
+				if id.LessThan(cur) {
+					m[id.Fork] = append(m[id.Fork][:i], append([]TestIdent{id}, m[id.Fork][i:]...)...)
+					break
+				}
+			}
+		}
 	}
 	return m
 }

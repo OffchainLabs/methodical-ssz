@@ -46,6 +46,14 @@ type TestIdent struct {
 	Offset int    `json:"offset"`
 }
 
+func (ti TestIdent) LessThan(other TestIdent) bool {
+	if ti.Name == other.Name {
+		return ti.Offset < other.Offset
+	}
+	// strings.Compare will return -1 if ti.Name is < other.Name
+	return strings.Compare(ti.Name, other.Name) == -1
+}
+
 func (ti TestIdent) String() string {
 	return fmt.Sprintf("%s:%s:%s:%d", ti.Preset, ti.Fork, ti.Name, ti.Offset)
 }

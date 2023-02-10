@@ -3,7 +3,6 @@ package specs
 import "text/template"
 
 var testCaseTemplateBytes = `func {{.TestFuncName}}(t *testing.T) {
-	var err error
 	fixtureDir := "{{.FixtureDirectory}}"
 	root, serialized, err := specs.RootAndSerializedFromFixture(fixtureDir)
 	require.NoError(t, err)
@@ -13,6 +12,13 @@ var testCaseTemplateBytes = `func {{.TestFuncName}}(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, root, sroot)
 }`
+
+var testCaseTemplateImports = `import (
+	"testing"
+
+	"github.com/kasey/methodical-ssz/specs"
+	"github.com/prysmaticlabs/prysm/v3/testing/require"
+)`
 
 var testFuncBodyTpl *template.Template
 

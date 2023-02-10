@@ -3,9 +3,12 @@ package specs
 import (
 	"bytes"
 	"fmt"
+	"go/format"
 	"os"
 	"path"
+	"strings"
 
+	"github.com/kasey/methodical-ssz/sszgen/backend"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
@@ -99,21 +102,25 @@ type TestCaseTpl struct {
 	structName string
 }
 
+func (tpl *TestCaseTpl) testdataDir() string {
+	return path.Join("testdata", tpl.fixture.Directory)
+}
+
 func (tpl *TestCaseTpl) rootPath() string {
-	return path.Join(tpl.fixture.Directory, rootFilename)
+	return path.Join(tpl.testdataDir(), rootFilename)
 }
 
 func (tpl *TestCaseTpl) yamlPath() string {
-	return path.Join(tpl.fixture.Directory, valueFilename)
+	return path.Join(tpl.testdataDir(), valueFilename)
 }
 
 func (tpl *TestCaseTpl) serializedPath() string {
-	return path.Join(tpl.fixture.Directory, serializedFilename)
+	return path.Join(tpl.testdataDir(), serializedFilename)
 }
 
 func (tpl *TestCaseTpl) ensureFixtures(fs afero.Fs) error {
 	f := tpl.fixture
-	if err := fs.MkdirAll(f.Directory, os.ModePerm); err != nil {
+	if err := fs.MkdirAll(tpl.testdataDir(), os.ModePerm); err != nil {
 		return errors.Wrapf(err, "failed to create fixture directory %s", f.Directory)
 	}
 	if err := ensure(fs, tpl.rootPath(), f.Root.Contents, f.Root.FileMode); err != nil {
@@ -161,14 +168,11 @@ func (tpl *TestCaseTpl) Render() (string, error) {
 	return b.String(), err
 }
 
-func GenerateSpecTests(cases map[TestIdent]Fixture, rels *SpecRelationships, fs afero.Fs) error {
-	idents := make([]TestIdent, len(cases))
-	i := 0
-	for k, _ := range cases {
-		idents[i] = k
-		i++
-	}
-	for fork, ids := range GroupByFork(idents) {
+func WriteSpecTestFiles(cases map[TestIdent]Fixture, rels *SpecRelationships, fs afero.Fs) error {
+	caseFuncs := make([]string, 0)
+	fg := GroupByFork(cases)
+	for _, fork := range ForkOrder {
+		ids := fg[fork]
 		raf, err := rels.RelationsAtFork(fork)
 		if err != nil {
 			return err
@@ -187,7 +191,25 @@ func GenerateSpecTests(cases map[TestIdent]Fixture, rels *SpecRelationships, fs 
 			if err := tpl.ensureFixtures(fs); err != nil {
 				return err
 			}
+			cfunc, err := tpl.Render()
+			if err != nil {
+				return err
+			}
+			caseFuncs = append(caseFuncs, cfunc)
 		}
 	}
+	packageDecl := "package " + backend.RenderedPackageName(rels.Package) + "\n\n"
+	contents := packageDecl + "\n\n" + testCaseTemplateImports + "\n\n" + strings.Join(caseFuncs, "\n\n")
+
+	testBytes, err := format.Source([]byte(contents))
+	if err != nil {
+		return err
+	}
+
+	fname := "methodical_test.go"
+	if err := afero.WriteFile(fs, fname, testBytes, 0666); err != nil {
+		return errors.Wrapf(err, "error writing spectest functions to %s", fname)
+	}
+
 	return nil
 }

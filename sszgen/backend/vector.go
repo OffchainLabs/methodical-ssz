@@ -144,13 +144,25 @@ func (g *generateVector) isByteVector() bool {
 	return isByte
 }
 
+const ByteChunkSize = 32
+
 func (g *generateVector) renderByteSliceAppend(fieldName string) string {
-	t := `if len(%s) != %d {
+	if g.valRep.Size%ByteChunkSize == 0 {
+		return fmt.Sprintf(byteSliceAppendTpl, fieldName, g.valRep.Size, fieldName)
+	} else {
+		return fmt.Sprintf(byteSlicePutBytesTpl, fieldName, g.valRep.Size, fieldName)
+	}
+}
+
+var byteSliceAppendTpl = `if len(%s) != %d {
 	return ssz.ErrBytesLength
 }
 hh.Append(%s)`
-	return fmt.Sprintf(t, fieldName, g.valRep.Size, fieldName)
-}
+
+var byteSlicePutBytesTpl = `if len(%s) != %d {
+			return ssz.ErrBytesLength
+		}
+		hh.PutBytes(%s)`
 
 func (g *generateVector) generateHTRPutter(fieldName string) string {
 	nestedFieldName := "o"
@@ -175,11 +187,7 @@ func (g *generateVector) generateHTRPutter(fieldName string) string {
 
 	switch v := vr.(type) {
 	case *types.ValueByte:
-		t := `if len(%s) != %d {
-			return ssz.ErrBytesLength
-		}
-		hh.PutBytes(%s)`
-		return fmt.Sprintf(t, fieldName, g.valRep.Size, fieldName)
+		return fmt.Sprintf(byteSlicePutBytesTpl, fieldName, g.valRep.Size, fieldName)
 	case *types.ValueVector:
 		gv := &generateVector{valRep: v, targetPackage: g.targetPackage}
 		if gv.isByteVector() {

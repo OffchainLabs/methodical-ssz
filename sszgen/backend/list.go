@@ -71,10 +71,15 @@ func (g *generateList) generateHTRPutter(fieldName string) string {
 	switch v := vr.(type) {
 	case *types.ValueByte:
 		t := `if len(%s) > %d {
-			return ssz.ErrBytesLength
-		}
-		hh.PutBytes(%s)`
-		return fmt.Sprintf(t, fieldName, g.valRep.MaxSize, fieldName)
+					return ssz.ErrBytesLength
+				}
+			    subIndx := hh.Index()
+				hh.PutBytes(%s)`
+		putBytes := fmt.Sprintf(t, fieldName, g.valRep.MaxSize, fieldName)
+		mtmpl := `numItems := uint64(len(%s))
+		hh.MerkleizeWithMixin(subIndx, numItems, (%d*%d + 31)/32)`
+		res := "\n{\n" + putBytes + "\n" + fmt.Sprintf(mtmpl, fieldName, g.valRep.MaxSize, v.FixedSize()) + "\n}\n"
+		return res
 	case *types.ValueVector:
 		gv := &generateVector{valRep: v, targetPackage: g.targetPackage}
 		if gv.isByteVector() {

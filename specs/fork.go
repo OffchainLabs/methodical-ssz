@@ -22,10 +22,11 @@ var (
 	Altair      Fork = "altair"
 	Bellatrix   Fork = "bellatrix"
 	Capella     Fork = "capella"
-	EIP4844     Fork = "eip4844"
+	//EIP4844     Fork = "eip4844"
 )
 
-var ForkOrder = []Fork{Phase0, Altair, Bellatrix, Capella, EIP4844}
+// var ForkOrder = []Fork{Phase0, Altair, Bellatrix, Capella, EIP4844}
+var ForkOrder = []Fork{Phase0, Altair, Bellatrix, Capella}
 
 func stringToFork(s string) Fork {
 	switch s {
@@ -37,8 +38,10 @@ func stringToFork(s string) Fork {
 		return Bellatrix
 	case string(Capella):
 		return Capella
-	case string(EIP4844):
-		return EIP4844
+		/*
+			case string(EIP4844):
+				return EIP4844
+		*/
 	default:
 		return ForkUnknown
 	}

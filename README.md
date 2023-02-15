@@ -37,7 +37,7 @@ curl -L https://github.com/ethereum/consensus-spec-tests/releases/download/v1.3.
 yaml config
 ===========
 
-The spectest generation tool next needs a mapping between go types and consensus spec container types. This mapping is described as a yaml config file. The mappings for prysm types are committed to the repo in a go `testdata` fixture directory, in `specs/testdata/prysm.yaml`. The following snippet illustrates the format:
+The spectest generation tool needs a mapping between go types and consensus spec container types. This mapping is described as a yaml config file. The mappings for prysm types are committed to the repo in a go `testdata` fixture directory, in `specs/testdata/prysm.yaml`. The following snippet illustrates the format:
 ```
 package: github.com/prysmaticlabs/prysm/v3/proto/prysm/v1alpha1
 preset: mainnet

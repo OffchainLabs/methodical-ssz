@@ -1,5 +1,4 @@
-name: tx-fuzz workflow
-
+name: methodical-ssz
 
 on:
   push:

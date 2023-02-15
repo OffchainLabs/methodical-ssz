@@ -65,7 +65,7 @@ func actionSpectests(cl *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	for ident, _ := range cases {
+	for ident := range cases {
 		fmt.Printf("%s\n", ident)
 	}
 

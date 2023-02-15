@@ -137,7 +137,7 @@ func loadPrysmRelations(t *testing.T) *SpecRelationships {
 	y, err := os.ReadFile("testdata/prysm.yaml")
 	require.NoError(t, err)
 	sr := &SpecRelationships{}
-	err = yaml.Unmarshal([]byte(y), sr)
+	err = yaml.Unmarshal(y, sr)
 	require.NoError(t, err)
 	return sr
 }

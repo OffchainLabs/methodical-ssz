@@ -62,7 +62,6 @@ func NewGenerator(packageName, packagePath string) *Generator {
 func (g *Generator) Generate(vr types.ValRep) error {
 	if vc, ok := vr.(*types.ValueContainer); ok {
 		return g.genValueContainer(vc)
-
 	}
 	if vo, ok := vr.(*types.ValueOverlay); ok {
 		return g.genValueOverlay(vo)

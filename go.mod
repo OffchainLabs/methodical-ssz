@@ -1,12 +1,13 @@
 module github.com/OffchainLabs/methodical-ssz
 
-go 1.19
+go 1.20
 
 require (
 	github.com/dave/jennifer v1.6.0
 	github.com/ethereum/go-ethereum v1.10.25
 	github.com/golang/snappy v0.0.4
 	github.com/pkg/errors v0.9.1
+	github.com/prysmaticlabs/go-bitfield v0.0.0-20210809151128-385d8c5e3fb7
 	github.com/prysmaticlabs/prysm/v3 v3.2.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/afero v1.2.2

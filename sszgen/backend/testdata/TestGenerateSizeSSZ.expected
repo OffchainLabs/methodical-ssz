@@ -1,4 +1,4 @@
-func (c *BeaconState) XXSizeSSZ() int {
+func (c *BeaconState) SizeSSZ() int {
 	size := 2687377
 	size += len(c.HistoricalRoots) * 32
 	size += len(c.Eth1DataVotes) * 72

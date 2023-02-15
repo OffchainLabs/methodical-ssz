@@ -1,9 +1,9 @@
-func (c *BeaconState) XXMarshalSSZ() ([]byte, error) {
-	buf := make([]byte, c.XXSizeSSZ())
-	return c.XXMarshalSSZTo(buf[:0])
+func (c *BeaconState) MarshalSSZ() ([]byte, error) {
+	buf := make([]byte, c.SizeSSZ())
+	return c.MarshalSSZTo(buf[:0])
 }
 
-func (c *BeaconState) XXMarshalSSZTo(dst []byte) ([]byte, error) {
+func (c *BeaconState) MarshalSSZTo(dst []byte) ([]byte, error) {
 	var err error
 	offset := 2687377
 
@@ -21,17 +21,17 @@ func (c *BeaconState) XXMarshalSSZTo(dst []byte) ([]byte, error) {
 
 	// Field 3: Fork
 	if c.Fork == nil {
-		c.Fork = new(prysmaticlabs_prysm_proto_beacon_p2p_v1.Fork)
+		c.Fork = new(prysmaticlabs_prysm_v3_proto_beacon_p2p_v1.Fork)
 	}
-	if dst, err = c.Fork.XXMarshalSSZTo(dst); err != nil {
+	if dst, err = c.Fork.MarshalSSZTo(dst); err != nil {
 		return nil, err
 	}
 
 	// Field 4: LatestBlockHeader
 	if c.LatestBlockHeader == nil {
-		c.LatestBlockHeader = new(prysmaticlabs_prysm_proto_eth_v1alpha1.BeaconBlockHeader)
+		c.LatestBlockHeader = new(prysmaticlabs_prysm_v3_proto_eth_v1alpha1.BeaconBlockHeader)
 	}
-	if dst, err = c.LatestBlockHeader.XXMarshalSSZTo(dst); err != nil {
+	if dst, err = c.LatestBlockHeader.MarshalSSZTo(dst); err != nil {
 		return nil, err
 	}
 
@@ -63,9 +63,9 @@ func (c *BeaconState) XXMarshalSSZTo(dst []byte) ([]byte, error) {
 
 	// Field 8: Eth1Data
 	if c.Eth1Data == nil {
-		c.Eth1Data = new(prysmaticlabs_prysm_proto_eth_v1alpha1.Eth1Data)
+		c.Eth1Data = new(prysmaticlabs_prysm_v3_proto_eth_v1alpha1.Eth1Data)
 	}
-	if dst, err = c.Eth1Data.XXMarshalSSZTo(dst); err != nil {
+	if dst, err = c.Eth1Data.MarshalSSZTo(dst); err != nil {
 		return nil, err
 	}
 
@@ -133,25 +133,25 @@ func (c *BeaconState) XXMarshalSSZTo(dst []byte) ([]byte, error) {
 
 	// Field 18: PreviousJustifiedCheckpoint
 	if c.PreviousJustifiedCheckpoint == nil {
-		c.PreviousJustifiedCheckpoint = new(prysmaticlabs_prysm_proto_eth_v1alpha1.Checkpoint)
+		c.PreviousJustifiedCheckpoint = new(prysmaticlabs_prysm_v3_proto_eth_v1alpha1.Checkpoint)
 	}
-	if dst, err = c.PreviousJustifiedCheckpoint.XXMarshalSSZTo(dst); err != nil {
+	if dst, err = c.PreviousJustifiedCheckpoint.MarshalSSZTo(dst); err != nil {
 		return nil, err
 	}
 
 	// Field 19: CurrentJustifiedCheckpoint
 	if c.CurrentJustifiedCheckpoint == nil {
-		c.CurrentJustifiedCheckpoint = new(prysmaticlabs_prysm_proto_eth_v1alpha1.Checkpoint)
+		c.CurrentJustifiedCheckpoint = new(prysmaticlabs_prysm_v3_proto_eth_v1alpha1.Checkpoint)
 	}
-	if dst, err = c.CurrentJustifiedCheckpoint.XXMarshalSSZTo(dst); err != nil {
+	if dst, err = c.CurrentJustifiedCheckpoint.MarshalSSZTo(dst); err != nil {
 		return nil, err
 	}
 
 	// Field 20: FinalizedCheckpoint
 	if c.FinalizedCheckpoint == nil {
-		c.FinalizedCheckpoint = new(prysmaticlabs_prysm_proto_eth_v1alpha1.Checkpoint)
+		c.FinalizedCheckpoint = new(prysmaticlabs_prysm_v3_proto_eth_v1alpha1.Checkpoint)
 	}
-	if dst, err = c.FinalizedCheckpoint.XXMarshalSSZTo(dst); err != nil {
+	if dst, err = c.FinalizedCheckpoint.MarshalSSZTo(dst); err != nil {
 		return nil, err
 	}
 
@@ -171,7 +171,7 @@ func (c *BeaconState) XXMarshalSSZTo(dst []byte) ([]byte, error) {
 		return nil, ssz.ErrListTooBig
 	}
 	for _, o := range c.Eth1DataVotes {
-		if dst, err = o.XXMarshalSSZTo(dst); err != nil {
+		if dst, err = o.MarshalSSZTo(dst); err != nil {
 			return nil, err
 		}
 	}
@@ -181,7 +181,7 @@ func (c *BeaconState) XXMarshalSSZTo(dst []byte) ([]byte, error) {
 		return nil, ssz.ErrListTooBig
 	}
 	for _, o := range c.Validators {
-		if dst, err = o.XXMarshalSSZTo(dst); err != nil {
+		if dst, err = o.MarshalSSZTo(dst); err != nil {
 			return nil, err
 		}
 	}
@@ -206,7 +206,7 @@ func (c *BeaconState) XXMarshalSSZTo(dst []byte) ([]byte, error) {
 		}
 	}
 	for _, o := range c.PreviousEpochAttestations {
-		if dst, err = o.XXMarshalSSZTo(dst); err != nil {
+		if dst, err = o.MarshalSSZTo(dst); err != nil {
 			return nil, err
 		}
 	}
@@ -223,7 +223,7 @@ func (c *BeaconState) XXMarshalSSZTo(dst []byte) ([]byte, error) {
 		}
 	}
 	for _, o := range c.CurrentEpochAttestations {
-		if dst, err = o.XXMarshalSSZTo(dst); err != nil {
+		if dst, err = o.MarshalSSZTo(dst); err != nil {
 			return nil, err
 		}
 	}

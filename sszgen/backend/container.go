@@ -59,6 +59,10 @@ func (g *generateContainer) fixedOffset() int {
 }
 
 func (g *generateContainer) initializeValue(fieldName string) string {
+	fqType := g.TypeName()
+	if g.targetPackage != g.PackagePath() {
+		fqType = importAlias(g.PackagePath()) + "." + fqType
+	}
 	return fmt.Sprintf("new(%s)", fullyQualifiedTypeName(g.ValueContainer, g.targetPackage))
 }
 

@@ -13,8 +13,8 @@ var generator_generateFixture = `package derp
 
 import (
 	"fmt"
-	ssz "github.com/prysmaticlabs/fastssz"
 	derp "github.com/prysmaticlabs/derp/derp"
+	ssz "github.com/prysmaticlabs/fastssz"
 )
 
 func main() {
@@ -87,7 +87,7 @@ func TestExtractImportsFromContainerFields(t *testing.T) {
 	imports := extractImportsFromContainerFields(vc.Contents, targetPackage)
 	require.Equal(t, 3, len(imports))
 	require.Equal(t, "prysmaticlabs_eth2_types", imports["github.com/prysmaticlabs/eth2-types"])
-	require.Equal(t, "prysmaticlabs_prysm_proto_eth_v1alpha1", imports["github.com/prysmaticlabs/prysm/v3/proto/eth/v1alpha1"])
+	require.Equal(t, "prysmaticlabs_prysm_v3_proto_eth_v1alpha1", imports["github.com/prysmaticlabs/prysm/v3/proto/eth/v1alpha1"])
 	require.Equal(t, "prysmaticlabs_go_bitfield", imports["github.com/prysmaticlabs/go-bitfield"])
 }
 

@@ -1,7 +1,7 @@
 package backend
 
 import (
-	"github.com/kasey/methodical-ssz/sszgen/types"
+	"github.com/OffchainLabs/methodical-ssz/sszgen/types"
 )
 
 type generateUnion struct {

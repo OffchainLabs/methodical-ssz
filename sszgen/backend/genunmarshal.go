@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/kasey/methodical-ssz/sszgen/types"
+	"github.com/OffchainLabs/methodical-ssz/sszgen/types"
 )
 
 var generateUnmarshalSSZTmpl = `func ({{.Receiver}} {{.Type}}) UnmarshalSSZ(buf []byte) error {

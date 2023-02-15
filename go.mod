@@ -1,4 +1,4 @@
-module github.com/kasey/methodical-ssz
+module github.com/OffchainLabs/methodical-ssz
 
 go 1.19
 

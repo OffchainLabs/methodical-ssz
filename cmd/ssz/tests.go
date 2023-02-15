@@ -6,9 +6,9 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/kasey/methodical-ssz/specs"
-	"github.com/kasey/methodical-ssz/sszgen"
-	"github.com/kasey/methodical-ssz/sszgen/backend"
+	"github.com/OffchainLabs/methodical-ssz/specs"
+	"github.com/OffchainLabs/methodical-ssz/sszgen"
+	"github.com/OffchainLabs/methodical-ssz/sszgen/backend"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"github.com/urfave/cli/v2"

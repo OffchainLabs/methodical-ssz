@@ -16,7 +16,7 @@ var testCaseTemplateBytes = `func {{.TestFuncName}}(t *testing.T) {
 var testCaseTemplateImports = `import (
 	"testing"
 
-	"github.com/kasey/methodical-ssz/specs"
+	"github.com/OffchainLabs/methodical-ssz/specs"
 	"github.com/prysmaticlabs/prysm/v3/testing/require"
 )`
 

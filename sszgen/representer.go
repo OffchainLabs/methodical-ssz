@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"go/types"
 
-	sszgenTypes "github.com/kasey/methodical-ssz/sszgen/types"
+	sszgenTypes "github.com/OffchainLabs/methodical-ssz/sszgen/types"
 	"github.com/pkg/errors"
 )
 

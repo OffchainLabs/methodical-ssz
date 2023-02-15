@@ -3,7 +3,7 @@
 package testdata
 
 import (
-	"github.com/kasey/methodical-ssz/sszgen/types"
+	"github.com/OffchainLabs/methodical-ssz/sszgen/types"
 )
 
 var testing types.ValRep = &types.ValueContainer{

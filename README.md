@@ -72,5 +72,5 @@ go run ./cmd/ssz spectest --release-uri=file://$PWD/mainnet-v1.3.0-rc.2.tar.gz -
 Run the spectest like normal go tests:
 ```
 go test ./generated/
-ok  	github.com/kasey/methodical-ssz/generated	1.003s
+ok  	github.com/OffchainLabs/methodical-ssz/generated	1.003s
 ```

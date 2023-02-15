@@ -4,7 +4,7 @@ import (
 	"go/format"
 
 	jen "github.com/dave/jennifer/jen"
-	"github.com/kasey/methodical-ssz/sszgen/types"
+	"github.com/OffchainLabs/methodical-ssz/sszgen/types"
 )
 
 func RenderIntermediate(vr types.ValRep) (string, error) {

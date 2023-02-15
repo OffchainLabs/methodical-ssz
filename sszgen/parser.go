@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/kasey/methodical-ssz/sszgen/backend"
+	"github.com/OffchainLabs/methodical-ssz/sszgen/backend"
 	"golang.org/x/tools/go/packages"
 )
 

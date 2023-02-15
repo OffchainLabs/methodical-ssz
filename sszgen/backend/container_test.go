@@ -3,7 +3,7 @@ package backend
 import (
 	"go/format"
 
-	"github.com/kasey/methodical-ssz/sszgen/types"
+	"github.com/OffchainLabs/methodical-ssz/sszgen/types"
 )
 
 func normalizeFixtureBytes(raw []byte) (string, error) {

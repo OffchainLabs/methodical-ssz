@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/kasey/methodical-ssz/sszgen"
-	"github.com/kasey/methodical-ssz/sszgen/backend"
+	"github.com/OffchainLabs/methodical-ssz/sszgen"
+	"github.com/OffchainLabs/methodical-ssz/sszgen/backend"
 	"github.com/urfave/cli/v2"
 )
 

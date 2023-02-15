@@ -4,12 +4,12 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/kasey/methodical-ssz/sszgen/types"
+	"github.com/OffchainLabs/methodical-ssz/sszgen/types"
 	"github.com/prysmaticlabs/prysm/v3/testing/require"
 )
 
 func TestGetSimpleRepresentation(t *testing.T) {
-	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
+	packageName := "github.com/OffchainLabs/methodical-ssz/sszgen/testdata"
 	pp, err := NewPackageParser(packageName, []string{"NoImports"})
 	require.NoError(t, err)
 	for _, td := range pp.results {
@@ -19,7 +19,7 @@ func TestGetSimpleRepresentation(t *testing.T) {
 }
 
 func TestBeaconState(t *testing.T) {
-	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
+	packageName := "github.com/OffchainLabs/methodical-ssz/sszgen/testdata"
 	pp, err := NewPackageParser(packageName, []string{"BeaconState"})
 	require.NoError(t, err)
 	for _, td := range pp.results {
@@ -29,7 +29,7 @@ func TestBeaconState(t *testing.T) {
 }
 
 func TestPrimitiveAliasRepresentation(t *testing.T) {
-	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
+	packageName := "github.com/OffchainLabs/methodical-ssz/sszgen/testdata"
 	typeName := "AliasedPrimitive"
 	pp, err := NewPackageParser(packageName, []string{typeName})
 	require.NoError(t, err)
@@ -47,7 +47,7 @@ func TestPrimitiveAliasRepresentation(t *testing.T) {
 // type AliasedPrimitive uint64
 // will be represented like ValueOverlay{Name: "AliasedPrimitive", Underlying: ValueUint{Name: "uint64"}}
 func TestSimpleStructRepresentation(t *testing.T) {
-	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
+	packageName := "github.com/OffchainLabs/methodical-ssz/sszgen/testdata"
 	typeName := "NoImports"
 	pp, err := NewPackageParser(packageName, []string{typeName})
 	require.NoError(t, err)
@@ -78,7 +78,7 @@ func TestSimpleStructRepresentation(t *testing.T) {
 
 // Tests that 1 and 2 dimensional vectors are represented as expected
 func TestStructVectors(t *testing.T) {
-	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
+	packageName := "github.com/OffchainLabs/methodical-ssz/sszgen/testdata"
 	typeName := "NoImports"
 	pp, err := NewPackageParser(packageName, []string{typeName})
 	require.NoError(t, err)
@@ -116,7 +116,7 @@ func TestStructVectors(t *testing.T) {
 
 // tests that ssz dimensions are assigned correctly with a vector nested in a list
 func TestVectorInListInStruct(t *testing.T) {
-	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
+	packageName := "github.com/OffchainLabs/methodical-ssz/sszgen/testdata"
 	typeName := "NoImports"
 	pp, err := NewPackageParser(packageName, []string{typeName})
 	require.NoError(t, err)
@@ -146,7 +146,7 @@ func TestVectorInListInStruct(t *testing.T) {
 }
 
 func TestContainerField(t *testing.T) {
-	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
+	packageName := "github.com/OffchainLabs/methodical-ssz/sszgen/testdata"
 	typeName := "NoImports"
 	pp, err := NewPackageParser(packageName, []string{typeName})
 	require.NoError(t, err)
@@ -176,7 +176,7 @@ func TestContainerField(t *testing.T) {
 }
 
 func TestListContainers(t *testing.T) {
-	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
+	packageName := "github.com/OffchainLabs/methodical-ssz/sszgen/testdata"
 	typeName := "NoImports"
 	pp, err := NewPackageParser(packageName, []string{typeName})
 	require.NoError(t, err)
@@ -230,7 +230,7 @@ func TestListContainers(t *testing.T) {
 }
 
 func TestListOfOverlays(t *testing.T) {
-	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
+	packageName := "github.com/OffchainLabs/methodical-ssz/sszgen/testdata"
 	typeName := "NoImports"
 	pp, err := NewPackageParser(packageName, []string{typeName})
 	require.NoError(t, err)
@@ -275,7 +275,7 @@ func TestListOfOverlays(t *testing.T) {
 }
 
 func TestVectorOfOverlays(t *testing.T) {
-	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
+	packageName := "github.com/OffchainLabs/methodical-ssz/sszgen/testdata"
 	typeName := "NoImports"
 	pp, err := NewPackageParser(packageName, []string{typeName})
 	require.NoError(t, err)
@@ -320,7 +320,7 @@ func TestVectorOfOverlays(t *testing.T) {
 }
 
 func TestBitlist(t *testing.T) {
-	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
+	packageName := "github.com/OffchainLabs/methodical-ssz/sszgen/testdata"
 	typeName := "TestBitlist"
 	pp, err := NewPackageParser(packageName, []string{typeName})
 	require.NoError(t, err)
@@ -360,7 +360,7 @@ func TestBitlist(t *testing.T) {
 }
 
 func TestFixedSizeArray(t *testing.T) {
-	packageName := "github.com/kasey/methodical-ssz/sszgen/testdata"
+	packageName := "github.com/OffchainLabs/methodical-ssz/sszgen/testdata"
 	typeName := "FixedSizeArray"
 	pp, err := NewPackageParser(packageName, []string{typeName})
 	require.NoError(t, err)

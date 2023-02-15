@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/kasey/methodical-ssz/sszgen"
-	"github.com/kasey/methodical-ssz/sszgen/testutil"
+	"github.com/OffchainLabs/methodical-ssz/sszgen"
+	"github.com/OffchainLabs/methodical-ssz/sszgen/testutil"
 	"github.com/urfave/cli/v2"
 )
 

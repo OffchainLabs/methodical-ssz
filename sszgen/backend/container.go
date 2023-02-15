@@ -3,7 +3,7 @@ package backend
 import (
 	"fmt"
 
-	"github.com/kasey/methodical-ssz/sszgen/types"
+	"github.com/OffchainLabs/methodical-ssz/sszgen/types"
 )
 
 const receiverName = "c"

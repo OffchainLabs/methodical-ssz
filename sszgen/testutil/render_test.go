@@ -3,7 +3,7 @@ package testutil
 import (
 	"testing"
 
-	"github.com/kasey/methodical-ssz/sszgen/types"
+	"github.com/OffchainLabs/methodical-ssz/sszgen/types"
 	"github.com/prysmaticlabs/prysm/v3/testing/require"
 )
 

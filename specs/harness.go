@@ -8,7 +8,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/kasey/methodical-ssz/sszgen/backend"
+	"github.com/OffchainLabs/methodical-ssz/sszgen/backend"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"

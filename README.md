@@ -66,7 +66,7 @@ spectest subcommand
 
 The `generated` directory is a good place to stick generated tests as it is already in the .gitignore for the project. Assuming the tarball in the example above has been downloaded to the repo directory, running the following command there will generate spectests for all prysm types described in the test fixture yaml config:
 ```
-go run ./cmd/ssz spectest --release-uri=file://$PWD/mainnet-v1.3.0-rc.2.tar.gz --config=$PWD/specs/testdata/prysm.yaml --output=$PWD/generated/spectests
+go run ./cmd/ssz spectest --release-uri=file://$PWD/mainnet-v1.3.0-rc.2.tar.gz --config=$PWD/specs/testdata/prysm.yaml --output=$PWD/generated
 ```
 
 Run the spectest like normal go tests:

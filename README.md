@@ -1,7 +1,7 @@
 methodical-ssz
 --------------
 
-This tool generates code that uses the [fastssz api](https://github.com/ferranbt/fastssz/) (with bindings for [go-hashtree](https://github.com/prysmaticlabs/gohashtree) coming very soon!), for marshaling, unmarshaling and merkleization of go types.
+This tool generates code that uses the [prysm fork](https://github.com/prysmaticlabs/fastssz/) of the [fastssz api](https://github.com/ferranbt/fastssz/) (with bindings for [go-hashtree](https://github.com/prysmaticlabs/gohashtree) coming very soon!), for marshaling, unmarshaling and merkleization of go types.
 
 Generate ssz methodsets
 -----------------------

@@ -50,7 +50,7 @@ func IdentFilter(ident TestIdent) func([]TestIdent) []TestIdent {
 
 func GroupByFork(cases map[TestIdent]Fixture) map[Fork][]TestIdent {
 	m := make(map[Fork][]TestIdent)
-	for id, _ := range cases {
+	for id := range cases {
 		switch len(m[id.Fork]) {
 		case 0:
 			m[id.Fork] = []TestIdent{id}

@@ -6,7 +6,7 @@ type caster interface {
 }
 
 type casterConfig struct {
-	toOverlayFunc func(string) string
+	toOverlayFunc   func(string) string
 	fromOverlayFunc func(string) string
 }
 

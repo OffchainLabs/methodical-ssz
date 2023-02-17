@@ -3,8 +3,8 @@ package types
 import "fmt"
 
 type ValueOverlay struct {
-	Name string
-	Package string
+	Name       string
+	Package    string
 	Underlying ValRep
 }
 
@@ -28,10 +28,7 @@ func (vo *ValueOverlay) IsVariableSized() bool {
 }
 
 func (vo *ValueOverlay) IsBitfield() bool {
-	if vo.Package == "github.com/prysmaticlabs/go-bitfield" {
-		return true
-	}
-	return false
+	return vo.Package == "github.com/prysmaticlabs/go-bitfield"
 }
 
 func (vo *ValueOverlay) bitfieldFixedSize() int {

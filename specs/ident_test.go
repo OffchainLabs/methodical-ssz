@@ -41,42 +41,42 @@ func TestParsePath(t *testing.T) {
 }
 
 func TestUnmarshalIdentFields(t *testing.T) {
-	cases := []struct{
-		name string
+	cases := []struct {
+		name      string
 		marshaled string
-		err error
-		preset *Preset
-		fork *Fork
+		err       error
+		preset    *Preset
+		fork      *Fork
 	}{
 		{
-			name: "unknown fork",
+			name:      "unknown fork",
 			marshaled: `{"fork": "derp"}`,
-			err: ErrUnknownFork,
+			err:       ErrUnknownFork,
 		},
 		{
-			name: "altair",
+			name:      "altair",
 			marshaled: fmt.Sprintf(`{"fork": "%s"}`, Altair),
-			fork: &Altair,
+			fork:      &Altair,
 		},
 		{
-			name: "phase0",
+			name:      "phase0",
 			marshaled: fmt.Sprintf(`{"fork": "%s"}`, Phase0),
-			fork: &Phase0,
+			fork:      &Phase0,
 		},
 		{
-			name: "unknown preset",
+			name:      "unknown preset",
 			marshaled: `{"preset": "derp"}`,
-			err: ErrUnknownPreset,
+			err:       ErrUnknownPreset,
 		},
 		{
-			name: "mainnet preset",
+			name:      "mainnet preset",
 			marshaled: `{"preset": "mainnet"}`,
-			preset: &Mainnet,
+			preset:    &Mainnet,
 		},
 		{
-			name: "minimal preset",
+			name:      "minimal preset",
 			marshaled: `{"preset": "minimal"}`,
-			preset: &Minimal,
+			preset:    &Minimal,
 		},
 	}
 	for _, c := range cases {

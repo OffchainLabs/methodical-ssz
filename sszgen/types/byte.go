@@ -1,7 +1,7 @@
 package types
 
 type ValueByte struct {
-	Name string
+	Name    string
 	Package string
 }
 

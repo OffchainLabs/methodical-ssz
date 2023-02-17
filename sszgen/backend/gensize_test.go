@@ -15,7 +15,8 @@ func TestGenerateSizeSSZ(t *testing.T) {
 
 	ty, ok := testFixBeaconState.(*types.ValueContainer)
 	require.Equal(t, true, ok)
-	gc := GenerateSizeSSZ(&generateContainer{ty, ""})
+	gc, err := GenerateSizeSSZ(&generateContainer{ty, ""})
+	require.NoError(t, err)
 	require.Equal(t, 4, len(gc.imports))
 	actual, err := normalizeFixtureString(gc.blocks[0])
 	require.NoError(t, err)

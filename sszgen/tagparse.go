@@ -59,13 +59,13 @@ func (tp TagParser) GetSSZTags() map[string]string {
 			continue
 		default:
 			if state == tsValue {
-				tags[labelStr] = trimQuotes(string(txt))
+				tags[labelStr] = trimQuotes(txt)
 				state = tsLabel
 				labelStr = ""
 				continue
 			}
 			if state == tsLabel {
-				labelStr += string(txt)
+				labelStr += txt
 				continue
 			}
 		}

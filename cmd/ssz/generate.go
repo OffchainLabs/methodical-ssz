@@ -43,6 +43,8 @@ var generate = &cli.Command{
 		if len(typeNames) > 0 {
 			fields = strings.Split(strings.TrimSpace(typeNames), ",")
 		}
+
+		fmt.Printf("Parsing package %v\n", sourcePackage)
 		parser, err := sszgen.NewPackageParser(sourcePackage, fields)
 		if err != nil {
 			return err
@@ -52,10 +54,10 @@ var generate = &cli.Command{
 			output = "methodical.ssz.go"
 		}
 		outFh, err := os.Create(output)
-		defer outFh.Close()
 		if err != nil {
 			return err
 		}
+		defer outFh.Close()
 
 		g := backend.NewGenerator(sourcePackage, sourcePackage)
 		for _, s := range parser.TypeDefs() {
@@ -66,6 +68,7 @@ var generate = &cli.Command{
 			}
 			g.Generate(typeRep)
 		}
+		fmt.Println("Rendering template")
 		rbytes, err := g.Render()
 		if err != nil {
 			return err

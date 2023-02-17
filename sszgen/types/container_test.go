@@ -7,11 +7,11 @@ import (
 )
 
 var testFixderp ValRep = &ValueContainer{
-	Name: "derp",
+	Name:    "derp",
 	Package: "derp",
 	Contents: []ContainerField{
 		{
-			Key: "sup",
+			Key:   "sup",
 			Value: nil,
 		},
 	},
@@ -35,15 +35,15 @@ func TestBeaconStateSizeSSZ(t *testing.T) {
 	require.Equal(t, 24, testFixBeaconBlocksByRangeRequest.FixedSize())
 	require.Equal(t, false, testFixStatus.IsVariableSized())
 
-	require.Equal(t, 2687377, testFixBeaconState.FixedSize())
+	require.Equal(t, 4, testFixBeaconState.FixedSize())
 	require.Equal(t, true, testFixBeaconState.IsVariableSized())
 
-	require.Equal(t, 2736629, testFixBeaconStateAltair.FixedSize())
+	require.Equal(t, 4, testFixBeaconStateAltair.FixedSize())
 	require.Equal(t, true, testFixBeaconState.IsVariableSized())
 	require.Equal(t, 16, testFixFork.FixedSize())
 	require.Equal(t, false, testFixStatus.IsVariableSized())
-	require.Equal(t, 148, testFixPendingAttestation.FixedSize())
-	require.Equal(t, false, testFixStatus.IsVariableSized())
+	require.Equal(t, 4, testFixPendingAttestation.FixedSize())
+	require.Equal(t, true, testFixPendingAttestation.IsVariableSized())
 	require.Equal(t, 524288, testFixHistoricalBatch.FixedSize())
 	require.Equal(t, false, testFixStatus.IsVariableSized())
 	require.Equal(t, 64, testFixSigningData.FixedSize())

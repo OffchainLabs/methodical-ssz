@@ -1,7 +1,7 @@
 package types
 
 type ValueBool struct {
-	Name string
+	Name    string
 	Package string
 }
 

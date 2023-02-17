@@ -86,7 +86,7 @@ func (sr SpecRelationships) RelationsAtFork(f Fork) (map[string]string, error) {
 			// don't replace a newer version of the type with an older version
 			if !ok {
 				rf[t.SpecName] = t.TypeName
-				// a blank Name proprety means the type name is the same as the spec name
+				// a blank Name property means the type name is the same as the spec name
 				if rf[t.SpecName] == "" {
 					rf[t.SpecName] = t.SpecName
 				}

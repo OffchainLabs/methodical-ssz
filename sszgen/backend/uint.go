@@ -19,7 +19,7 @@ func (g *generateUint) coerce() func(string) string {
 }
 
 func (g *generateUint) generateUnmarshalValue(fieldName string, offset string) string {
-	// mispelling of Unmarshall due to misspelling of method exported by fastssz
+	// misspelling of Unmarshall due to misspelling of method exported by fastssz
 	convert := fmt.Sprintf("ssz.UnmarshallUint%d(%s)", g.valRep.Size, offset)
 	return fmt.Sprintf("%s = %s", fieldName, g.casterConfig.toOverlay(convert))
 }

@@ -158,11 +158,10 @@ func TestContainerField(t *testing.T) {
 
 	refFieldValRep, err := container.GetField("ContainerRefField")
 	require.NoError(t, err)
-	require.Equal(t, "AnotherContainerType", refFieldValRep.TypeName())
-	// TODO (MariusVanDerWijden) why is this now a container not a pointer to a container?
-	//refField, ok := refFieldValRep.(*types.ValuePointer)
-	//require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(refFieldValRep))
-	cont, isCont := refFieldValRep.(*types.ValueContainer)
+	require.Equal(t, "*AnotherContainerType", refFieldValRep.TypeName())
+	refField, ok := refFieldValRep.(*types.ValuePointer)
+	require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(refField))
+	cont, isCont := refField.Referent.(*types.ValueContainer)
 	require.Equal(t, true, isCont)
 	require.Equal(t, 1, len(cont.Fields()))
 }

@@ -54,23 +54,21 @@ func newStructDef(fs *token.FileSet, imp types.Importer, typ *types.Named, packa
 			continue
 		}
 
-		var mf *FieldDef
 		switch ftyp := f.Type().(type) {
 		case *types.Pointer:
 			fn, ok := ftyp.Elem().(*types.Named)
 			if ok {
-				obj := fn.Obj()
-				mf = &FieldDef{
+				mf := &FieldDef{
 					name: f.Name(),
-					typ:  obj.Type(),
+					typ:  f.Type(),
 					tag:  styp.Tag(i),
-					pkg:  obj.Pkg(),
+					pkg:  fn.Obj().Pkg(),
 				}
 				mtyp.Fields = append(mtyp.Fields, mf)
 				continue
 			}
 		}
-		mf = &FieldDef{
+		mf := &FieldDef{
 			name: f.Name(),
 			typ:  f.Type(),
 			tag:  styp.Tag(i),

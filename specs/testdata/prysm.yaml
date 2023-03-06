@@ -1,0 +1,75 @@
+package: github.com/prysmaticlabs/prysm/v3/proto/prysm/v1alpha1
+preset: mainnet
+defs:
+  - fork: phase0
+    types:
+      - name: AggregateAndProof
+        type_name: AggregateAttestationAndProof
+      - name: Attestation
+      - name: AttestationData
+      - name: AttesterSlashing
+      - name: BeaconBlock
+      - name: BeaconBlockBody
+      - name: BeaconBlockHeader
+      - name: BeaconState
+      - name: Checkpoint
+      - name: Deposit
+      - name: DepositData
+        type_name: Deposit_Data
+      - name: DepositMessage
+      - name: Eth1Data
+      - name: Fork
+      - name: ForkData
+      - name: HistoricalBatch
+      - name: IndexedAttestation
+      - name: PendingAttestation
+      - name: ProposerSlashing
+      - name: SignedAggregateAndProof
+        type_name: SignedAggregateAttestationAndProof
+      - name: SignedBeaconBlock
+      - name: SignedBeaconBlockHeader
+      - name: SignedVoluntaryExit
+      - name: SigningData
+      - name: Validator
+      - name: VoluntaryExit
+  - fork: altair
+    types:
+      - name: BeaconBlock
+        type_name: BeaconBlockAltair
+      - name: BeaconBlockBody
+        type_name: BeaconBlockBodyAltair
+      - name: BeaconState
+        type_name: BeaconStateAltair
+      - name: ContributionAndProof
+      - name: SignedBeaconBlock
+        type_name: SignedBeaconBlockAltair
+      - name: SignedContributionAndProof
+      - name: SyncAggregate
+      - name: SyncAggregatorSelectionData
+      - name: SyncCommittee
+      - name: SyncCommitteeContribution
+      - name: SyncCommitteeMessage
+  - fork: bellatrix
+    types:
+      - name: BeaconBlock
+        type_name: BeaconBlockBellatrix
+      - name: BeaconBlockBody
+        type_name: BeaconBlockBodyBellatrix
+      - name: BeaconState
+        type_name: BeaconStateBellatrix
+      - name: PowBlock
+      - name: SignedBeaconBlock
+        type_name: SignedBeaconBlockBellatrix
+  - fork: capella
+    types:
+      - name: BeaconBlock
+        type_name: BeaconBlockCapella
+      - name: BeaconBlockBody
+        type_name: BeaconBlockBodyCapella
+      - name: BeaconState
+        type_name: BeaconStateCapella
+      - name: SignedBeaconBlock
+        type_name: SignedBeaconBlockCapella
+      - name: BLSToExecutionChange
+      - name: SignedBLSToExecutionChange
+      - name: HistoricalSummary

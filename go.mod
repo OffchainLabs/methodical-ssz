@@ -9,7 +9,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prysmaticlabs/fastssz v0.0.0-20220628121656-93dfe28febab
 	github.com/prysmaticlabs/go-bitfield v0.0.0-20210809151128-385d8c5e3fb7
-	github.com/prysmaticlabs/prysm/v3 v3.0.0-20230306172125-af0dee34a927
+	github.com/prysmaticlabs/prysm/v3 v3.0.0-20230307162535-0893821e35e7
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/afero v1.2.2
 	github.com/urfave/cli/v2 v2.24.1

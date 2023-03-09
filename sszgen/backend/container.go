@@ -14,10 +14,18 @@ type generateContainer struct {
 }
 
 func (g *generateContainer) generateHTRPutter(fieldName string) string {
-	tmpl := `if err := %s.HashTreeRootWith(hh); err != nil {
+	fullTmpl := `if err := %s.HashTreeRootWith(hh); err != nil {
 		return err
 	}`
-	return fmt.Sprintf(tmpl, fieldName)
+	lightTmpl := `if hash, err := %s.HashTreeRoot(); err != nil {
+		return err
+	} else {
+		hh.AppendBytes32(hash[:])
+	}`
+	if !g.LightHash {
+		return fmt.Sprintf(fullTmpl, fieldName)
+	}
+	return fmt.Sprintf(lightTmpl, fieldName)
 }
 
 func (g *generateContainer) variableSizeSSZ(fieldName string) string {

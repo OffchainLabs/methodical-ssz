@@ -8,10 +8,11 @@ type ContainerField struct {
 }
 
 type ValueContainer struct {
-	Name     string
-	Package  string
-	Contents []ContainerField
-	nameMap  map[string]ValRep
+	Name      string
+	Package   string
+	Contents  []ContainerField
+	LightHash bool
+	nameMap   map[string]ValRep
 }
 
 func (vc *ValueContainer) Fields() []ContainerField {

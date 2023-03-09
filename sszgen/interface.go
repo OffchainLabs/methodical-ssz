@@ -2,6 +2,7 @@ package sszgen
 
 import (
 	"go/types"
+
 	"golang.org/x/tools/go/packages"
 )
 

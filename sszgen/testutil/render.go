@@ -3,8 +3,8 @@ package testutil
 import (
 	"go/format"
 
-	jen "github.com/dave/jennifer/jen"
 	"github.com/OffchainLabs/methodical-ssz/sszgen/types"
+	jen "github.com/dave/jennifer/jen"
 )
 
 func RenderIntermediate(vr types.ValRep) (string, error) {

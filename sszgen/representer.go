@@ -44,6 +44,15 @@ func expand(f *FieldDef) (sszgenTypes.ValRep, error) {
 	case *types.Slice:
 		return expandArrayHead(f)
 	case *types.Pointer:
+		if ty, ok := ty.Elem().(*types.Named); ok {
+			if types.Implements(f.typ, fastsszMarshaler) && types.Implements(f.typ, fastsszUnmarshaler) && types.Implements(f.typ, fastsszLightHasher) {
+				return &sszgenTypes.ValueContainer{
+					Name:      ty.Obj().Name(),
+					Package:   f.pkg.Path(),
+					LightHash: !types.Implements(f.typ, fastsszFullHasher),
+				}, nil
+			}
+		}
 		vr, err := expand(&FieldDef{name: f.name, tag: f.tag, typ: ty.Elem(), pkg: f.pkg})
 		if err != nil {
 			return nil, err

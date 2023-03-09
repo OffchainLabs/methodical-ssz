@@ -8,7 +8,7 @@ require (
 	github.com/golang/snappy v0.0.4
 	github.com/pkg/errors v0.9.1
 	github.com/prysmaticlabs/go-bitfield v0.0.0-20210809151128-385d8c5e3fb7
-	github.com/prysmaticlabs/prysm/v3 v3.2.2-rc.1.0.20230308123646-eb0b5a6146ef
+	github.com/prysmaticlabs/prysm/v3 v3.2.2-rc.1.0.20230309092345-83a294c1a5a4
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/afero v1.2.2
 	github.com/urfave/cli/v2 v2.24.1

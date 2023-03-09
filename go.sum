@@ -1,5 +1,6 @@
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/btcsuite/btcd/btcec/v2 v2.3.2 h1:5n0X6hX0Zk+6omWcihdYvdAlGf2DfasC0GMf7DClJ3U=
+github.com/cespare/xxhash v1.1.0 h1:a6HrQnmkObjyL+Gs60czilIUGqrzKutQD6XZog3p+ko=
 github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=
 github.com/cpuguy83/go-md2man/v2 v2.0.2 h1:p1EgwI/C7NhT0JmVkwCD2ZBK8j4aeHQX2pMHHBfMQ6w=
 github.com/cpuguy83/go-md2man/v2 v2.0.2/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
@@ -48,12 +49,8 @@ github.com/prysmaticlabs/go-bitfield v0.0.0-20210809151128-385d8c5e3fb7/go.mod h
 github.com/prysmaticlabs/gohashtree v0.0.2-alpha h1:hk5ZsDQuSkyUMhTd55qB396P1+dtyIKiSwMmYE/hyEU=
 github.com/prysmaticlabs/gohashtree v0.0.2-alpha/go.mod h1:4pWaT30XoEx1j8KNJf3TV+E3mQkaufn7mf+jRNb/Fuk=
 github.com/prysmaticlabs/protoc-gen-go-cast v0.0.0-20230228205207-28762a7b9294 h1:q9wE0ZZRdTUAAeyFP/w0SwBEnCqlVy2+on6X2/e+eAU=
-github.com/prysmaticlabs/prysm/v3 v3.0.0-20230306172125-af0dee34a927 h1:XZe4WcUF+NOhaOAfhOjlfymzV1HLoF0ukXZX6t1vVlc=
-github.com/prysmaticlabs/prysm/v3 v3.0.0-20230306172125-af0dee34a927/go.mod h1:tk/LvCJpiq/EpMPkSJwE0OYBLnXOiMktEN+Xt1IIKkE=
-github.com/prysmaticlabs/prysm/v3 v3.2.1 h1:K1cuIIh3tK/Z8943Xn1q1RU/4epnHcfwOJpNiue0Qcs=
-github.com/prysmaticlabs/prysm/v3 v3.2.1/go.mod h1:W6h2+OurbfMNqWE2e3r+Uiit4plAW3W7ncDx1LIe8+I=
-github.com/prysmaticlabs/prysm/v3 v3.2.2-rc.1.0.20230308123646-eb0b5a6146ef h1:dVaY3QcfcYJhaU5PqAoJtBXkWRNqqeUkqxl4lq1gg3o=
-github.com/prysmaticlabs/prysm/v3 v3.2.2-rc.1.0.20230308123646-eb0b5a6146ef/go.mod h1:tk/LvCJpiq/EpMPkSJwE0OYBLnXOiMktEN+Xt1IIKkE=
+github.com/prysmaticlabs/prysm/v3 v3.2.2-rc.1.0.20230309092345-83a294c1a5a4 h1:P58mUzwZ4xrbsIiecFLJOaYBeltJTYmQ4bB1iZgArkA=
+github.com/prysmaticlabs/prysm/v3 v3.2.2-rc.1.0.20230309092345-83a294c1a5a4/go.mod h1:QyK7KxYY+0PGQaCuRtb55EpvA3Zh74wCNKl8EW+sYS0=
 github.com/rogpeppe/go-internal v1.9.0 h1:73kH8U+JUqXU8lRuOHeVHaa/SZPifC7BkcraZVejAe8=
 github.com/russross/blackfriday/v2 v2.1.0 h1:JIOH55/0cWyOuilr9/qlrm0BSXldqnqwMsf35Ld67mk=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
@@ -73,7 +70,6 @@ github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673/go.mod h1:N3UwUGtsr
 golang.org/x/crypto v0.5.0 h1:U/0M97KRkSFvyD/3FSmdP5W5swImpNgle/EHFhOsQPE=
 golang.org/x/mod v0.8.0 h1:LUYupSeNrTNCGzR/hVBk2NHZO4hXcVaW1k4Qx7rjPx8=
 golang.org/x/mod v0.8.0/go.mod h1:iBbtSCu2XBx23ZKBPSOrRkjjQPZFPuis4dIYUhu/chs=
-golang.org/x/net v0.6.0 h1:L4ZwwTvKW9gr0ZMS1yrHD9GZhIuVjOBBnaKH+SPQK0Q=
 golang.org/x/net v0.7.0 h1:rJrUqqhjsgNp7KqAIc25s9pZnjU7TUcSY7HcVZjdn1g=
 golang.org/x/sync v0.1.0 h1:wsuoTGHzEhffawBOhz5CYhcrV4IdKZbEyZjBMuTp12o=
 golang.org/x/sys v0.0.0-20220704084225-05e143d24a9e/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=

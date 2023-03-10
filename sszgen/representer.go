@@ -44,11 +44,13 @@ func expand(f *FieldDef) (sszgenTypes.ValRep, error) {
 	case *types.Slice:
 		return expandArrayHead(f)
 	case *types.Pointer:
+		// If the struct pointer implements the fastssz interfaces, use those for
+		// serialization and merkleization instead of generating code.
 		if ty, ok := ty.Elem().(*types.Named); ok {
 			if types.Implements(f.typ, fastsszMarshaler) && types.Implements(f.typ, fastsszUnmarshaler) && types.Implements(f.typ, fastsszLightHasher) {
 				return &sszgenTypes.ValueContainer{
 					Name:      ty.Obj().Name(),
-					Package:   f.pkg.Path(),
+					Package:   ty.Obj().Pkg().Path(),
 					LightHash: !types.Implements(f.typ, fastsszFullHasher),
 				}, nil
 			}
@@ -76,6 +78,23 @@ func expand(f *FieldDef) (sszgenTypes.ValRep, error) {
 		}
 		return &container, nil
 	case *types.Named:
+		// If the struct value implements the fastssz interfaces, use those for
+		// serialization and merkleization instead of generating code. Some of
+		// the methods might be on the value and some on the pointer, find both.
+		var (
+			marshaler   = types.Implements(ty, fastsszMarshaler) || types.Implements(types.NewPointer(ty), fastsszMarshaler)
+			unmarshaler = types.Implements(ty, fastsszUnmarshaler) || types.Implements(types.NewPointer(ty), fastsszUnmarshaler)
+			lightHasher = types.Implements(ty, fastsszLightHasher) || types.Implements(types.NewPointer(ty), fastsszLightHasher)
+			fullHasher  = types.Implements(ty, fastsszFullHasher) || types.Implements(types.NewPointer(ty), fastsszFullHasher)
+		)
+		if marshaler && unmarshaler && lightHasher {
+			return &sszgenTypes.ValueContainer{
+				Name:      ty.Obj().Name(),
+				Package:   ty.Obj().Pkg().Path(),
+				Value:     true,
+				LightHash: !fullHasher,
+			}, nil
+		}
 		exp, err := expand(&FieldDef{name: ty.Obj().Name(), tag: f.tag, typ: ty.Underlying(), pkg: f.pkg})
 		switch ty.Underlying().(type) {
 		case *types.Struct:

@@ -67,6 +67,9 @@ func (g *generateContainer) fixedOffset() int {
 }
 
 func (g *generateContainer) initializeValue(fieldName string) string {
+	if g.Value {
+		return ""
+	}
 	return fmt.Sprintf("new(%s)", fullyQualifiedTypeName(g.ValueContainer, g.targetPackage))
 }
 

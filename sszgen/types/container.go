@@ -11,6 +11,7 @@ type ValueContainer struct {
 	Name      string
 	Package   string
 	Contents  []ContainerField
+	Value     bool
 	LightHash bool
 	nameMap   map[string]ValRep
 }

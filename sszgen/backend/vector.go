@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"text/template"
 
+	"github.com/OffchainLabs/methodical-ssz/sszgen/interfaces"
 	"github.com/OffchainLabs/methodical-ssz/sszgen/types"
 )
 
@@ -15,7 +16,7 @@ type generateVector struct {
 }
 
 func (g *generateVector) generateUnmarshalValue(fieldName string, sliceName string) string {
-	gg := newValueGenerator(g.valRep.ElementValue, g.targetPackage)
+	gg := newValueGenerator(interfaces.SszUnmarshaler, g.valRep.ElementValue, g.targetPackage)
 	switch g.valRep.ElementValue.(type) {
 	case *types.ValueByte:
 		t := `%s = make([]byte, 0, %d)
@@ -87,7 +88,7 @@ func (g *generateVector) generateFixedMarshalValue(fieldName string) string {
 		t := `for _, %s := range %s {
 	%s
 }`
-		gg := newValueGenerator(g.valRep.ElementValue, g.targetPackage)
+		gg := newValueGenerator(interfaces.SszMarshaler, g.valRep.ElementValue, g.targetPackage)
 		internal := gg.generateFixedMarshalValue(nestedFieldName)
 		marshalValue = fmt.Sprintf(t, nestedFieldName, fieldName, internal)
 	}

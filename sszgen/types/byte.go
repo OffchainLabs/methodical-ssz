@@ -1,5 +1,7 @@
 package types
 
+import "go/types"
+
 type ValueByte struct {
 	Name    string
 	Package string
@@ -18,6 +20,10 @@ func (vb *ValueByte) FixedSize() int {
 }
 
 func (vb *ValueByte) IsVariableSized() bool {
+	return false
+}
+
+func (vb *ValueByte) SatisfiesInterface(*types.Interface) bool {
 	return false
 }
 

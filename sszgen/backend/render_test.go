@@ -31,7 +31,7 @@ func TestGenerator_Generate(t *testing.T) {
 			"fmt":                                "",
 		},
 	}
-	g := &Generator{packagePath: "github.com/prysmaticlabs/derp", packageName: "derp"}
+	g := &Generator{packagePath: "github.com/prysmaticlabs/derp"}
 	g.gc = append(g.gc, gc)
 	rendered, err := g.Render()
 	require.NoError(t, err)
@@ -48,7 +48,6 @@ func TestGenerator_GenerateBeaconState(t *testing.T) {
 
 	g := &Generator{
 		packagePath: "github.com/prysmaticlabs/prysm/v3/proto/beacon/p2p/v1",
-		packageName: "ethereum_beacon_p2p_v1",
 	}
 	g.Generate(testFixBeaconState)
 	rendered, err := g.Render()

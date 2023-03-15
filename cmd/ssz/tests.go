@@ -36,6 +36,11 @@ var tests = &cli.Command{
 			Required:    true,
 			Destination: &output,
 		},
+		&cli.BoolFlag{
+			Name:        "disable-delegation",
+			Usage:       "if specified, do not check for existing ssz method sets. helpful when the codegen source has them already",
+			Destination: &disableDelegation,
+		},
 	},
 	Action: func(c *cli.Context) error {
 		return actionSpectests(c)
@@ -52,7 +57,7 @@ func actionSpectests(cl *cli.Context) error {
 		return err
 	}
 	types := cfg.GoTypes()
-	parser, err := sszgen.NewPackageParser(cfg.Package, types)
+	ps, err := sszgen.NewGoPathScoper(cfg.Package)
 	if err != nil {
 		return err
 	}
@@ -69,14 +74,24 @@ func actionSpectests(cl *cli.Context) error {
 		fmt.Printf("%s\n", ident)
 	}
 
-	g := backend.NewGenerator(cfg.Package, cfg.Package)
-	for _, s := range parser.TypeDefs() {
+	g := backend.NewGenerator(cfg.Package)
+	defs, err := sszgen.TypeDefs(ps, types...)
+	if err != nil {
+		return err
+	}
+	opts := make([]sszgen.FieldParserOpt, 0)
+	if disableDelegation {
+		opts = append(opts, sszgen.WithDisableDelegation())
+	}
+	for _, s := range defs {
 		fmt.Printf("Generating methods for %s/%s\n", s.PackageName, s.Name)
-		typeRep, err := sszgen.ParseTypeDef(s)
+		typeRep, err := sszgen.ParseTypeDef(s, opts...)
 		if err != nil {
 			return err
 		}
-		g.Generate(typeRep)
+		if err := g.Generate(typeRep); err != nil {
+			return err
+		}
 	}
 	rbytes, err := g.Render()
 	if err != nil {
@@ -85,7 +100,7 @@ func actionSpectests(cl *cli.Context) error {
 	if err := afero.WriteFile(fs, "methodical.ssz.go", rbytes, 0666); err != nil {
 		return err
 	}
-	source, err := parser.TypeDefSourceCode()
+	source, err := ps.TypeDefSourceCode(defs)
 	if err != nil {
 		return err
 	}

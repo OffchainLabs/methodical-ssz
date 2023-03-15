@@ -3,6 +3,7 @@ package backend
 import (
 	"fmt"
 
+	"github.com/OffchainLabs/methodical-ssz/sszgen/interfaces"
 	"github.com/OffchainLabs/methodical-ssz/sszgen/types"
 )
 
@@ -22,7 +23,7 @@ func (g *generateOverlay) toOverlay() func(string) string {
 }
 
 func (g *generateOverlay) generateVariableMarshalValue(fieldName string) string {
-	gg := newValueGenerator(g.Underlying, g.targetPackage)
+	gg := newValueGenerator(interfaces.SszMarshaler, g.Underlying, g.targetPackage)
 	vm, ok := gg.(variableMarshaller)
 	if !ok {
 		return ""
@@ -31,7 +32,7 @@ func (g *generateOverlay) generateVariableMarshalValue(fieldName string) string 
 }
 
 func (g *generateOverlay) generateUnmarshalValue(fieldName string, sliceName string) string {
-	gg := newValueGenerator(g.Underlying, g.targetPackage)
+	gg := newValueGenerator(interfaces.SszUnmarshaler, g.Underlying, g.targetPackage)
 	c, ok := gg.(caster)
 	if ok {
 		c.setToOverlay(g.toOverlay())
@@ -50,7 +51,7 @@ return err
 }
 
 func (g *generateOverlay) generateFixedMarshalValue(fieldName string) string {
-	gg := newValueGenerator(g.Underlying, g.targetPackage)
+	gg := newValueGenerator(interfaces.SszMarshaler, g.Underlying, g.targetPackage)
 	uc, ok := gg.(coercer)
 	if ok {
 		return gg.generateFixedMarshalValue(uc.coerce()(fieldName))
@@ -74,7 +75,7 @@ func (g *generateOverlay) generateHTRPutter(fieldName string) string {
 hh.PutBitlist(%s, %d)`
 		return fmt.Sprintf(t, fieldName, fieldName, ul.MaxSize)
 	}
-	gg := newValueGenerator(g.Underlying, g.targetPackage)
+	gg := newValueGenerator(interfaces.SszLightHasher, g.Underlying, g.targetPackage)
 	htrp, ok := gg.(htrPutter)
 	if !ok {
 		return ""

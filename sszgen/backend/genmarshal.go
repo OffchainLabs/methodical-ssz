@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"text/template"
+
+	"github.com/OffchainLabs/methodical-ssz/sszgen/interfaces"
 )
 
 var marshalBodyTmpl = `func ({{.Receiver}} {{.Type}}) MarshalSSZ() ([]byte, error) {
@@ -32,16 +34,17 @@ func GenerateMarshalSSZ(g *generateContainer) (*generatedCode, error) {
 	offset := 0
 	for i, c := range g.Contents {
 		// only lists need the offset variable
-		mg := newValueGenerator(c.Value, g.targetPackage)
+		mg := newValueGenerator(interfaces.SszMarshaler, c.Value, g.targetPackage)
 		fieldName := fmt.Sprintf("%s.%s", receiverName, c.Key)
 		marshalValueBlocks = append(marshalValueBlocks, fmt.Sprintf("\n\t// Field %d: %s", i, c.Key))
 		vi, ok := mg.(valueInitializer)
 		if ok {
-			ini := vi.initializeValue(fieldName)
+			ini := vi.initializeValue()
 			if ini != "" {
 				marshalValueBlocks = append(marshalValueBlocks, fmt.Sprintf("if %s == nil {\n\t%s = %s\n}", fieldName, fieldName, ini))
 			}
 		}
+
 		mv := mg.generateFixedMarshalValue(fieldName)
 		marshalValueBlocks = append(marshalValueBlocks, "\t"+mv)
 		offset += c.Value.FixedSize()

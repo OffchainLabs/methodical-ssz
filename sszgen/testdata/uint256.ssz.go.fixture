@@ -1,0 +1,68 @@
+package faketypes
+
+import (
+	"fmt"
+	ssz "github.com/prysmaticlabs/fastssz"
+)
+
+func (c *TestStruct) SizeSSZ() int {
+	size := 32
+
+	return size
+}
+func (c *TestStruct) MarshalSSZ() ([]byte, error) {
+	buf := make([]byte, c.SizeSSZ())
+	return c.MarshalSSZTo(buf[:0])
+}
+
+func (c *TestStruct) MarshalSSZTo(dst []byte) ([]byte, error) {
+	var err error
+
+	// Field 0: TwoFixSix
+	if c.TwoFixSix == nil {
+		c.TwoFixSix = new(Int)
+	}
+	if dst, err = c.TwoFixSix.MarshalSSZTo(dst); err != nil {
+		return nil, err
+	}
+
+	return dst, err
+}
+func (c *TestStruct) UnmarshalSSZ(buf []byte) error {
+	var err error
+	size := uint64(len(buf))
+	if size != 32 {
+		return ssz.ErrSize
+	}
+
+	s0 := buf[0:32] // c.TwoFixSix
+
+	// Field 0: TwoFixSix
+	c.TwoFixSix = new(Int)
+	if err = c.TwoFixSix.UnmarshalSSZ(s0); err != nil {
+		return err
+	}
+	return err
+}
+func (c *TestStruct) HashTreeRoot() ([32]byte, error) {
+	hh := ssz.DefaultHasherPool.Get()
+	if err := c.HashTreeRootWith(hh); err != nil {
+		ssz.DefaultHasherPool.Put(hh)
+		return [32]byte{}, err
+	}
+	root, err := hh.HashRoot()
+	ssz.DefaultHasherPool.Put(hh)
+	return root, err
+}
+
+func (c *TestStruct) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+	indx := hh.Index()
+	// Field 0: TwoFixSix
+	if hash, err := c.TwoFixSix.HashTreeRoot(); err != nil {
+		return err
+	} else {
+		hh.AppendBytes32(hash[:])
+	}
+	hh.Merkleize(indx)
+	return nil
+}

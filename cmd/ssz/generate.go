@@ -13,6 +13,7 @@ import (
 )
 
 var sourcePackage, output, typeNames string
+var disableDelegation bool
 var generate = &cli.Command{
 	Name:      "generate",
 	ArgsUsage: "<input package, eg github.com/prysmaticlabs/prysm/v3/proto/beacon/p2p/v1>",
@@ -31,6 +32,11 @@ var generate = &cli.Command{
 			Usage:       "if specified, only generate methods for types specified in this comma-separated list",
 			Destination: &typeNames,
 		},
+		&cli.BoolFlag{
+			Name:        "disable-delegation",
+			Usage:       "if specified, do not check for existing ssz method sets. helpful when the codegen source has them already",
+			Destination: &disableDelegation,
+		},
 	},
 	Action: func(c *cli.Context) error {
 		sourcePackage = c.Args().Get(0)
@@ -45,7 +51,7 @@ var generate = &cli.Command{
 		}
 
 		fmt.Printf("Parsing package %v\n", sourcePackage)
-		parser, err := sszgen.NewPackageParser(sourcePackage, fields)
+		ps, err := sszgen.NewGoPathScoper(sourcePackage)
 		if err != nil {
 			return err
 		}
@@ -59,14 +65,24 @@ var generate = &cli.Command{
 		}
 		defer outFh.Close()
 
-		g := backend.NewGenerator(sourcePackage, sourcePackage)
-		for _, s := range parser.TypeDefs() {
+		g := backend.NewGenerator(sourcePackage)
+		defs, err := sszgen.TypeDefs(ps, fields...)
+		if err != nil {
+			return err
+		}
+		opts := make([]sszgen.FieldParserOpt, 0)
+		if disableDelegation {
+			opts = append(opts, sszgen.WithDisableDelegation())
+		}
+		for _, s := range defs {
 			fmt.Printf("Generating methods for %s/%s\n", s.PackageName, s.Name)
-			typeRep, err := sszgen.ParseTypeDef(s)
+			typeRep, err := sszgen.ParseTypeDef(s, opts...)
 			if err != nil {
 				return err
 			}
-			g.Generate(typeRep)
+			if err := g.Generate(typeRep); err != nil {
+				return err
+			}
 		}
 		fmt.Println("Rendering template")
 		rbytes, err := g.Render()

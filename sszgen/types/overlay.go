@@ -1,11 +1,15 @@
 package types
 
-import "fmt"
+import (
+	"fmt"
+	"go/types"
+)
 
 type ValueOverlay struct {
 	Name       string
 	Package    string
 	Underlying ValRep
+	Interfaces map[*types.Interface]bool
 }
 
 func (vo *ValueOverlay) TypeName() string {
@@ -25,6 +29,10 @@ func (vo *ValueOverlay) FixedSize() int {
 
 func (vo *ValueOverlay) IsVariableSized() bool {
 	return vo.Underlying.IsVariableSized()
+}
+
+func (vo *ValueOverlay) SatisfiesInterface(ti *types.Interface) bool {
+	return vo.Interfaces != nil && vo.Interfaces[ti]
 }
 
 func (vo *ValueOverlay) IsBitfield() bool {

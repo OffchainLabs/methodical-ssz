@@ -40,7 +40,7 @@ var ir = &cli.Command{
 		if len(typeNames) > 0 {
 			fields = strings.Split(strings.TrimSpace(typeNames), ",")
 		}
-		parser, err := sszgen.NewPackageParser(sourcePackage, fields)
+		ps, err := sszgen.NewGoPathScoper(sourcePackage)
 		if err != nil {
 			return err
 		}
@@ -52,7 +52,11 @@ var ir = &cli.Command{
 		defer outFh.Close()
 
 		renderedTypes := make([]string, 0)
-		for _, s := range parser.TypeDefs() {
+		defs, err := sszgen.TypeDefs(ps, fields...)
+		if err != nil {
+			return err
+		}
+		for _, s := range defs {
 			typeRep, err := sszgen.ParseTypeDef(s)
 			if err != nil {
 				return err

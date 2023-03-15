@@ -1,5 +1,7 @@
 package types
 
+import "go/types"
+
 type ValueBool struct {
 	Name    string
 	Package string
@@ -18,6 +20,10 @@ func (vb *ValueBool) FixedSize() int {
 }
 
 func (vb *ValueBool) IsVariableSized() bool {
+	return false
+}
+
+func (vb *ValueBool) SatisfiesInterface(*types.Interface) bool {
 	return false
 }
 

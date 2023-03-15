@@ -1,5 +1,7 @@
 package types
 
+import "go/types"
+
 type ValueVector struct {
 	ElementValue ValRep
 	Size         int
@@ -19,6 +21,10 @@ func (vv *ValueVector) PackagePath() string {
 
 func (vv *ValueVector) IsVariableSized() bool {
 	return vv.ElementValue.IsVariableSized()
+}
+
+func (vv *ValueVector) SatisfiesInterface(*types.Interface) bool {
+	return false
 }
 
 var _ ValRep = &ValueVector{}

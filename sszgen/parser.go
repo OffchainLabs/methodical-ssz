@@ -13,18 +13,13 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-type packageParser struct {
-	// configuration
+type GoPathScoper struct {
 	packagePath string
 	fieldNames  []string
-	// parsed values
-	pkg     *types.Package
-	results []*TypeDef
-	// keeping the object form allows the source code for type definitions to be regenerated for spectests
-	objects map[string]types.Object
+	pkg         *types.Package
 }
 
-func NewPackageParser(packageName string, fieldNames []string) (*packageParser, error) {
+func NewGoPathScoper(packageName string) (*GoPathScoper, error) {
 	cfg := &packages.Config{
 		Mode: packages.NeedTypes | packages.NeedDeps | packages.NeedImports,
 	}
@@ -37,40 +32,50 @@ func NewPackageParser(packageName string, fieldNames []string) (*packageParser, 
 			continue
 		}
 
-		pp := &packageParser{packagePath: pkg.ID, fieldNames: fieldNames, pkg: pkg.Types, objects: make(map[string]types.Object)}
-		return pp, pp.parse()
+		pp := &GoPathScoper{packagePath: pkg.ID, pkg: pkg.Types}
+		return pp, nil
 	}
 	return nil, fmt.Errorf("package named '%s' could not be loaded from the go build system. Please make sure the current folder contains the go.mod for the target package, or that its go.mod is in a parent directory", packageName)
 }
 
-func (pp *packageParser) parse() error {
+type PathScoper interface {
+	Path() string
+	Scope() *types.Scope
+}
+
+func (pp *GoPathScoper) Path() string {
+	return pp.packagePath
+}
+
+func (pp *GoPathScoper) Scope() *types.Scope {
+	return pp.pkg.Scope()
+}
+
+func TypeDefs(ps PathScoper, fieldNames ...string) ([]*TypeDef, error) {
 	fileSet := token.NewFileSet()
-	importer := importer.Default()
+	imp := importer.Default()
 
 	// If no field names are requested, use all
-	if pp.fieldNames == nil {
-		pp.fieldNames = pp.pkg.Scope().Names()
+	if fieldNames == nil {
+		fieldNames = ps.Scope().Names()
 	}
 
-	for _, typeName := range pp.fieldNames {
-		typ, obj, err := lookupType(pp.pkg.Scope(), typeName)
+	results := make([]*TypeDef, len(fieldNames))
+	for i, typeName := range fieldNames {
+		typ, obj, err := lookupType(ps.Scope(), typeName)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		var mtyp *TypeDef
 		if _, ok := typ.Underlying().(*types.Struct); ok {
-			mtyp = newStructDef(fileSet, importer, typ, pp.packagePath)
+			mtyp = newStructDef(fileSet, imp, typ, ps.Path())
 		} else {
-			mtyp = newPrimitiveDef(fileSet, importer, typ, pp.packagePath)
+			mtyp = newPrimitiveDef(fileSet, imp, typ, ps.Path())
 		}
-		pp.results = append(pp.results, mtyp)
-		pp.objects[typeName] = obj
+		mtyp.object = obj
+		results[i] = mtyp
 	}
-	return nil
-}
-
-func (pp *packageParser) TypeDefs() []*TypeDef {
-	return pp.results
+	return results, nil
 }
 
 type ImportNamer struct {
@@ -135,11 +140,12 @@ func reformatStructTag(line string) string {
 	return strings.ReplaceAll(line, `\"`, `"`)
 }
 
-func (pp *packageParser) TypeDefSourceCode() ([]byte, error) {
+func (pp *GoPathScoper) TypeDefSourceCode(defs []*TypeDef) ([]byte, error) {
 	in := NewImportNamer(pp.pkg)
 	structs := make([]string, 0)
-	for _, def := range pp.objects {
-		defstring := types.ObjectString(def, in.Name)
+	for _, def := range defs {
+		obj := def.object
+		defstring := types.ObjectString(obj, in.Name)
 		// add a little whitespace for nicer formatting
 		defstring = strings.ReplaceAll(defstring, ";", "\n")
 		defstring = strings.ReplaceAll(defstring, "{", "{\n")

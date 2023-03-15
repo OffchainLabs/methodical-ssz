@@ -1,5 +1,7 @@
 package types
 
+import "go/types"
+
 type UintSize int
 
 const (
@@ -30,6 +32,10 @@ func (vu *ValueUint) FixedSize() int {
 }
 
 func (vu *ValueUint) IsVariableSized() bool {
+	return false
+}
+
+func (vu *ValueUint) SatisfiesInterface(*types.Interface) bool {
 	return false
 }
 

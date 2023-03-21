@@ -140,8 +140,9 @@ func (p *FieldParser) expandArray(dims []*SSZDimension, f *FieldDef) (gentypes.V
 		return nil, fmt.Errorf("invalid typ in expand array: %v with name: %v ", f.typ, f.name)
 	}
 
-	if len(dims) > 1 {
-		elv, err = p.expandArray(dims[1:], &FieldDef{typ: elem.Underlying(), pkg: f.pkg})
+	// Only expand the inner array if it is not a named type
+	if _, ok := elem.(*types.Named); !ok && len(dims) > 1 {
+		elv, err = p.expandArray(dims[1:], &FieldDef{name: f.name, typ: elem.Underlying(), pkg: f.pkg})
 		if err != nil {
 			return nil, err
 		}

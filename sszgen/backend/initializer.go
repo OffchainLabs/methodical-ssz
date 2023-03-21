@@ -11,6 +11,6 @@ func initializeValue(rep types.ValRep, pkgName string) string {
 	case *types.ValuePointer:
 		return fmt.Sprintf("new(%s)", fullyQualifiedTypeName(vt.Referent, pkgName))
 	default:
-		return fmt.Sprintf("new(%s)", fullyQualifiedTypeName(rep, pkgName))
+		return ""
 	}
 }

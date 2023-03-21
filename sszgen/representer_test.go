@@ -134,7 +134,7 @@ func TestVectorInListInStruct(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "[][]byte", listValRep.TypeName())
 	list, ok := listValRep.(*types.ValueList)
-	require.Equal(t, true, ok, "Expected the result to be a ValueOverlay type, got %v", typename(listValRep))
+	require.Equal(t, true, ok, "Expected the result to be a ValueList type, got %v", typename(listValRep))
 	require.Equal(t, 16777216, list.MaxSize, "Unexpected value for list max size based on parsed ssz tags")
 
 	require.Equal(t, "[]byte", list.ElementValue.TypeName())

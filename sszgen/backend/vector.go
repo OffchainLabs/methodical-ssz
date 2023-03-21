@@ -79,7 +79,11 @@ func (g *generateVector) generateFixedMarshalValue(fieldName string) string {
 	var marshalValue string
 	switch g.valRep.ElementValue.(type) {
 	case *types.ValueByte:
-		marshalValue = fmt.Sprintf("dst = append(dst, %s...)", fieldName)
+		if g.valRep.IsVariableSized() {
+			marshalValue = fmt.Sprintf("dst = append(dst, %s...)", fieldName)
+		} else {
+			marshalValue = fmt.Sprintf("dst = append(dst, %s[:]...)", fieldName)
+		}
 	default:
 		nestedFieldName := "o"
 		if fieldName[0:1] == "o" && monoCharacter(fieldName) {
@@ -149,7 +153,11 @@ const ByteChunkSize = 32
 
 func (g *generateVector) renderByteSliceAppend(fieldName string) string {
 	if g.valRep.Size%ByteChunkSize == 0 {
-		return fmt.Sprintf(byteSliceAppendTpl, fieldName, g.valRep.Size, fieldName)
+		if g.valRep.IsVariableSized() {
+			return fmt.Sprintf(byteSliceAppendTpl, fieldName, g.valRep.Size, fieldName)
+		} else {
+			return fmt.Sprintf(byteSliceAppendTplFixedSize, fieldName, g.valRep.Size, fieldName)
+		}
 	} else {
 		return fmt.Sprintf(byteSlicePutBytesTpl, fieldName, g.valRep.Size, fieldName)
 	}
@@ -159,6 +167,11 @@ var byteSliceAppendTpl = `if len(%s) != %d {
 	return ssz.ErrBytesLength
 }
 hh.Append(%s)`
+
+var byteSliceAppendTplFixedSize = `if len(%s) != %d {
+	return ssz.ErrBytesLength
+}
+hh.Append(%s[:])`
 
 var byteSlicePutBytesTpl = `if len(%s) != %d {
 			return ssz.ErrBytesLength

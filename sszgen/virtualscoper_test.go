@@ -29,6 +29,7 @@ func TestNewVirtualPathScoper(t *testing.T) {
 	g := backend.NewGenerator(pkgName)
 	require.NoError(t, g.Generate(typeRep))
 	rb, err := g.Render()
+	require.NoError(t, err)
 	// compare string representations so test failures will be legible
 	require.Equal(t, string(expected), string(rb))
 }

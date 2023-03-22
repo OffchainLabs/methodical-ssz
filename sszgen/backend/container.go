@@ -11,6 +11,7 @@ const receiverName = "c"
 type generateContainer struct {
 	*types.ValueContainer
 	targetPackage string
+	importNamer   *ImportNamer
 }
 
 func (g *generateContainer) generateHTRPutter(fieldName string) string {
@@ -59,7 +60,7 @@ func (g *generateContainer) fixedOffset() int {
 }
 
 func (g *generateContainer) initializeValue() string {
-	return fmt.Sprintf("new(%s)", fullyQualifiedTypeName(g.ValueContainer, g.targetPackage))
+	return fmt.Sprintf("new(%s)", fullyQualifiedTypeName(g.ValueContainer, g.targetPackage, g.importNamer))
 }
 
 var _ valueGenerator = &generateContainer{}

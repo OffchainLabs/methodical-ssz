@@ -11,6 +11,7 @@ import (
 type generateDelegate struct {
 	types.ValRep
 	targetPackage string
+	importNamer   *ImportNamer
 }
 
 func (g *generateDelegate) generateHTRPutter(fieldName string) string {
@@ -59,7 +60,12 @@ func (g *generateDelegate) generateVariableMarshalValue(fieldName string) string
 }
 
 func (g *generateDelegate) initializeValue() string {
-	return initializeValue(g.ValRep, g.targetPackage)
+	switch vt := g.ValRep.(type) {
+	case *types.ValuePointer:
+		return fmt.Sprintf("new(%s)", fullyQualifiedTypeName(vt.Referent, g.targetPackage, g.importNamer))
+	default:
+		return ""
+	}
 }
 
 var _ valueGenerator = &generateDelegate{}

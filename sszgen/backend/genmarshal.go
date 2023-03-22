@@ -34,7 +34,7 @@ func GenerateMarshalSSZ(g *generateContainer) (*generatedCode, error) {
 	offset := 0
 	for i, c := range g.Contents {
 		// only lists need the offset variable
-		mg := newValueGenerator(interfaces.SszMarshaler, c.Value, g.targetPackage)
+		mg := newValueGenerator(interfaces.SszMarshaler, c.Value, g.targetPackage, g.importNamer)
 		fieldName := fmt.Sprintf("%s.%s", receiverName, c.Key)
 		marshalValueBlocks = append(marshalValueBlocks, fmt.Sprintf("\n\t// Field %d: %s", i, c.Key))
 		vi, ok := mg.(valueInitializer)
@@ -87,7 +87,6 @@ func GenerateMarshalSSZ(g *generateContainer) (*generatedCode, error) {
 		return nil, err
 	}
 	return &generatedCode{
-		blocks:  []string{buf.String()},
-		imports: extractImportsFromContainerFields(g.Contents, g.targetPackage),
+		blocks: []string{buf.String()},
 	}, nil
 }

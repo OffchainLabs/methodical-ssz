@@ -24,7 +24,7 @@ func (vc *ValueContainer) Fields() []ContainerField {
 }
 
 func (vc *ValueContainer) Append(name string, value ValRep) {
-	vc.Contents = append(vc.Contents, ContainerField{name, value})
+	vc.Contents = append(vc.Contents, ContainerField{Key: name, Value: value})
 	if vc.nameMap == nil {
 		vc.nameMap = make(map[string]ValRep)
 	}

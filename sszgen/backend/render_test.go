@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/OffchainLabs/methodical-ssz/sszgen/types"
 	"github.com/prysmaticlabs/prysm/v3/testing/require"
 )
 
@@ -77,17 +76,6 @@ func TestImportAlias(t *testing.T) {
 	for _, c := range cases {
 		require.Equal(t, importAlias(c.packageName), c.alias)
 	}
-}
-
-func TestExtractImportsFromContainerFields(t *testing.T) {
-	vc, ok := testFixBeaconState.(*types.ValueContainer)
-	require.Equal(t, true, ok)
-	targetPackage := "github.com/prysmaticlabs/prysm/v3/proto/beacon/p2p/v1"
-	imports := extractImportsFromContainerFields(vc.Contents, targetPackage)
-	require.Equal(t, 3, len(imports))
-	require.Equal(t, "prysmaticlabs_eth2_types", imports["github.com/prysmaticlabs/eth2-types"])
-	require.Equal(t, "prysmaticlabs_prysm_v3_proto_eth_v1alpha1", imports["github.com/prysmaticlabs/prysm/v3/proto/eth/v1alpha1"])
-	require.Equal(t, "prysmaticlabs_go_bitfield", imports["github.com/prysmaticlabs/go-bitfield"])
 }
 
 func TestRenderedPackageName(t *testing.T) {

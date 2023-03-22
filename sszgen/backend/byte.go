@@ -9,6 +9,7 @@ import (
 type generateByte struct {
 	*types.ValueByte
 	targetPackage string
+	importNamer   *ImportNamer
 }
 
 func (g *generateByte) generateHTRPutter(fieldName string) string {

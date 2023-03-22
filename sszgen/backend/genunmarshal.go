@@ -31,7 +31,7 @@ func GenerateUnmarshalSSZ(g *generateContainer) (*generatedCode, error) {
 	unmarshalBlocks := make([]string, 0)
 	for i, c := range g.Contents {
 		unmarshalBlocks = append(unmarshalBlocks, fmt.Sprintf("\n\t// Field %d: %s", i, c.Key))
-		mg := newValueGenerator(interfaces.SszUnmarshaler, c.Value, g.targetPackage)
+		mg := newValueGenerator(interfaces.SszUnmarshaler, c.Value, g.targetPackage, g.importNamer)
 		fieldName := fmt.Sprintf("%s.%s", receiverName, c.Key)
 
 		vi, ok := mg.(valueInitializer)
@@ -91,8 +91,7 @@ func GenerateUnmarshalSSZ(g *generateContainer) (*generatedCode, error) {
 		return nil, err
 	}
 	return &generatedCode{
-		blocks:  []string{buf.String()},
-		imports: extractImportsFromContainerFields(g.Contents, g.targetPackage),
+		blocks: []string{buf.String()},
 	}, nil
 }
 

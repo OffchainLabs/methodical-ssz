@@ -13,10 +13,11 @@ type generateVector struct {
 	valRep        *types.ValueVector
 	targetPackage string
 	casterConfig
+	importNamer *ImportNamer
 }
 
 func (g *generateVector) generateUnmarshalValue(fieldName string, sliceName string) string {
-	gg := newValueGenerator(interfaces.SszUnmarshaler, g.valRep.ElementValue, g.targetPackage)
+	gg := newValueGenerator(interfaces.SszUnmarshaler, g.valRep.ElementValue, g.targetPackage, g.importNamer)
 	switch g.valRep.ElementValue.(type) {
 	case *types.ValueByte:
 		t := `%s = make([]byte, 0, %d)
@@ -51,7 +52,7 @@ func (g *generateVector) generateUnmarshalValue(fieldName string, sliceName stri
 			NestedUnmarshal string
 			FieldName       string
 		}{
-			TypeName:        fullyQualifiedTypeName(nvr, g.targetPackage),
+			TypeName:        fullyQualifiedTypeName(nvr, g.targetPackage, g.importNamer),
 			SliceName:       sliceName,
 			NumElements:     g.valRep.FixedSize() / g.valRep.ElementValue.FixedSize(),
 			NestedFixedSize: g.valRep.ElementValue.FixedSize(),
@@ -92,7 +93,7 @@ func (g *generateVector) generateFixedMarshalValue(fieldName string) string {
 		t := `for _, %s := range %s {
 	%s
 }`
-		gg := newValueGenerator(interfaces.SszMarshaler, g.valRep.ElementValue, g.targetPackage)
+		gg := newValueGenerator(interfaces.SszMarshaler, g.valRep.ElementValue, g.targetPackage, g.importNamer)
 		internal := gg.generateFixedMarshalValue(nestedFieldName)
 		marshalValue = fmt.Sprintf(t, nestedFieldName, fieldName, internal)
 	}

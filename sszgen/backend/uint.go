@@ -10,6 +10,7 @@ type generateUint struct {
 	valRep        *types.ValueUint
 	targetPackage string
 	casterConfig
+	importNamer *ImportNamer
 }
 
 func (g *generateUint) coerce() func(string) string {

@@ -5,6 +5,7 @@ import "go/types"
 type ValueVector struct {
 	ElementValue ValRep
 	Size         int
+	IsArray      bool
 }
 
 func (vv *ValueVector) TypeName() string {

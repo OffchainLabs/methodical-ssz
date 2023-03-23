@@ -80,10 +80,10 @@ func (g *generateVector) generateFixedMarshalValue(fieldName string) string {
 	var marshalValue string
 	switch g.valRep.ElementValue.(type) {
 	case *types.ValueByte:
-		if g.valRep.IsVariableSized() {
-			marshalValue = fmt.Sprintf("dst = append(dst, %s...)", fieldName)
-		} else {
+		if g.valRep.IsArray {
 			marshalValue = fmt.Sprintf("dst = append(dst, %s[:]...)", fieldName)
+		} else {
+			marshalValue = fmt.Sprintf("dst = append(dst, %s...)", fieldName)
 		}
 	default:
 		nestedFieldName := "o"

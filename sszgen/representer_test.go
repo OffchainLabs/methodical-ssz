@@ -387,6 +387,7 @@ func TestFixedSizeArray(t *testing.T) {
 	underlying := container.Underlying
 	c2, ok := underlying.(*types.ValueVector)
 	require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(c2))
+	require.Equal(t, true, c2.IsArray)
 }
 
 func typename(v interface{}) string {

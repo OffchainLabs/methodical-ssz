@@ -131,8 +131,10 @@ func (p *FieldParser) expandArray(dims []*SSZDimension, f *FieldDef) (gentypes.V
 		err  error
 		elem types.Type
 	)
+	isArray := false
 	// at this point f.typ is either and array or a slice
 	if arr, ok := f.typ.(*types.Array); ok {
+		isArray = true
 		elem = arr.Elem()
 	} else if arr, ok := f.typ.(*types.Slice); ok {
 		elem = arr.Elem()
@@ -155,6 +157,7 @@ func (p *FieldParser) expandArray(dims []*SSZDimension, f *FieldDef) (gentypes.V
 
 	if d.IsVector() {
 		return &gentypes.ValueVector{
+			IsArray:      isArray,
 			ElementValue: elv,
 			Size:         d.VectorLen(),
 		}, nil

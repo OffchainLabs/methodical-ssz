@@ -24,13 +24,14 @@ func main() {
 func TestGenerator_Generate(t *testing.T) {
 	gc := &generatedCode{
 		blocks: []string{"func main() {\n\tfmt.printf(\"hello world\")\n}"},
-		imports: map[string]string{
-			"github.com/prysmaticlabs/derp/derp": "derp",
-			"github.com/prysmaticlabs/fastssz":   "ssz",
-			"fmt":                                "",
-		},
 	}
-	g := &Generator{packagePath: "github.com/prysmaticlabs/derp"}
+	defaultImports := map[string]string{
+		"github.com/prysmaticlabs/derp/derp": "derp",
+		"github.com/prysmaticlabs/fastssz":   "ssz",
+		"fmt":                                "",
+	}
+	inm := NewImportNamer("github.com/prysmaticlabs/derp", defaultImports)
+	g := &Generator{packagePath: "github.com/prysmaticlabs/derp", importNamer: inm}
 	g.gc = append(g.gc, gc)
 	rendered, err := g.Render()
 	require.NoError(t, err)

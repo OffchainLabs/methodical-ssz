@@ -1,5 +1,7 @@
 package types
 
+import "go/types"
+
 type ValueUnion struct {
 	Name string
 }
@@ -18,6 +20,10 @@ func (vu *ValueUnion) FixedSize() int {
 
 func (vu *ValueUnion) IsVariableSized() bool {
 	panic("not implemented")
+}
+
+func (vu *ValueUnion) SatisfiesInterface(*types.Interface) bool {
+	return false
 }
 
 var _ ValRep = &ValueUnion{}

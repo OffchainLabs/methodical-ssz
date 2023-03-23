@@ -7,6 +7,7 @@ import (
 type generateUnion struct {
 	*types.ValueUnion
 	targetPackage string
+	importNamer   *ImportNamer
 }
 
 func (g *generateUnion) generateHTRPutter(fieldName string) string {

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/OffchainLabs/methodical-ssz/sszgen/interfaces"
 	"github.com/OffchainLabs/methodical-ssz/sszgen/types"
 )
 
@@ -30,12 +31,12 @@ func GenerateUnmarshalSSZ(g *generateContainer) (*generatedCode, error) {
 	unmarshalBlocks := make([]string, 0)
 	for i, c := range g.Contents {
 		unmarshalBlocks = append(unmarshalBlocks, fmt.Sprintf("\n\t// Field %d: %s", i, c.Key))
-		mg := newValueGenerator(c.Value, g.targetPackage)
+		mg := newValueGenerator(interfaces.SszUnmarshaler, c.Value, g.targetPackage, g.importNamer)
 		fieldName := fmt.Sprintf("%s.%s", receiverName, c.Key)
 
 		vi, ok := mg.(valueInitializer)
 		if ok {
-			ini := vi.initializeValue(fieldName)
+			ini := vi.initializeValue()
 			if ini != "" {
 				unmarshalBlocks = append(unmarshalBlocks, fmt.Sprintf("%s = %s", fieldName, ini))
 			}
@@ -90,8 +91,7 @@ func GenerateUnmarshalSSZ(g *generateContainer) (*generatedCode, error) {
 		return nil, err
 	}
 	return &generatedCode{
-		blocks:  []string{buf.String()},
-		imports: extractImportsFromContainerFields(g.Contents, g.targetPackage),
+		blocks: []string{buf.String()},
 	}, nil
 }
 

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"text/template"
+
+	"github.com/OffchainLabs/methodical-ssz/sszgen/interfaces"
 )
 
 // ChunkSize is used to check if packed bytes align to the chunk sized used by the
@@ -40,7 +42,7 @@ func GenerateHashTreeRoot(g *generateContainer) (*generatedCode, error) {
 	for i, c := range g.Contents {
 		fieldName := fmt.Sprintf("%s.%s", receiverName, c.Key)
 		htrSteps = append(htrSteps, fmt.Sprintf("\t// Field %d: %s", i, c.Key))
-		vg := newValueGenerator(c.Value, g.targetPackage)
+		vg := newValueGenerator(interfaces.SszLightHasher, c.Value, g.targetPackage, g.importNamer)
 		htrp, ok := vg.(htrPutter)
 		if !ok {
 			continue
@@ -62,7 +64,6 @@ func GenerateHashTreeRoot(g *generateContainer) (*generatedCode, error) {
 	// TODO: allow GenerateHashTreeRoot to return an error since template.Execute
 	// can technically return an error (get rid of the panics)
 	return &generatedCode{
-		blocks:  []string{buf.String()},
-		imports: extractImportsFromContainerFields(g.Contents, g.targetPackage),
+		blocks: []string{buf.String()},
 	}, nil
 }

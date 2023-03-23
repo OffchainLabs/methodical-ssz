@@ -3,18 +3,20 @@ package backend
 import (
 	"fmt"
 
+	"github.com/OffchainLabs/methodical-ssz/sszgen/interfaces"
 	"github.com/OffchainLabs/methodical-ssz/sszgen/types"
 )
 
 type generateOverlay struct {
 	*types.ValueOverlay
 	targetPackage string
+	importNamer   *ImportNamer
 }
 
 func (g *generateOverlay) toOverlay() func(string) string {
 	wrapper := g.TypeName()
 	if g.targetPackage != g.PackagePath() {
-		wrapper = importAlias(g.PackagePath()) + "." + wrapper
+		wrapper = g.importNamer.NameString(g.PackagePath()) + "." + wrapper
 	}
 	return func(value string) string {
 		return fmt.Sprintf("%s(%s)", wrapper, value)
@@ -22,7 +24,7 @@ func (g *generateOverlay) toOverlay() func(string) string {
 }
 
 func (g *generateOverlay) generateVariableMarshalValue(fieldName string) string {
-	gg := newValueGenerator(g.Underlying, g.targetPackage)
+	gg := newValueGenerator(interfaces.SszMarshaler, g.Underlying, g.targetPackage, g.importNamer)
 	vm, ok := gg.(variableMarshaller)
 	if !ok {
 		return ""
@@ -31,7 +33,7 @@ func (g *generateOverlay) generateVariableMarshalValue(fieldName string) string 
 }
 
 func (g *generateOverlay) generateUnmarshalValue(fieldName string, sliceName string) string {
-	gg := newValueGenerator(g.Underlying, g.targetPackage)
+	gg := newValueGenerator(interfaces.SszUnmarshaler, g.Underlying, g.targetPackage, g.importNamer)
 	c, ok := gg.(caster)
 	if ok {
 		c.setToOverlay(g.toOverlay())
@@ -50,7 +52,7 @@ return err
 }
 
 func (g *generateOverlay) generateFixedMarshalValue(fieldName string) string {
-	gg := newValueGenerator(g.Underlying, g.targetPackage)
+	gg := newValueGenerator(interfaces.SszMarshaler, g.Underlying, g.targetPackage, g.importNamer)
 	uc, ok := gg.(coercer)
 	if ok {
 		return gg.generateFixedMarshalValue(uc.coerce()(fieldName))
@@ -74,7 +76,7 @@ func (g *generateOverlay) generateHTRPutter(fieldName string) string {
 hh.PutBitlist(%s, %d)`
 		return fmt.Sprintf(t, fieldName, fieldName, ul.MaxSize)
 	}
-	gg := newValueGenerator(g.Underlying, g.targetPackage)
+	gg := newValueGenerator(interfaces.SszLightHasher, g.Underlying, g.targetPackage, g.importNamer)
 	htrp, ok := gg.(htrPutter)
 	if !ok {
 		return ""

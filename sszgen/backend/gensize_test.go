@@ -15,9 +15,14 @@ func TestGenerateSizeSSZ(t *testing.T) {
 
 	ty, ok := testFixBeaconState.(*types.ValueContainer)
 	require.Equal(t, true, ok)
-	gc, err := GenerateSizeSSZ(&generateContainer{ty, ""})
+	inm := NewImportNamer("", nil)
+	gc, err := GenerateSizeSSZ(&generateContainer{ValueContainer: ty, targetPackage: "", importNamer: inm})
 	require.NoError(t, err)
-	require.Equal(t, 4, len(gc.imports))
+	// the size code for BeaconState is all fixed values and calls to values inside loops, so it can safely assume nothing needs
+	// to be initialized.
+	// TODO: Add a test case for size code for a type like BeaconBlockBodyBellatrix that needs to init for safety
+	// (ie actually requires imports)
+	require.Equal(t, 0, len(gc.imports))
 	actual, err := normalizeFixtureString(gc.blocks[0])
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)

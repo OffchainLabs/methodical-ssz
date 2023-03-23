@@ -18,7 +18,7 @@ func TestGenerateHashTreeRoot(t *testing.T) {
 
 	vc, ok := testFixBeaconState.(*types.ValueContainer)
 	require.Equal(t, true, ok)
-	gc := &generateContainer{vc, ""}
+	gc := &generateContainer{ValueContainer: vc, targetPackage: ""}
 	code, err := GenerateHashTreeRoot(gc)
 	require.NoError(t, err)
 	require.Equal(t, 4, len(code.imports))
@@ -39,7 +39,7 @@ func TestHTROverlayCoerce(t *testing.T) {
 			Package: pkg,
 		},
 	}
-	gv := &generateOverlay{val, pkg}
+	gv := &generateOverlay{ValueOverlay: val, targetPackage: pkg}
 	actual := gv.generateHTRPutter("b.Slot")
 	require.Equal(t, expected, actual)
 }
@@ -51,7 +51,7 @@ func TestHTRContainer(t *testing.T) {
 		return err
 	}`
 	val := &types.ValueContainer{}
-	gv := &generateContainer{val, pkg}
+	gv := &generateContainer{ValueContainer: val, targetPackage: pkg}
 	actual := gv.generateHTRPutter("b.Fork")
 	require.Equal(t, expected, actual)
 }

@@ -10,6 +10,7 @@ type generateBool struct {
 	valRep        *types.ValueBool
 	targetPackage string
 	casterConfig
+	importNamer *ImportNamer
 }
 
 func (g *generateBool) generateHTRPutter(fieldName string) string {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"text/template"
 
+	"github.com/OffchainLabs/methodical-ssz/sszgen/interfaces"
 	"github.com/OffchainLabs/methodical-ssz/sszgen/types"
 )
 
@@ -12,6 +13,7 @@ type generateList struct {
 	valRep        *types.ValueList
 	targetPackage string
 	casterConfig
+	importNamer *ImportNamer
 }
 
 var generateListHTRPutterTmpl = `{
@@ -99,7 +101,7 @@ func (g *generateList) generateHTRPutter(fieldName string) string {
 		lpe.Merkleize = fmt.Sprintf(mtmpl, fieldName, g.valRep.MaxSize, v.FixedSize())
 		return renderHtrListPutter(lpe)
 	case *types.ValueContainer:
-		gc := newValueGenerator(v, g.targetPackage)
+		gc := newValueGenerator(interfaces.SszLightHasher, v, g.targetPackage, g.importNamer)
 		lpe.AppendCall = gc.generateHTRPutter(nestedFieldName)
 		lpe.Merkleize = fmt.Sprintf("hh.MerkleizeWithMixin(subIndx, uint64(len(%s)), %d)", fieldName, g.valRep.MaxSize)
 		return renderHtrListPutter(lpe)
@@ -164,11 +166,11 @@ func (g *generateList) generateUnmarshalVariableValue(fieldName string, sliceNam
 	if fieldName[0:1] == "i" && monoCharacter(fieldName) {
 		loopVar = fieldName + "i"
 	}
-	gg := newValueGenerator(g.valRep.ElementValue, g.targetPackage)
+	gg := newValueGenerator(interfaces.SszUnmarshaler, g.valRep.ElementValue, g.targetPackage, g.importNamer)
 	vi, ok := gg.(valueInitializer)
 	var initializer string
 	if ok {
-		initializer = vi.initializeValue("tmp")
+		initializer = vi.initializeValue()
 		if initializer != "" {
 			initializer = "tmp = " + initializer
 		}
@@ -192,7 +194,7 @@ func (g *generateList) generateUnmarshalVariableValue(fieldName string, sliceNam
 		LoopVar:         loopVar,
 		SliceName:       sliceName,
 		ElementSize:     g.valRep.ElementValue.FixedSize(),
-		TypeName:        fullyQualifiedTypeName(g.valRep.ElementValue, g.targetPackage),
+		TypeName:        fullyQualifiedTypeName(g.valRep.ElementValue, g.targetPackage, g.importNamer),
 		FieldName:       fieldName,
 		MaxSize:         g.valRep.MaxSize,
 		Initializer:     initializer,
@@ -210,7 +212,7 @@ func (g *generateList) generateUnmarshalFixedValue(fieldName string, sliceName s
 	if fieldName[0:1] == "i" && monoCharacter(fieldName) {
 		loopVar = fieldName + "i"
 	}
-	gg := newValueGenerator(g.valRep.ElementValue, g.targetPackage)
+	gg := newValueGenerator(interfaces.SszUnmarshaler, g.valRep.ElementValue, g.targetPackage, g.importNamer)
 	nestedUnmarshal := ""
 	switch g.valRep.ElementValue.(type) {
 	case *types.ValueByte:
@@ -221,7 +223,7 @@ func (g *generateList) generateUnmarshalFixedValue(fieldName string, sliceName s
 	vi, ok := gg.(valueInitializer)
 	var initializer string
 	if ok {
-		initializer = vi.initializeValue("tmp")
+		initializer = vi.initializeValue()
 		if initializer != "" {
 			initializer = "tmp = " + initializer
 		}
@@ -245,7 +247,7 @@ func (g *generateList) generateUnmarshalFixedValue(fieldName string, sliceName s
 		LoopVar:         loopVar,
 		SliceName:       sliceName,
 		ElementSize:     g.valRep.ElementValue.FixedSize(),
-		TypeName:        fullyQualifiedTypeName(g.valRep.ElementValue, g.targetPackage),
+		TypeName:        fullyQualifiedTypeName(g.valRep.ElementValue, g.targetPackage, g.importNamer),
 		FieldName:       fieldName,
 		MaxSize:         g.valRep.MaxSize,
 		Initializer:     initializer,
@@ -289,7 +291,7 @@ func (g *generateList) variableSizeSSZ(fieldName string) string {
 		return fmt.Sprintf("len(%s) * %d", fieldName, g.valRep.ElementValue.FixedSize())
 	}
 
-	gg := newValueGenerator(g.valRep.ElementValue, g.targetPackage)
+	gg := newValueGenerator(interfaces.SszMarshaler, g.valRep.ElementValue, g.targetPackage, g.importNamer)
 	vslTmpl, err := template.New("variableSizedListTmpl").Parse(variableSizedListTmpl)
 	if err != nil {
 		panic(err)
@@ -372,7 +374,7 @@ func (g *generateList) generateVariableMarshalValue(fieldName string) string {
 		t := `for _, %s := range %s {
 	%s
 }`
-		gg := newValueGenerator(g.valRep.ElementValue, g.targetPackage)
+		gg := newValueGenerator(interfaces.SszMarshaler, g.valRep.ElementValue, g.targetPackage, g.importNamer)
 		var internal string
 		if g.valRep.ElementValue.IsVariableSized() {
 			vm, ok := gg.(variableMarshaller)

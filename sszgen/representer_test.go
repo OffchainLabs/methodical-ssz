@@ -16,9 +16,11 @@ var (
 
 func TestGetSimpleRepresentation(t *testing.T) {
 	typeName := noImports
-	pp, err := NewPackageParser(packageName, []string{typeName})
+	ps, err := NewGoPathScoper(packageName)
 	require.NoError(t, err)
-	for _, td := range pp.results {
+	defs, err := TypeDefs(ps, typeName)
+	require.NoError(t, err)
+	for _, td := range defs {
 		_, err := ParseTypeDef(td)
 		require.NoError(t, err)
 	}
@@ -29,9 +31,11 @@ func TestGetSimpleRepresentation(t *testing.T) {
 // will be represented like ValueOverlay{Name: "AliasedPrimitive", Underlying: ValueUint{Name: "uint64"}}
 func TestPrimitiveAliasRepresentation(t *testing.T) {
 	typeName := "AliasedPrimitive"
-	pp, err := NewPackageParser(packageName, []string{typeName})
+	ps, err := NewGoPathScoper(packageName)
 	require.NoError(t, err)
-	for _, td := range pp.results {
+	defs, err := TypeDefs(ps, typeName)
+	require.NoError(t, err)
+	for _, td := range defs {
 		val, err := ParseTypeDef(td)
 		require.NoError(t, err)
 		require.Equal(t, typeName, val.TypeName())
@@ -43,11 +47,13 @@ func TestPrimitiveAliasRepresentation(t *testing.T) {
 
 func TestSimpleStructRepresentation(t *testing.T) {
 	typeName := noImports
-	pp, err := NewPackageParser(packageName, []string{typeName})
+	ps, err := NewGoPathScoper(packageName)
 	require.NoError(t, err)
 
-	td := pp.results[0]
-	val, err := ParseTypeDef(td)
+	defs, err := TypeDefs(ps, typeName)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(defs))
+	val, err := ParseTypeDef(defs[0])
 	require.NoError(t, err)
 	require.Equal(t, typeName, val.TypeName())
 	container, ok := val.(*types.ValueContainer)
@@ -73,11 +79,13 @@ func TestSimpleStructRepresentation(t *testing.T) {
 // Tests that 1 and 2 dimensional vectors are represented as expected
 func TestStructVectors(t *testing.T) {
 	typeName := noImports
-	pp, err := NewPackageParser(packageName, []string{typeName})
+	ps, err := NewGoPathScoper(packageName)
 	require.NoError(t, err)
 
-	td := pp.results[0]
-	val, err := ParseTypeDef(td)
+	defs, err := TypeDefs(ps, typeName)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(defs))
+	val, err := ParseTypeDef(defs[0])
 	require.NoError(t, err)
 	require.Equal(t, typeName, val.TypeName())
 	container, ok := val.(*types.ValueContainer)
@@ -110,11 +118,13 @@ func TestStructVectors(t *testing.T) {
 // tests that ssz dimensions are assigned correctly with a vector nested in a list
 func TestVectorInListInStruct(t *testing.T) {
 	typeName := noImports
-	pp, err := NewPackageParser(packageName, []string{typeName})
+	ps, err := NewGoPathScoper(packageName)
 	require.NoError(t, err)
 
-	td := pp.results[0]
-	val, err := ParseTypeDef(td)
+	defs, err := TypeDefs(ps, typeName)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(defs))
+	val, err := ParseTypeDef(defs[0])
 	require.NoError(t, err)
 	require.Equal(t, typeName, val.TypeName())
 	container, ok := val.(*types.ValueContainer)
@@ -124,7 +134,7 @@ func TestVectorInListInStruct(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "[][]byte", listValRep.TypeName())
 	list, ok := listValRep.(*types.ValueList)
-	require.Equal(t, true, ok, "Expected the result to be a ValueOverlay type, got %v", typename(listValRep))
+	require.Equal(t, true, ok, "Expected the result to be a ValueList type, got %v", typename(listValRep))
 	require.Equal(t, 16777216, list.MaxSize, "Unexpected value for list max size based on parsed ssz tags")
 
 	require.Equal(t, "[]byte", list.ElementValue.TypeName())
@@ -139,11 +149,13 @@ func TestVectorInListInStruct(t *testing.T) {
 
 func TestContainerField(t *testing.T) {
 	typeName := noImports
-	pp, err := NewPackageParser(packageName, []string{typeName})
+	ps, err := NewGoPathScoper(packageName)
 	require.NoError(t, err)
 
-	td := pp.results[0]
-	val, err := ParseTypeDef(td)
+	defs, err := TypeDefs(ps, typeName)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(defs))
+	val, err := ParseTypeDef(defs[0])
 	require.NoError(t, err)
 	require.Equal(t, typeName, val.TypeName())
 	container, ok := val.(*types.ValueContainer)
@@ -168,11 +180,13 @@ func TestContainerField(t *testing.T) {
 
 func TestListContainers(t *testing.T) {
 	typeName := noImports
-	pp, err := NewPackageParser(packageName, []string{typeName})
+	ps, err := NewGoPathScoper(packageName)
 	require.NoError(t, err)
 
-	td := pp.results[0]
-	val, err := ParseTypeDef(td)
+	defs, err := TypeDefs(ps, typeName)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(defs))
+	val, err := ParseTypeDef(defs[0])
 	require.NoError(t, err)
 	require.Equal(t, typeName, val.TypeName())
 	container, ok := val.(*types.ValueContainer)
@@ -221,11 +235,15 @@ func TestListContainers(t *testing.T) {
 
 func TestListOfOverlays(t *testing.T) {
 	typeName := noImports
-	pp, err := NewPackageParser(packageName, []string{typeName})
+	ps, err := NewGoPathScoper(packageName)
 	require.NoError(t, err)
 
-	td := pp.results[0]
-	val, err := ParseTypeDef(td)
+	defs, err := TypeDefs(ps, typeName)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(defs))
+	val, err := ParseTypeDef(defs[0])
+	require.NoError(t, err)
+
 	require.NoError(t, err)
 	require.Equal(t, typeName, val.TypeName())
 	container, ok := val.(*types.ValueContainer)
@@ -265,11 +283,15 @@ func TestListOfOverlays(t *testing.T) {
 
 func TestVectorOfOverlays(t *testing.T) {
 	typeName := noImports
-	pp, err := NewPackageParser(packageName, []string{typeName})
+	ps, err := NewGoPathScoper(packageName)
 	require.NoError(t, err)
 
-	td := pp.results[0]
-	val, err := ParseTypeDef(td)
+	defs, err := TypeDefs(ps, typeName)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(defs))
+	val, err := ParseTypeDef(defs[0])
+	require.NoError(t, err)
+
 	require.NoError(t, err)
 	require.Equal(t, typeName, val.TypeName())
 	container, ok := val.(*types.ValueContainer)
@@ -309,11 +331,13 @@ func TestVectorOfOverlays(t *testing.T) {
 
 func TestBitlist(t *testing.T) {
 	typeName := "TestBitlist"
-	pp, err := NewPackageParser(packageName, []string{typeName})
+	ps, err := NewGoPathScoper(packageName)
 	require.NoError(t, err)
 
-	td := pp.results[0]
-	val, err := ParseTypeDef(td)
+	defs, err := TypeDefs(ps, typeName)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(defs))
+	val, err := ParseTypeDef(defs[0])
 	require.NoError(t, err)
 	require.Equal(t, typeName, val.TypeName())
 	container, ok := val.(*types.ValueContainer)
@@ -348,11 +372,13 @@ func TestBitlist(t *testing.T) {
 
 func TestFixedSizeArray(t *testing.T) {
 	typeName := "FixedSizeArray"
-	pp, err := NewPackageParser(packageName, []string{typeName})
+	ps, err := NewGoPathScoper(packageName)
 	require.NoError(t, err)
 
-	td := pp.results[0]
-	val, err := ParseTypeDef(td)
+	defs, err := TypeDefs(ps, typeName)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(defs))
+	val, err := ParseTypeDef(defs[0])
 	require.NoError(t, err)
 	require.Equal(t, typeName, val.TypeName())
 	container, ok := val.(*types.ValueOverlay)
@@ -361,6 +387,7 @@ func TestFixedSizeArray(t *testing.T) {
 	underlying := container.Underlying
 	c2, ok := underlying.(*types.ValueVector)
 	require.Equal(t, true, ok, "Expected the result to be a ValueContainer type, got %v", typename(c2))
+	require.Equal(t, true, c2.IsArray)
 }
 
 func typename(v interface{}) string {

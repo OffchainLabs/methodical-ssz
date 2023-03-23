@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"text/template"
 
+	"github.com/OffchainLabs/methodical-ssz/sszgen/interfaces"
 	"github.com/OffchainLabs/methodical-ssz/sszgen/types"
 )
 
@@ -12,10 +13,11 @@ type generateVector struct {
 	valRep        *types.ValueVector
 	targetPackage string
 	casterConfig
+	importNamer *ImportNamer
 }
 
 func (g *generateVector) generateUnmarshalValue(fieldName string, sliceName string) string {
-	gg := newValueGenerator(g.valRep.ElementValue, g.targetPackage)
+	gg := newValueGenerator(interfaces.SszUnmarshaler, g.valRep.ElementValue, g.targetPackage, g.importNamer)
 	switch g.valRep.ElementValue.(type) {
 	case *types.ValueByte:
 		t := `%s = make([]byte, 0, %d)
@@ -50,7 +52,7 @@ func (g *generateVector) generateUnmarshalValue(fieldName string, sliceName stri
 			NestedUnmarshal string
 			FieldName       string
 		}{
-			TypeName:        fullyQualifiedTypeName(nvr, g.targetPackage),
+			TypeName:        fullyQualifiedTypeName(nvr, g.targetPackage, g.importNamer),
 			SliceName:       sliceName,
 			NumElements:     g.valRep.FixedSize() / g.valRep.ElementValue.FixedSize(),
 			NestedFixedSize: g.valRep.ElementValue.FixedSize(),
@@ -78,7 +80,11 @@ func (g *generateVector) generateFixedMarshalValue(fieldName string) string {
 	var marshalValue string
 	switch g.valRep.ElementValue.(type) {
 	case *types.ValueByte:
-		marshalValue = fmt.Sprintf("dst = append(dst, %s...)", fieldName)
+		if g.valRep.IsArray {
+			marshalValue = fmt.Sprintf("dst = append(dst, %s[:]...)", fieldName)
+		} else {
+			marshalValue = fmt.Sprintf("dst = append(dst, %s...)", fieldName)
+		}
 	default:
 		nestedFieldName := "o"
 		if fieldName[0:1] == "o" && monoCharacter(fieldName) {
@@ -87,7 +93,7 @@ func (g *generateVector) generateFixedMarshalValue(fieldName string) string {
 		t := `for _, %s := range %s {
 	%s
 }`
-		gg := newValueGenerator(g.valRep.ElementValue, g.targetPackage)
+		gg := newValueGenerator(interfaces.SszMarshaler, g.valRep.ElementValue, g.targetPackage, g.importNamer)
 		internal := gg.generateFixedMarshalValue(nestedFieldName)
 		marshalValue = fmt.Sprintf(t, nestedFieldName, fieldName, internal)
 	}
@@ -148,7 +154,11 @@ const ByteChunkSize = 32
 
 func (g *generateVector) renderByteSliceAppend(fieldName string) string {
 	if g.valRep.Size%ByteChunkSize == 0 {
-		return fmt.Sprintf(byteSliceAppendTpl, fieldName, g.valRep.Size, fieldName)
+		if g.valRep.IsVariableSized() {
+			return fmt.Sprintf(byteSliceAppendTpl, fieldName, g.valRep.Size, fieldName)
+		} else {
+			return fmt.Sprintf(byteSliceAppendTplFixedSize, fieldName, g.valRep.Size, fieldName)
+		}
 	} else {
 		return fmt.Sprintf(byteSlicePutBytesTpl, fieldName, g.valRep.Size, fieldName)
 	}
@@ -158,6 +168,11 @@ var byteSliceAppendTpl = `if len(%s) != %d {
 	return ssz.ErrBytesLength
 }
 hh.Append(%s)`
+
+var byteSliceAppendTplFixedSize = `if len(%s) != %d {
+	return ssz.ErrBytesLength
+}
+hh.Append(%s[:])`
 
 var byteSlicePutBytesTpl = `if len(%s) != %d {
 			return ssz.ErrBytesLength

@@ -1,6 +1,9 @@
 package types
 
-import "fmt"
+import (
+	"fmt"
+	"go/types"
+)
 
 type ContainerField struct {
 	Key   string
@@ -8,12 +11,12 @@ type ContainerField struct {
 }
 
 type ValueContainer struct {
-	Name      string
-	Package   string
-	Contents  []ContainerField
-	Value     bool
-	LightHash bool
-	nameMap   map[string]ValRep
+	Name          string
+	Package       string
+	Contents      []ContainerField
+	HasSSZMethods bool
+	nameMap       map[string]ValRep
+	Interfaces    map[*types.Interface]bool
 }
 
 func (vc *ValueContainer) Fields() []ContainerField {
@@ -21,7 +24,7 @@ func (vc *ValueContainer) Fields() []ContainerField {
 }
 
 func (vc *ValueContainer) Append(name string, value ValRep) {
-	vc.Contents = append(vc.Contents, ContainerField{name, value})
+	vc.Contents = append(vc.Contents, ContainerField{Key: name, Value: value})
 	if vc.nameMap == nil {
 		vc.nameMap = make(map[string]ValRep)
 	}
@@ -63,6 +66,10 @@ func (vc *ValueContainer) IsVariableSized() bool {
 		}
 	}
 	return false
+}
+
+func (vc *ValueContainer) SatisfiesInterface(ti *types.Interface) bool {
+	return vc.Interfaces != nil && vc.Interfaces[ti]
 }
 
 var _ ValRep = &ValueContainer{}

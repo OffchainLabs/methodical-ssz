@@ -17,6 +17,7 @@ type TypeDef struct {
 	fs          *token.FileSet
 	orig        *types.Named
 	scope       *fileScope
+	object      types.Object
 }
 
 // FieldDef represents a field of the intermediate marshaling type.

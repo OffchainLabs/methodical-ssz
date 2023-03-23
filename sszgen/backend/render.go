@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"go/format"
+	"go/types"
 	"strings"
 	"text/template"
 
-	"github.com/OffchainLabs/methodical-ssz/sszgen/types"
+	gentypes "github.com/OffchainLabs/methodical-ssz/sszgen/types"
 )
 
 type generatedCode struct {
@@ -30,52 +31,47 @@ func (gc *generatedCode) renderBlocks() string {
 
 func (gc *generatedCode) merge(right *generatedCode) {
 	gc.blocks = append(gc.blocks, right.blocks...)
-	if right.imports == nil {
-		return
-	}
-	for k, v := range right.imports {
-		// deduplicate imports and detect collisions
-		// we should prevent collisions by normalizing import naming in a preprocessing pass
-		if _, ok := gc.imports[k]; ok {
-			continue
-		}
-		gc.imports[k] = v
-	}
 }
 
 // Generator needs to be initialized with the package name,
 // so use the new NewGenerator func for proper setup.
 type Generator struct {
 	gc          []*generatedCode
-	packageName string
 	packagePath string
+	importNamer *ImportNamer
 }
 
-func NewGenerator(packageName, packagePath string) *Generator {
+var defaultSSZImports = map[string]string{
+	"github.com/prysmaticlabs/fastssz": "ssz",
+	"fmt":                              "",
+}
+
+func NewGenerator(packagePath string) *Generator {
+	importNamer := NewImportNamer(packagePath, defaultSSZImports)
 	return &Generator{
-		packageName: packageName,
 		packagePath: packagePath,
+		importNamer: importNamer,
 	}
 }
 
 // TODO Generate should be able to return an error
-func (g *Generator) Generate(vr types.ValRep) error {
-	if vc, ok := vr.(*types.ValueContainer); ok {
+func (g *Generator) Generate(vr gentypes.ValRep) error {
+	if vc, ok := vr.(*gentypes.ValueContainer); ok {
 		return g.genValueContainer(vc)
 	}
-	if vo, ok := vr.(*types.ValueOverlay); ok {
+	if vo, ok := vr.(*gentypes.ValueOverlay); ok {
 		return g.genValueOverlay(vo)
 	}
-	return fmt.Errorf("can only generate method sets for container & overlay types at this time, type: %v", vr.TypeName())
+	return fmt.Errorf("can only generate method sets for container & overlay gentypes at this time, type: %v", vr.TypeName())
 }
 
-func (g *Generator) genValueOverlay(vc *types.ValueOverlay) error {
-	// TODO (MariusVanDerWijden) implement for basic types
+func (g *Generator) genValueOverlay(vc *gentypes.ValueOverlay) error {
+	// TODO (MariusVanDerWijden) implement for basic gentypes
 	return nil
 }
 
-func (g *Generator) genValueContainer(vc *types.ValueContainer) error {
-	container := &generateContainer{vc, g.packagePath}
+func (g *Generator) genValueContainer(vc *gentypes.ValueContainer) error {
+	container := &generateContainer{ValueContainer: vc, targetPackage: g.packagePath, importNamer: g.importNamer}
 	methods := []func(gc *generateContainer) (*generatedCode, error){
 		GenerateSizeSSZ,
 		GenerateMarshalSSZ,
@@ -106,20 +102,12 @@ func (g *Generator) Render() ([]byte, error) {
 	if g.packagePath == "" {
 		return nil, fmt.Errorf("missing packagePath: Generator requires a packagePath for code generation.")
 	}
-	if g.packageName == "" {
-		return nil, fmt.Errorf("missing packageName: Generator requires a target package name for code generation.")
-	}
 	ft := template.New("generated.ssz.go")
 	tmpl, err := ft.Parse(fileTemplate)
 	if err != nil {
 		return nil, err
 	}
-	final := &generatedCode{
-		imports: map[string]string{
-			"github.com/prysmaticlabs/fastssz": "ssz",
-			"fmt":                              "",
-		},
-	}
+	final := &generatedCode{}
 	for _, gc := range g.gc {
 		final.merge(gc)
 	}
@@ -129,14 +117,15 @@ func (g *Generator) Render() ([]byte, error) {
 		Imports string
 		Blocks  string
 	}{
-		Package: RenderedPackageName(g.packageName),
-		Imports: final.renderImportPairs(),
+		Package: RenderedPackageName(g.packagePath),
+		Imports: g.importNamer.ImportPairs(),
 		Blocks:  final.renderBlocks(),
 	})
 	if err != nil {
 		return nil, err
 	}
 	return format.Source(buf.Bytes())
+	//return buf.Bytes(), nil
 }
 
 type valueGenerator interface {
@@ -147,7 +136,7 @@ type valueGenerator interface {
 }
 
 type valueInitializer interface {
-	initializeValue(string) string
+	initializeValue() string
 }
 
 type variableMarshaller interface {
@@ -166,26 +155,29 @@ type htrPutter interface {
 	generateHTRPutter(string) string
 }
 
-func newValueGenerator(vr types.ValRep, packagePath string) valueGenerator {
+func newValueGenerator(ifaceCtx *types.Interface, vr gentypes.ValRep, packagePath string, inm *ImportNamer) valueGenerator {
+	if vr.SatisfiesInterface(ifaceCtx) {
+		return &generateDelegate{ValRep: vr, targetPackage: packagePath, importNamer: inm}
+	}
 	switch ty := vr.(type) {
-	case *types.ValueBool:
-		return &generateBool{valRep: ty, targetPackage: packagePath}
-	case *types.ValueByte:
-		return &generateByte{ty, packagePath}
-	case *types.ValueContainer:
-		return &generateContainer{ty, packagePath}
-	case *types.ValueList:
-		return &generateList{valRep: ty, targetPackage: packagePath}
-	case *types.ValueOverlay:
-		return &generateOverlay{ty, packagePath}
-	case *types.ValuePointer:
-		return &generatePointer{ty, packagePath}
-	case *types.ValueUint:
-		return &generateUint{valRep: ty, targetPackage: packagePath}
-	case *types.ValueUnion:
-		return &generateUnion{ty, packagePath}
-	case *types.ValueVector:
-		return &generateVector{valRep: ty, targetPackage: packagePath}
+	case *gentypes.ValueBool:
+		return &generateBool{valRep: ty, targetPackage: packagePath, importNamer: inm}
+	case *gentypes.ValueByte:
+		return &generateByte{ValueByte: ty, targetPackage: packagePath, importNamer: inm}
+	case *gentypes.ValueContainer:
+		return &generateContainer{ValueContainer: ty, targetPackage: packagePath, importNamer: inm}
+	case *gentypes.ValueList:
+		return &generateList{valRep: ty, targetPackage: packagePath, importNamer: inm}
+	case *gentypes.ValueOverlay:
+		return &generateOverlay{ValueOverlay: ty, targetPackage: packagePath, importNamer: inm}
+	case *gentypes.ValuePointer:
+		return &generatePointer{ValuePointer: ty, targetPackage: packagePath, importNamer: inm}
+	case *gentypes.ValueUint:
+		return &generateUint{valRep: ty, targetPackage: packagePath, importNamer: inm}
+	case *gentypes.ValueUnion:
+		return &generateUnion{ValueUnion: ty, targetPackage: packagePath, importNamer: inm}
+	case *gentypes.ValueVector:
+		return &generateVector{valRep: ty, targetPackage: packagePath, importNamer: inm}
 	}
 	panic(fmt.Sprintf("Cannot manage generation for unrecognized ValRep implementation %v", vr))
 }
@@ -202,37 +194,18 @@ func importAlias(packageName string) string {
 	return strings.ReplaceAll(strings.Join(parts, "_"), "-", "_")
 }
 
-func fullyQualifiedTypeName(v types.ValRep, targetPackage string) string {
+func fullyQualifiedTypeName(v gentypes.ValRep, targetPackage string, inamer *ImportNamer) string {
 	tn := v.TypeName()
 	if targetPackage == v.PackagePath() || v.PackagePath() == "" {
 		return tn
 	}
-	parts := strings.Split(v.PackagePath(), "/")
-	for i, p := range parts {
-		if strings.Contains(p, ".") {
-			continue
-		}
-		parts = parts[i:]
-		break
-	}
-	pkg := strings.ReplaceAll(strings.Join(parts, "_"), "-", "_")
+	pkg := inamer.NameString(v.PackagePath())
+
 	if tn[0:1] == "*" {
 		tn = tn[1:]
 		pkg = "*" + pkg
 	}
 	return pkg + "." + tn
-}
-
-func extractImportsFromContainerFields(cfs []types.ContainerField, targetPackage string) map[string]string {
-	imports := make(map[string]string)
-	for _, cf := range cfs {
-		pkg := cf.Value.PackagePath()
-		if pkg == "" || pkg == targetPackage {
-			continue
-		}
-		imports[pkg] = importAlias(pkg)
-	}
-	return imports
 }
 
 // RenderedPackageName reduces the fully qualified package name to the relative package name, ie

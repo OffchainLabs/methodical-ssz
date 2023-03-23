@@ -15,7 +15,7 @@ func TestGenerateMarshalSSZ(t *testing.T) {
 
 	vc, ok := testFixBeaconState.(*types.ValueContainer)
 	require.Equal(t, true, ok)
-	gc := &generateContainer{vc, ""}
+	gc := &generateContainer{ValueContainer: vc, targetPackage: ""}
 	code, err := GenerateMarshalSSZ(gc)
 	require.NoError(t, err)
 	require.Equal(t, 4, len(code.imports))

@@ -17,7 +17,7 @@ func TestGenerateUnmarshalSSZ(t *testing.T) {
 
 	vc, ok := testFixBeaconState.(*types.ValueContainer)
 	require.Equal(t, true, ok)
-	gc := &generateContainer{vc, ""}
+	gc := &generateContainer{ValueContainer: vc, targetPackage: ""}
 	code, err := GenerateUnmarshalSSZ(gc)
 	require.NoError(t, err)
 	require.Equal(t, 4, len(code.imports))
@@ -35,7 +35,7 @@ func TestUnmarshalSteps(t *testing.T) {
 
 	vc, ok := testFixBeaconState.(*types.ValueContainer)
 	require.Equal(t, true, ok)
-	gc := &generateContainer{vc, ""}
+	gc := &generateContainer{ValueContainer: vc, targetPackage: ""}
 	ums := gc.unmarshalSteps()
 	require.Equal(t, 21, len(ums))
 	require.Equal(t, ums[15].nextVariable.fieldNumber, ums[16].fieldNumber)

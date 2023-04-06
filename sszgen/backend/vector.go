@@ -234,11 +234,39 @@ func monoCharacter(s string) bool {
 	return true
 }
 
+var variableSizedVectorTmpl = `func() int {
+	s := 0
+	for _, o := range {{ .FieldName }} {
+		s += 4
+		s += {{ .SizeComputation }}
+	}
+	return s
+}()`
+
 func (g *generateVector) variableSizeSSZ(fieldName string) string {
+	// TODO(rjl493456442) if the element of vector is fixed size,
+	// then the vector itself must be fixed as well. This clause
+	// should be removed.
 	if !g.valRep.ElementValue.IsVariableSized() {
 		return fmt.Sprintf("len(%s) * %d", fieldName, g.valRep.ElementValue.FixedSize())
 	}
-	return ""
+	gg := newValueGenerator(interfaces.SszMarshaler, g.valRep.ElementValue, g.targetPackage, g.importNamer)
+	vslTmpl, err := template.New("variableSizedVectorTmpl").Parse(variableSizedVectorTmpl)
+	if err != nil {
+		panic(err)
+	}
+	buf := bytes.NewBuffer(nil)
+	err = vslTmpl.Execute(buf, struct {
+		FieldName       string
+		SizeComputation string
+	}{
+		FieldName:       fieldName,
+		SizeComputation: gg.variableSizeSSZ("o"),
+	})
+	if err != nil {
+		panic(err)
+	}
+	return buf.String()
 }
 
 func (g *generateVector) coerce() func(string) string {

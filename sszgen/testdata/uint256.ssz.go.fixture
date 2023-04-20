@@ -10,6 +10,7 @@ func (c *TestStruct) SizeSSZ() int {
 
 	return size
 }
+
 func (c *TestStruct) MarshalSSZ() ([]byte, error) {
 	buf := make([]byte, c.SizeSSZ())
 	return c.MarshalSSZTo(buf[:0])
@@ -28,6 +29,7 @@ func (c *TestStruct) MarshalSSZTo(dst []byte) ([]byte, error) {
 
 	return dst, err
 }
+
 func (c *TestStruct) UnmarshalSSZ(buf []byte) error {
 	var err error
 	size := uint64(len(buf))
@@ -44,6 +46,7 @@ func (c *TestStruct) UnmarshalSSZ(buf []byte) error {
 	}
 	return err
 }
+
 func (c *TestStruct) HashTreeRoot() ([32]byte, error) {
 	hh := ssz.DefaultHasherPool.Get()
 	if err := c.HashTreeRootWith(hh); err != nil {

@@ -26,7 +26,7 @@ func (gc *generatedCode) renderImportPairs() string {
 }
 
 func (gc *generatedCode) renderBlocks() string {
-	return strings.Join(gc.blocks, "\n")
+	return strings.Join(gc.blocks, "\n\n")
 }
 
 func (gc *generatedCode) merge(right *generatedCode) {

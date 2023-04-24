@@ -13,6 +13,9 @@ func (vv *ValueVector) TypeName() string {
 }
 
 func (vv *ValueVector) FixedSize() int {
+	if vv.IsVariableSized() {
+		return 4
+	}
 	return vv.Size * vv.ElementValue.FixedSize()
 }
 

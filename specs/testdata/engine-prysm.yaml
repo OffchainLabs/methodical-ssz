@@ -1,0 +1,14 @@
+package: github.com/prysmaticlabs/prysm/v3/proto/engine/v1
+preset: mainnet
+defs:
+  - fork: bellatrix
+    types:
+      - name: ExecutionPayload
+      - name: ExecutionPayloadHeader
+  - fork: capella
+    types:
+      - name: ExecutionPayload
+        type_name: ExecutionPayloadCapella
+      - name: ExecutionPayloadHeader
+        type_name: ExecutionPayloadHeaderCapella
+      - name: Withdrawal

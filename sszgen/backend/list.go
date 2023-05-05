@@ -73,14 +73,14 @@ func (g *generateList) generateHTRPutter(fieldName string) string {
 	switch v := vr.(type) {
 	case *types.ValueByte:
 		t := `if len(%s) > %d {
-					return ssz.ErrBytesLength
+					return ssz.ErrIncorrectListSize
 				}
 			    subIndx := hh.Index()
-				hh.PutBytes(%s)`
+				hh.AppendBytes32(%s)`
 		putBytes := fmt.Sprintf(t, fieldName, g.valRep.MaxSize, fieldName)
 		mtmpl := `numItems := uint64(len(%s))
-		hh.MerkleizeWithMixin(subIndx, numItems, (%d*%d + 31)/32)`
-		res := "\n{\n" + putBytes + "\n" + fmt.Sprintf(mtmpl, fieldName, g.valRep.MaxSize, v.FixedSize()) + "\n}\n"
+		hh.MerkleizeWithMixin(subIndx, numItems, (%d + 31)/32)`
+		res := "\n{\n" + putBytes + "\n" + fmt.Sprintf(mtmpl, fieldName, g.valRep.MaxSize) + "\n}\n"
 		return res
 	case *types.ValueVector:
 		gv := &generateVector{valRep: v, targetPackage: g.targetPackage}
@@ -101,6 +101,11 @@ func (g *generateList) generateHTRPutter(fieldName string) string {
 		lpe.Merkleize = fmt.Sprintf(mtmpl, fieldName, g.valRep.MaxSize, v.FixedSize())
 		return renderHtrListPutter(lpe)
 	case *types.ValueContainer:
+		gc := newValueGenerator(interfaces.SszLightHasher, v, g.targetPackage, g.importNamer)
+		lpe.AppendCall = gc.generateHTRPutter(nestedFieldName)
+		lpe.Merkleize = fmt.Sprintf("hh.MerkleizeWithMixin(subIndx, uint64(len(%s)), %d)", fieldName, g.valRep.MaxSize)
+		return renderHtrListPutter(lpe)
+	case *types.ValueList:
 		gc := newValueGenerator(interfaces.SszLightHasher, v, g.targetPackage, g.importNamer)
 		lpe.AppendCall = gc.generateHTRPutter(nestedFieldName)
 		lpe.Merkleize = fmt.Sprintf("hh.MerkleizeWithMixin(subIndx, uint64(len(%s)), %d)", fieldName, g.valRep.MaxSize)
@@ -309,17 +314,6 @@ func (g *generateList) variableSizeSSZ(fieldName string) string {
 	}
 	return buf.String()
 }
-
-var generateVariableMarshalValueTmpl = `if len({{ .FieldName }}) > {{ .MaxSize }} {
-		return nil, ssz.ErrListTooBig
-}
-
-for _, o := range {{ .FieldName }} {
-		if len(o) != {{ .ElementSize }} {
-				return nil, ssz.ErrBytesLength
-		}
-		dst = append(dst, o) 
-}`
 
 var tmplVariableOffsetManagement = `{
 	offset = 4 * len({{.FieldName}})

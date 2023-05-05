@@ -26,6 +26,8 @@ type FieldDef struct {
 	typ  types.Type
 	tag  string
 	pkg  *types.Package
+	// declared as a slice pointer for unambiguous zero-value
+	dims *[]*SSZDimension
 }
 
 func newStructDef(fs *token.FileSet, imp types.Importer, typ *types.Named, packageName string) *TypeDef {

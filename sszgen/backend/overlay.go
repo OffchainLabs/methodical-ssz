@@ -61,7 +61,17 @@ func (g *generateOverlay) generateFixedMarshalValue(fieldName string) string {
 }
 
 func (g *generateOverlay) variableSizeSSZ(fieldname string) string {
-	return ""
+	l, ok := g.Underlying.(*types.ValueList)
+	if !ok {
+		panic("unhandled case, non-list variable sized overlay")
+	}
+	if l.ElementValue.IsVariableSized() {
+		panic("unhandled case, overlay of list of variable-sized values")
+	}
+	if l.ElementValue.FixedSize() == 1 {
+		return fmt.Sprintf("len(%s)", fieldname)
+	}
+	return fmt.Sprintf("len(%s) * %d", fieldname, l.ElementValue.FixedSize())
 }
 
 func (g *generateOverlay) generateHTRPutter(fieldName string) string {

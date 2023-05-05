@@ -143,10 +143,6 @@ type variableMarshaller interface {
 	generateVariableMarshalValue(string) string
 }
 
-type variableUnmarshaller interface {
-	generateVariableUnmarshalValue(string) string
-}
-
 type coercer interface {
 	coerce() func(string) string
 }

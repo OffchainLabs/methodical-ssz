@@ -6,17 +6,6 @@ import (
 	"github.com/prysmaticlabs/prysm/v3/testing/require"
 )
 
-var testFixderp ValRep = &ValueContainer{
-	Name:    "derp",
-	Package: "derp",
-	Contents: []ContainerField{
-		{
-			Key:   "sup",
-			Value: nil,
-		},
-	},
-}
-
 func TestBeaconStateSizeSSZ(t *testing.T) {
 	require.Equal(t, 84, testFixStatus.FixedSize())
 	require.Equal(t, false, testFixStatus.IsVariableSized())

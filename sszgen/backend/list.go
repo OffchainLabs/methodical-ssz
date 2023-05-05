@@ -315,17 +315,6 @@ func (g *generateList) variableSizeSSZ(fieldName string) string {
 	return buf.String()
 }
 
-var generateVariableMarshalValueTmpl = `if len({{ .FieldName }}) > {{ .MaxSize }} {
-		return nil, ssz.ErrListTooBig
-}
-
-for _, o := range {{ .FieldName }} {
-		if len(o) != {{ .ElementSize }} {
-				return nil, ssz.ErrBytesLength
-		}
-		dst = append(dst, o) 
-}`
-
 var tmplVariableOffsetManagement = `{
 	offset = 4 * len({{.FieldName}})
 	for _, {{.NestedFieldName}} := range {{.FieldName}} {

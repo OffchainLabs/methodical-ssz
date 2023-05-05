@@ -9,6 +9,7 @@ import (
 
 	"github.com/OffchainLabs/methodical-ssz/sszgen"
 	"github.com/OffchainLabs/methodical-ssz/sszgen/backend"
+	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
 )
 
@@ -41,8 +42,11 @@ var generate = &cli.Command{
 	Action: func(c *cli.Context) error {
 		sourcePackage = c.Args().Get(0)
 		if sourcePackage == "" {
-			cli.ShowCommandHelp(c, "generate")
-			return fmt.Errorf("error: mising required <input package> argument")
+			missingErr := fmt.Errorf("error: missing required <input package> argument")
+			if err := cli.ShowCommandHelp(c, "generate"); err != nil {
+				return errors.Wrapf(missingErr, "unable to show help text, ShowCommandHelp error=%s", err.Error())
+			}
+			return missingErr
 		}
 		var err error
 		var fields []string

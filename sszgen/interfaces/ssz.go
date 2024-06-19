@@ -3,6 +3,7 @@ package interfaces
 import (
 	"go/types"
 
+	ssz "github.com/prysmaticlabs/fastssz"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -21,6 +22,12 @@ func NewSSZSupportMap(t types.Type) map[*types.Interface]bool {
 		SszFullHasher:  types.Implements(t, SszFullHasher) || types.Implements(types.NewPointer(t), SszFullHasher),
 	}
 }
+
+// Hack to make sure the fastssz package is imported and included our go.mod.
+// This is needed for the package reflection in the init method below.
+var _ = ssz.Marshaler(nil)
+var _ = ssz.Unmarshaler(nil)
+var _ = ssz.HashRoot(nil)
 
 func init() {
 	pkgs, err := packages.Load(&packages.Config{Mode: packages.NeedTypes}, "github.com/prysmaticlabs/fastssz")

@@ -5,19 +5,27 @@ import "text/template"
 var testCaseTemplateBytes = `func {{.TestFuncName}}(t *testing.T) {
 	fixtureDir := "{{.FixtureDirectory}}"
 	root, serialized, err := specs.RootAndSerializedFromFixture(fixtureDir)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("error reading fixtures in dir %s", fixtureDir)
+	}
 	v := &{{.GoTypeName}}{}
-	require.NoError(t, v.UnmarshalSSZ(serialized))
+	err = v.UnmarshalSSZ(serialized)
+	if err != nil {
+		t.Fatalf("error in UnmarshalSSZ reading fixture data from %s, err=%s", fixtureDir, err.Error())
+	}
 	sroot, err := v.HashTreeRoot()
-	require.NoError(t, err)
-	require.Equal(t, root, sroot)
+	if err != nil {
+		t.Fatal("error from HashTreeRoot=%s, from fixture data in %s", err.Error(), fixtureDir)
+	}
+	if root != sroot {
+		t.Fatalf("HashTreeRoot of fixture wrong, want=%#x, got=%#x, from fixture data in %s", root, sroot, fixtureDir)
+	}
 }`
 
 var testCaseTemplateImports = `import (
 	"testing"
 
 	"github.com/OffchainLabs/methodical-ssz/specs"
-	"github.com/prysmaticlabs/prysm/v3/testing/require"
 )`
 
 var testFuncBodyTpl *template.Template

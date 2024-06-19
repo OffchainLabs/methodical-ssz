@@ -4,8 +4,6 @@ import (
 	"go/format"
 	"os"
 	"testing"
-
-	"github.com/prysmaticlabs/prysm/v3/testing/require"
 )
 
 var generator_generateFixture = `package derp
@@ -34,16 +32,24 @@ func TestGenerator_Generate(t *testing.T) {
 	g := &Generator{packagePath: "github.com/prysmaticlabs/derp", importNamer: inm}
 	g.gc = append(g.gc, gc)
 	rendered, err := g.Render()
-	require.NoError(t, err)
-	require.Equal(t, generator_generateFixture, string(rendered))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(rendered) != generator_generateFixture {
+		t.Fatalf("expected:\n%s\nactual:\n%s", generator_generateFixture, string(rendered))
+	}
 }
 
 func TestGenerator_GenerateBeaconState(t *testing.T) {
 	t.Skip("fixtures need to be updated")
 	b, err := os.ReadFile("testdata/TestGenerator_GenerateBeaconState.expected")
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	formatted, err := format.Source(b)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	expected := string(formatted)
 
 	g := &Generator{
@@ -51,9 +57,13 @@ func TestGenerator_GenerateBeaconState(t *testing.T) {
 	}
 	g.Generate(testFixBeaconState)
 	rendered, err := g.Render()
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	actual := string(rendered)
-	require.Equal(t, expected, actual)
+	if actual != expected {
+		t.Fatalf("expected:\n%s\nactual:\n%s", expected, actual)
+	}
 }
 
 func TestImportAlias(t *testing.T) {
@@ -75,12 +85,17 @@ func TestImportAlias(t *testing.T) {
 		},
 	}
 	for _, c := range cases {
-		require.Equal(t, importAlias(c.packageName), c.alias)
+		if c.alias != importAlias(c.packageName) {
+			t.Fatalf("unexpected importAlias for packageName %s, want=%s, got=%s", c.packageName, c.alias, importAlias(c.packageName))
+		}
 	}
 }
 
 func TestRenderedPackageName(t *testing.T) {
 	before := "github.com/prysmaticlabs/prysm/v3/proto/eth/v1"
 	after := "v1"
-	require.Equal(t, after, RenderedPackageName(before))
+	got := RenderedPackageName(before)
+	if got != after {
+		t.Fatalf("unexpected result for RenderedPackageName, want=%s, got=%s", after, got)
+	}
 }

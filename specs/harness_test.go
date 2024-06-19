@@ -1,11 +1,11 @@
 package specs
 
 import (
+	"errors"
 	"os"
 	"path"
 	"testing"
 
-	"github.com/prysmaticlabs/prysm/v3/testing/require"
 	"github.com/spf13/afero"
 	"sigs.k8s.io/yaml"
 )
@@ -24,26 +24,55 @@ defs:
         type_name: BeaconBlockAltair`
 	sr := &SpecRelationships{}
 	err := yaml.Unmarshal([]byte(input), sr)
-	require.NoError(t, err)
-	require.Equal(t, "github.com/prysmaticlabs/prysm/v3/proto/prysm/v1alpha1", sr.Package)
-	require.Equal(t, Mainnet, sr.Preset)
-	require.Equal(t, 2, len(sr.Defs))
-	require.Equal(t, Phase0, sr.Defs[0].Fork)
-	require.Equal(t, 1, len(sr.Defs[0].Types))
-	require.Equal(t, "BeaconBlock", sr.Defs[0].Types[0].SpecName)
-	require.Equal(t, "", sr.Defs[0].Types[0].TypeName)
-	require.Equal(t, Altair, sr.Defs[1].Fork)
-	require.Equal(t, 1, len(sr.Defs[1].Types))
-	require.Equal(t, "BeaconBlock", sr.Defs[1].Types[0].SpecName)
-	require.Equal(t, "BeaconBlockAltair", sr.Defs[1].Types[0].TypeName)
-
-	require.Equal(t, 2, len(sr.GoTypes()))
+	if err != nil {
+		t.Fatalf("unexpected error from yaml.Unmarshal = %s", err.Error())
+	}
+	expectedPackage := "github.com/prysmaticlabs/prysm/v3/proto/prysm/v1alpha1"
+	if sr.Package != expectedPackage {
+		t.Errorf(".Package mismatch, want=%s, got=%s", expectedPackage, sr.Package)
+	}
+	if sr.Preset != Mainnet {
+		t.Errorf(".Preset mismatch, want=%s, got=%s", Mainnet, sr.Preset)
+	}
+	if len(sr.Defs) != 2 {
+		t.Errorf(".Defs mismatch, want=%d, got=%d", 2, len(sr.Defs))
+	}
+	if sr.Defs[0].Fork != Phase0 {
+		t.Errorf(".Defs[0].Fork mismatch, want=%s, got=%s", Phase0, sr.Defs[0].Fork)
+	}
+	if len(sr.Defs[0].Types) != 1 {
+		t.Errorf(".Defs[0].Types len mismatch, want=%d, got=%d", 1, len(sr.Defs[0].Types))
+	}
+	if sr.Defs[0].Types[0].SpecName != "BeaconBlock" {
+		t.Errorf(".SpecName of first def wrong, want=%s, got=%s", "BeaconBlock", sr.Defs[0].Types[0].SpecName)
+	}
+	if sr.Defs[0].Types[0].TypeName != "" {
+		t.Errorf(".TypeName of first type in first def wrong, want=%s, got=%s", "", sr.Defs[0].Types[0].TypeName)
+	}
+	if sr.Defs[1].Fork != Altair {
+		t.Errorf("wanted fork of 2nd def to be %s, got %s", Altair, sr.Defs[1].Fork)
+	}
+	if len(sr.Defs[1].Types) != 1 {
+		t.Errorf("wanted 1 type in the 2nd def, got %d", len(sr.Defs[1].Types))
+	}
+	if sr.Defs[1].Types[0].SpecName != "BeaconBlock" {
+		t.Errorf("wrong .SpecName for the first type in the 2nd def, want=%s, got=%s", "BeaconBlock", sr.Defs[1].Types[0].SpecName)
+	}
+	if sr.Defs[1].Types[0].TypeName != "BeaconBlockAltair" {
+		t.Errorf("wrong .TypeName fors the first type in the 2nd def, want=%s, got=%s", "BeaconBlockAltair", sr.Defs[1].Types[0].TypeName)
+	}
+	if len(sr.GoTypes()) != 2 {
+		t.Errorf("wanted 2 go types overall, got %d", len(sr.GoTypes()))
+	}
 }
 
 func TestHarnessYamlFull(t *testing.T) {
 	t.Skip("Skipping this test since no prysm.yaml file is available")
 	sr := loadPrysmRelations(t)
-	require.Equal(t, "github.com/prysmaticlabs/prysm/v3/proto/prysm/v1alpha1", sr.Package)
+	want := "github.com/prysmaticlabs/prysm/v3/proto/prysm/v1alpha1"
+	if sr.Package != want {
+		t.Fatalf("wanted .Package %s, got %s", want, sr.Package)
+	}
 }
 
 func TestRelationsAtFork(t *testing.T) {
@@ -117,28 +146,43 @@ func TestRelationsAtFork(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			r, err := sr.RelationsAtFork(c.fork)
-			if err != nil {
-				require.ErrorIs(t, err, c.err)
+			if c.err != nil {
+				if !errors.Is(err, c.err) {
+					t.Fatal("wrong error type for RelationsAtFork")
+				}
 				return
 			}
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatalf("unexpected error from sr.RelationsAtFork = %s", err.Error())
+			}
 			tn, ok := r[c.specName]
 			if c.missing {
-				require.Equal(t, false, ok)
+				if ok {
+					t.Fatalf("spec name %s not missing as expected", c.specName)
+				}
 				return
 			}
-			require.Equal(t, true, ok)
-			require.Equal(t, c.typeName, tn)
+			if !ok {
+				t.Fatalf("spec name %s missing", c.specName)
+			}
+			if tn != c.typeName {
+				t.Errorf("want relations type name %s, got %s", c.typeName, tn)
+			}
 		})
 	}
 }
 
 func loadPrysmRelations(t *testing.T) *SpecRelationships {
-	y, err := os.ReadFile("testdata/prysm.yaml")
-	require.NoError(t, err)
+	fname := "testdata/prysm.yaml"
+	y, err := os.ReadFile(fname)
+	if err != nil {
+		t.Fatalf("error reading file %s", fname)
+	}
 	sr := &SpecRelationships{}
 	err = yaml.Unmarshal(y, sr)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("error unmarshaling yaml at %s", fname)
+	}
 	return sr
 }
 
@@ -165,7 +209,9 @@ func TestTestCaseTplFuncName(t *testing.T) {
 				ident:      c.ident,
 				structName: c.ident.Name,
 			}
-			require.Equal(t, c.name, tpl.TestFuncName())
+			if tpl.TestFuncName() != c.name {
+				t.Errorf("want .TestFuncName=%s, got=%s", c.name, tpl.TestFuncName())
+			}
 		})
 	}
 }
@@ -198,9 +244,14 @@ func TestCaseFileLayout(t *testing.T) {
 			},
 		},
 	}
-	require.NoError(t, WriteSpecTestFiles(cases, rels, fs))
+	err := WriteSpecTestFiles(cases, rels, fs)
+	if err != nil {
+		t.Fatalf("failed to write spec test files with error=%s", err.Error())
+	}
 	entries, err := afero.ReadDir(fs, fix.Directory)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("failed to list directory %s with error=%s", fix.Directory, err.Error())
+	}
 	searching := map[string]bool{
 		rootFilename:       true,
 		serializedFilename: true,
@@ -208,13 +259,19 @@ func TestCaseFileLayout(t *testing.T) {
 	}
 	for _, f := range entries {
 		_, n, err := ParsePath(path.Join(fix.Directory, f.Name()))
-		require.NoError(t, err)
+		if err != nil {
+			t.Fatalf("failed to parse path %s", path.Join(fix.Directory, f.Name()))
+		}
 		_, ok := searching[n]
 		if ok {
 			delete(searching, n)
 		}
 	}
-	require.Equal(t, 0, len(searching))
+	if len(searching) != 0 {
+		for k := range searching {
+			t.Errorf("did not find %s in directory entries", k)
+		}
+	}
 }
 
 func TestRenderTestCaseTpl(t *testing.T) {
@@ -227,17 +284,30 @@ func TestRenderTestCaseTpl(t *testing.T) {
 		fixture:    basicFixture(),
 		structName: "AggregateAttestationAndProof",
 	}
-	rendered, err := tpl.Render()
-	require.NoError(t, err)
-	expected := `func Test_mainnet_altair_AggregateAttestationAndProof_0(t *testing.T) {
+	got, err := tpl.Render()
+	if err != nil {
+		t.Fatalf("error rendering template = %s", err.Error())
+	}
+	want := `func Test_mainnet_altair_AggregateAttestationAndProof_0(t *testing.T) {
 	fixtureDir := "testdata/tests/mainnet/altair/ssz_static/AggregateAndProof/ssz_random/case_0"
 	root, serialized, err := specs.RootAndSerializedFromFixture(fixtureDir)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("error reading fixtures in dir %s", fixtureDir)
+	}
 	v := &AggregateAttestationAndProof{}
-	require.NoError(t, v.UnmarshalSSZ(serialized))
+	err = v.UnmarshalSSZ(serialized)
+	if err != nil {
+		t.Fatalf("error in UnmarshalSSZ reading fixture data from %s, err=%s", fixtureDir, err.Error())
+	}
 	sroot, err := v.HashTreeRoot()
-	require.NoError(t, err)
-	require.Equal(t, root, sroot)
+	if err != nil {
+		t.Fatal("error from HashTreeRoot=%s, from fixture data in %s", err.Error(), fixtureDir)
+	}
+	if root != sroot {
+		t.Fatalf("HashTreeRoot of fixture wrong, want=%#x, got=%#x, from fixture data in %s", root, sroot, fixtureDir)
+	}
 }`
-	require.Equal(t, expected, rendered)
+	if got != want {
+		t.Fatalf("rendered template wrong, want=%s, got=%s", want, got)
+	}
 }

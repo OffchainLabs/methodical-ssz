@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/OffchainLabs/methodical-ssz/sszgen/types"
-	"github.com/prysmaticlabs/prysm/v3/testing/require"
 )
 
 // cases left to satisfy:
@@ -13,18 +12,33 @@ import (
 func TestGenerateHashTreeRoot(t *testing.T) {
 	t.Skip("fixtures need to be updated")
 	b, err := os.ReadFile("testdata/TestGenerateHashTreeRoot.expected")
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	expected := string(b)
 
 	vc, ok := testFixBeaconState.(*types.ValueContainer)
-	require.Equal(t, true, ok)
+	if !ok {
+		t.Fatal("testFixBeaconState failed to assert to type *types.ValueContainer")
+	}
+	if ok != true {
+		t.Fatal("failed to cast testFixBeaconState to ValueContainer")
+	}
 	gc := &generateContainer{ValueContainer: vc, targetPackage: ""}
 	code, err := GenerateHashTreeRoot(gc)
-	require.NoError(t, err)
-	require.Equal(t, 4, len(code.imports))
+	if err != nil {
+		t.Fatalf("err from GenerateHashTreeRoot=%v", err)
+	}
+	if len(code.imports) != 4 {
+		t.Fatalf("expected 4 imports, got %d", len(code.imports))
+	}
 	actual, err := normalizeFixtureString(code.blocks[0])
-	require.NoError(t, err)
-	require.Equal(t, expected, actual)
+	if err != nil {
+		t.Fatalf("err from normalizeFixtureString=%v", err)
+	}
+	if actual != expected {
+		t.Fatalf("expected:\n%s\nactual:\n%s", expected, actual)
+	}
 }
 
 func TestHTROverlayCoerce(t *testing.T) {
@@ -41,7 +55,9 @@ func TestHTROverlayCoerce(t *testing.T) {
 	}
 	gv := &generateOverlay{ValueOverlay: val, targetPackage: pkg}
 	actual := gv.generateHTRPutter("b.Slot")
-	require.Equal(t, expected, actual)
+	if actual != expected {
+		t.Fatalf("expected:\n%s\nactual:\n%s", expected, actual)
+	}
 }
 
 func TestHTRContainer(t *testing.T) {
@@ -53,7 +69,9 @@ func TestHTRContainer(t *testing.T) {
 	val := &types.ValueContainer{}
 	gv := &generateContainer{ValueContainer: val, targetPackage: pkg}
 	actual := gv.generateHTRPutter("b.Fork")
-	require.Equal(t, expected, actual)
+	if actual != expected {
+		t.Fatalf("expected:\n%s\nactual:\n%s", expected, actual)
+	}
 }
 
 func TestHTRByteVector(t *testing.T) {
@@ -75,5 +93,7 @@ func TestHTRByteVector(t *testing.T) {
 		targetPackage: pkg,
 	}
 	actual := gv.generateHTRPutter(fieldName)
-	require.Equal(t, expected, actual)
+	if actual != expected {
+		t.Fatalf("expected:\n%s\nactual:\n%s", expected, actual)
+	}
 }

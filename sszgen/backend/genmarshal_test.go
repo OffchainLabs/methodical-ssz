@@ -5,22 +5,33 @@ import (
 	"testing"
 
 	"github.com/OffchainLabs/methodical-ssz/sszgen/types"
-	"github.com/prysmaticlabs/prysm/v3/testing/require"
 )
 
 func TestGenerateMarshalSSZ(t *testing.T) {
 	b, err := os.ReadFile("testdata/TestGenerateMarshalSSZ.expected")
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	expected := string(b)
 
 	vc, ok := testFixBeaconState.(*types.ValueContainer)
-	require.Equal(t, true, ok)
+	if !ok {
+		t.Fatal("testFixBeaconState failed to assert to type *types.ValueContainer")
+	}
 	inm := NewImportNamer("", nil)
 	gc := &generateContainer{ValueContainer: vc, targetPackage: "", importNamer: inm}
 	code, err := GenerateMarshalSSZ(gc)
-	require.NoError(t, err)
-	require.Equal(t, 2, len(inm.aliases))
+	if err != nil {
+		t.Fatalf("err from GenerateMarshalSSZ=%v", err)
+	}
+	if len(inm.aliases) != 2 {
+		t.Fatalf("expected 2 aliases, got %d", len(inm.aliases))
+	}
 	actual, err := normalizeFixtureString(code.blocks[0])
-	require.NoError(t, err)
-	require.Equal(t, expected, actual)
+	if err != nil {
+		t.Fatalf("err from normalizeFixtureString=%v", err)
+	}
+	if actual != expected {
+		t.Fatalf("expected:\n%s\nactual:\n%s", expected, actual)
+	}
 }

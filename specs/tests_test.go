@@ -4,16 +4,22 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/prysmaticlabs/prysm/v3/testing/require"
 )
 
 func TestDecodeRootFile(t *testing.T) {
-	e, err := hexutil.Decode("0x44de62c118d7951f5b6d9a03444e54aff47d02ff57add2a4eb2a198b3e83ae35")
+	expectedHex := "0x44de62c118d7951f5b6d9a03444e54aff47d02ff57add2a4eb2a198b3e83ae35"
+	e, err := hexutil.Decode(expectedHex)
+	if err != nil {
+		t.Fatalf("hexutil.Decode failed on input \"%s\"", expectedHex)
+	}
 	expected := [32]byte{}
 	copy(expected[:], e)
-	require.NoError(t, err)
 	f := []byte(`{root: '0x44de62c118d7951f5b6d9a03444e54aff47d02ff57add2a4eb2a198b3e83ae35'}`)
 	r, err := DecodeRootFile(f)
-	require.NoError(t, err)
-	require.Equal(t, expected, r)
+	if err != nil {
+		t.Fatalf("unexpected error result from DecodeRootFile, %s", err.Error())
+	}
+	if expected != r {
+		t.Fatalf("root return value %#x from DecodeRootFile did not match expected value %#x", r, expected)
+	}
 }

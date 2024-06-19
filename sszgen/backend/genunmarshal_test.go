@@ -6,42 +6,67 @@ import (
 	"testing"
 
 	"github.com/OffchainLabs/methodical-ssz/sszgen/types"
-	"github.com/prysmaticlabs/prysm/v3/testing/require"
 )
 
 func TestGenerateUnmarshalSSZ(t *testing.T) {
 	t.Skip("fixtures need to be updated")
 	b, err := os.ReadFile("testdata/TestGenerateUnmarshalSSZ.expected")
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	expected := string(b)
 
 	vc, ok := testFixBeaconState.(*types.ValueContainer)
-	require.Equal(t, true, ok)
+	if !ok {
+		t.Fatal("testFixBeaconState failed to assert to type *types.ValueContainer")
+	}
 	gc := &generateContainer{ValueContainer: vc, targetPackage: ""}
 	code, err := GenerateUnmarshalSSZ(gc)
-	require.NoError(t, err)
-	require.Equal(t, 4, len(code.imports))
+	if err != nil {
+		t.Fatalf("err from GenerateUnmarshalSSZ=%v", err)
+	}
+	if len(code.imports) != 4 {
+		t.Fatalf("expected 4 imports, got %d", len(code.imports))
+	}
 	actual, err := normalizeFixtureString(code.blocks[0])
-	require.NoError(t, err)
-	require.Equal(t, expected, actual)
+	if err != nil {
+		t.Fatalf("err from normalizeFixtureString=%v", err)
+	}
+	if actual != expected {
+		t.Fatalf("expected:\n%s\nactual:\n%s", expected, actual)
+	}
 }
 
 func TestUnmarshalSteps(t *testing.T) {
 	fixturePath := "testdata/TestUnmarshalSteps.expected"
 	b, err := os.ReadFile(fixturePath)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	expected, err := normalizeFixtureBytes(b)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	vc, ok := testFixBeaconState.(*types.ValueContainer)
-	require.Equal(t, true, ok)
+	if !ok {
+		t.Fatal("testFixBeaconState failed to assert to type *types.ValueContainer")
+	}
 	gc := &generateContainer{ValueContainer: vc, targetPackage: ""}
 	ums := gc.unmarshalSteps()
-	require.Equal(t, 21, len(ums))
-	require.Equal(t, ums[15].nextVariable.fieldNumber, ums[16].fieldNumber)
+	if len(ums) != 21 {
+		t.Fatalf("expected 21 unmarshal steps, got %d", len(ums))
+	}
+	if ums[15].nextVariable.fieldNumber != ums[16].fieldNumber {
+		t.Fatalf("expected field numbers to match, got %d and %d", ums[15].nextVariable.fieldNumber, ums[16].fieldNumber)
+	}
 
 	gotRaw := strings.Join([]string{ums.fixedSlices(), "", ums.variableSlices(gc.fixedOffset())}, "\n")
 	actual, err := normalizeFixtureString(gotRaw)
-	require.NoError(t, err)
-	require.Equal(t, expected, actual)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if actual != expected {
+		t.Fatalf("expected:\n%s\nactual:\n%s", expected, actual)
+	}
 }

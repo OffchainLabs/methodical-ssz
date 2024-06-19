@@ -2,60 +2,120 @@ package types
 
 import (
 	"testing"
-
-	"github.com/prysmaticlabs/prysm/v3/testing/require"
 )
 
-var testFixderp ValRep = &ValueContainer{
-	Name:    "derp",
-	Package: "derp",
-	Contents: []ContainerField{
-		{
-			Key:   "sup",
-			Value: nil,
-		},
-	},
-}
-
 func TestBeaconStateSizeSSZ(t *testing.T) {
-	require.Equal(t, 84, testFixStatus.FixedSize())
-	require.Equal(t, false, testFixStatus.IsVariableSized())
-	require.Equal(t, 24, testFixBeaconBlocksByRangeRequest.FixedSize())
-	require.Equal(t, false, testFixStatus.IsVariableSized())
-	require.Equal(t, 16, testFixENRForkID.FixedSize())
-	require.Equal(t, false, testFixStatus.IsVariableSized())
-	require.Equal(t, 24, testFixBeaconBlocksByRangeRequest.FixedSize())
-	require.Equal(t, false, testFixStatus.IsVariableSized())
-	require.Equal(t, 16, testFixMetaDataV0.FixedSize())
-	require.Equal(t, false, testFixStatus.IsVariableSized())
-	require.Equal(t, 24, testFixBeaconBlocksByRangeRequest.FixedSize())
-	require.Equal(t, false, testFixStatus.IsVariableSized())
-	require.Equal(t, 80, testFixMetaDataV1.FixedSize())
-	require.Equal(t, false, testFixStatus.IsVariableSized())
-	require.Equal(t, 24, testFixBeaconBlocksByRangeRequest.FixedSize())
-	require.Equal(t, false, testFixStatus.IsVariableSized())
-
-	require.Equal(t, 4, testFixBeaconState.FixedSize())
-	require.Equal(t, true, testFixBeaconState.IsVariableSized())
-
-	require.Equal(t, 4, testFixBeaconStateAltair.FixedSize())
-	require.Equal(t, true, testFixBeaconState.IsVariableSized())
-	require.Equal(t, 16, testFixFork.FixedSize())
-	require.Equal(t, false, testFixStatus.IsVariableSized())
-	require.Equal(t, 4, testFixPendingAttestation.FixedSize())
-	require.Equal(t, true, testFixPendingAttestation.IsVariableSized())
-	require.Equal(t, 524288, testFixHistoricalBatch.FixedSize())
-	require.Equal(t, false, testFixStatus.IsVariableSized())
-	require.Equal(t, 64, testFixSigningData.FixedSize())
-	require.Equal(t, false, testFixStatus.IsVariableSized())
-	require.Equal(t, 36, testFixForkData.FixedSize())
-	require.Equal(t, false, testFixStatus.IsVariableSized())
-	require.Equal(t, 88, testFixDepositMessage.FixedSize())
-	require.Equal(t, false, testFixStatus.IsVariableSized())
-	require.Equal(t, 24624, testFixSyncCommittee.FixedSize())
-	require.Equal(t, false, testFixStatus.IsVariableSized())
-	require.Equal(t, 16, testFixSyncAggregatorSelectionData.FixedSize())
-	require.Equal(t, false, testFixStatus.IsVariableSized())
+	if testFixStatus.FixedSize() != 84 {
+		t.Errorf("Expected FixedSize = 84, got %d", testFixStatus.FixedSize())
+	}
+	if testFixStatus.IsVariableSized() != false {
+		t.Errorf("Expected IsVariableSized = false, got %t", testFixStatus.IsVariableSized())
+	}
+	if testFixBeaconBlocksByRangeRequest.FixedSize() != 24 {
+		t.Errorf("Expected FixedSize = 24, got %d", testFixBeaconBlocksByRangeRequest.FixedSize())
+	}
+	if testFixBeaconBlocksByRangeRequest.IsVariableSized() != false {
+		t.Errorf("Expected IsVariableSized = false, got %t", testFixBeaconBlocksByRangeRequest.IsVariableSized())
+	}
+	if testFixENRForkID.FixedSize() != 16 {
+		t.Errorf("Expected FixedSize = 16, got %d", testFixENRForkID.FixedSize())
+	}
+	if testFixENRForkID.IsVariableSized() != false {
+		t.Errorf("Expected IsVariableSized = false, got %t", testFixENRForkID.IsVariableSized())
+	}
+	if testFixBeaconBlocksByRangeRequest.FixedSize() != 24 {
+		t.Errorf("Expected FixedSize = 24, got %d", testFixBeaconBlocksByRangeRequest.FixedSize())
+	}
+	if testFixBeaconBlocksByRangeRequest.IsVariableSized() != false {
+		t.Errorf("Expected IsVariableSized = false, got %t", testFixBeaconBlocksByRangeRequest.IsVariableSized())
+	}
+	if testFixMetaDataV0.FixedSize() != 16 {
+		t.Errorf("Expected FixedSize = 16, got %d", testFixMetaDataV0.FixedSize())
+	}
+	if testFixMetaDataV0.IsVariableSized() != false {
+		t.Errorf("Expected IsVariableSized = false, got %t", testFixMetaDataV0.IsVariableSized())
+	}
+	if testFixBeaconBlocksByRangeRequest.FixedSize() != 24 {
+		t.Errorf("Expected FixedSize = 24, got %d", testFixBeaconBlocksByRangeRequest.FixedSize())
+	}
+	if testFixBeaconBlocksByRangeRequest.IsVariableSized() != false {
+		t.Errorf("Expected IsVariableSized = false, got %t", testFixBeaconBlocksByRangeRequest.IsVariableSized())
+	}
+	if testFixMetaDataV1.FixedSize() != 80 {
+		t.Errorf("Expected FixedSize = 80, got %d", testFixMetaDataV1.FixedSize())
+	}
+	if testFixMetaDataV1.IsVariableSized() != false {
+		t.Errorf("Expected IsVariableSized = false, got %t", testFixMetaDataV1.IsVariableSized())
+	}
+	if testFixBeaconBlocksByRangeRequest.FixedSize() != 24 {
+		t.Errorf("Expected FixedSize = 24, got %d", testFixBeaconBlocksByRangeRequest.FixedSize())
+	}
+	if testFixBeaconBlocksByRangeRequest.IsVariableSized() != false {
+		t.Errorf("Expected IsVariableSized = false, got %t", testFixBeaconBlocksByRangeRequest.IsVariableSized())
+	}
+	if testFixBeaconState.FixedSize() != 4 {
+		t.Errorf("Expected FixedSize = 4, got %d", testFixBeaconState.FixedSize())
+	}
+	if testFixBeaconState.IsVariableSized() != true {
+		t.Errorf("Expected IsVariableSized = true, got %t", testFixBeaconState.IsVariableSized())
+	}
+	if testFixBeaconStateAltair.FixedSize() != 4 {
+		t.Errorf("Expected FixedSize = 4, got %d", testFixBeaconStateAltair.FixedSize())
+	}
+	if testFixBeaconStateAltair.IsVariableSized() != true {
+		t.Errorf("Expected IsVariableSized = true, got %t", testFixBeaconStateAltair.IsVariableSized())
+	}
+	if testFixBeaconStateAltair.IsVariableSized() != true {
+		t.Errorf("Expected IsVariableSized = true, got %t", testFixBeaconStateAltair.IsVariableSized())
+	}
+	if testFixFork.FixedSize() != 16 {
+		t.Errorf("Expected FixedSize = 16, got %d", testFixFork.FixedSize())
+	}
+	if testFixFork.IsVariableSized() != false {
+		t.Errorf("Expected IsVariableSized = false, got %t", testFixFork.IsVariableSized())
+	}
+	if testFixPendingAttestation.FixedSize() != 4 {
+		t.Errorf("Expected FixedSize = 4, got %d", testFixPendingAttestation.FixedSize())
+	}
+	if testFixPendingAttestation.IsVariableSized() != true {
+		t.Errorf("Expected IsVariableSized = true, got %t", testFixPendingAttestation.IsVariableSized())
+	}
+	if testFixHistoricalBatch.FixedSize() != 524288 {
+		t.Errorf("Expected FixedSize = 524288, got %d", testFixHistoricalBatch.FixedSize())
+	}
+	if testFixHistoricalBatch.IsVariableSized() != false {
+		t.Errorf("Expected IsVariableSized = false, got %t", testFixHistoricalBatch.IsVariableSized())
+	}
+	if testFixSigningData.FixedSize() != 64 {
+		t.Errorf("Expected FixedSize = 64, got %d", testFixSigningData.FixedSize())
+	}
+	if testFixSigningData.IsVariableSized() != false {
+		t.Errorf("Expected IsVariableSized = false, got %t", testFixSigningData.IsVariableSized())
+	}
+	if testFixForkData.FixedSize() != 36 {
+		t.Errorf("Expected FixedSize = 36, got %d", testFixForkData.FixedSize())
+	}
+	if testFixForkData.IsVariableSized() != false {
+		t.Errorf("Expected IsVariableSized = false, got %t", testFixForkData.IsVariableSized())
+	}
+	if testFixDepositMessage.FixedSize() != 88 {
+		t.Errorf("Expected FixedSize = 88, got %d", testFixDepositMessage.FixedSize())
+	}
+	if testFixDepositMessage.IsVariableSized() != false {
+		t.Errorf("Expected IsVariableSized = false, got %t", testFixDepositMessage.IsVariableSized())
+	}
+	if testFixSyncCommittee.FixedSize() != 24624 {
+		t.Errorf("Expected FixedSize = 24624, got %d", testFixSyncCommittee.FixedSize())
+	}
+	if testFixSyncCommittee.IsVariableSized() != false {
+		t.Errorf("Expected IsVariableSized = false, got %t", testFixSyncCommittee.IsVariableSized())
+	}
+	if testFixSyncAggregatorSelectionData.FixedSize() != 16 {
+		t.Errorf("Expected FixedSize = 16, got %d", testFixSyncAggregatorSelectionData.FixedSize())
+	}
+	if testFixSyncAggregatorSelectionData.IsVariableSized() != false {
+		t.Errorf("Expected IsVariableSized = false, got %t", testFixSyncAggregatorSelectionData.IsVariableSized())
+	}
 }
 
 var testFixStatus ValRep = &ValueContainer{Name: "Status", Package: "github.com/prysmaticlabs/prysm/v3/proto/beacon/p2p/v1", Contents: []ContainerField{{Key: "ForkDigest", Value: &ValueVector{Size: 4, ElementValue: &ValueByte{Name: "byte"}}}, {Key: "FinalizedRoot", Value: &ValueVector{Size: 32, ElementValue: &ValueByte{Name: "byte"}}}, {Key: "FinalizedEpoch", Value: &ValueOverlay{Name: "Epoch", Package: "github.com/prysmaticlabs/eth2-types", Underlying: &ValueUint{Name: "uint64", Size: 64}}}, {Key: "HeadRoot", Value: &ValueVector{Size: 32, ElementValue: &ValueByte{Name: "byte"}}}, {Key: "HeadSlot", Value: &ValueOverlay{Name: "Slot", Package: "github.com/prysmaticlabs/eth2-types", Underlying: &ValueUint{Name: "uint64", Size: 64}}}}}

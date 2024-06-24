@@ -4,13 +4,14 @@ import (
 	"log"
 	"os"
 
+	"github.com/OffchainLabs/methodical-ssz/cmd/ssz/commands"
 	"github.com/urfave/cli/v2"
 )
 
 func main() {
 	app := &cli.App{
 		Usage:    "ssz codegen tools",
-		Commands: Commands,
+		Commands: commands.All,
 	}
 
 	err := app.Run(os.Args)
@@ -18,5 +19,3 @@ func main() {
 		log.Fatal(err)
 	}
 }
-
-var Commands = []*cli.Command{Generate, IR, Tests}

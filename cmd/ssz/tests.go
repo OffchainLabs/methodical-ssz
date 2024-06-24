@@ -15,7 +15,7 @@ import (
 )
 
 var releaseURI, configPath string
-var tests = &cli.Command{
+var Tests = &cli.Command{
 	Name:  "spectest",
 	Usage: "generate go test methods to execute spectests against generated types",
 	Flags: []cli.Flag{

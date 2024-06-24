@@ -14,7 +14,7 @@ import (
 
 var sourcePackage, output, typeNames string
 var disableDelegation bool
-var generate = &cli.Command{
+var Generate = &cli.Command{
 	Name:      "generate",
 	ArgsUsage: "<input package, eg github.com/prysmaticlabs/prysm/v3/proto/beacon/p2p/v1>",
 	Aliases:   []string{"gen"},

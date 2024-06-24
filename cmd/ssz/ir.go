@@ -10,7 +10,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-var ir = &cli.Command{
+var IR = &cli.Command{
 	Name:      "ir",
 	ArgsUsage: "<input package, eg github.com/prysmaticlabs/prysm/v3/proto/beacon/p2p/v1>",
 	Aliases:   []string{"gen"},

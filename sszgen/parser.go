@@ -28,11 +28,11 @@ func NewGoPathScoper(packageName string) (*GoPathScoper, error) {
 		return nil, err
 	}
 	for _, pkg := range pkgs {
-		if pkg.ID != packageName {
+		if pkg.PkgPath != packageName {
 			continue
 		}
 
-		pp := &GoPathScoper{packagePath: pkg.ID, pkg: pkg.Types}
+		pp := &GoPathScoper{packagePath: pkg.PkgPath, pkg: pkg.Types}
 		return pp, nil
 	}
 	return nil, fmt.Errorf("package named '%s' could not be loaded from the go build system. Please make sure the current folder contains the go.mod for the target package, or that its go.mod is in a parent directory", packageName)

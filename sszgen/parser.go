@@ -21,7 +21,7 @@ type GoPathScoper struct {
 
 func NewGoPathScoper(packageName string) (*GoPathScoper, error) {
 	cfg := &packages.Config{
-		Mode: packages.NeedTypes | packages.NeedDeps | packages.NeedImports,
+		Mode: packages.NeedFiles | packages.NeedTypes | packages.NeedDeps | packages.NeedImports,
 	}
 	pkgs, err := packages.Load(cfg, []string{packageName}...)
 	if err != nil {

@@ -1,8 +1,10 @@
 package interfaces
 
 import (
+	"fmt"
 	"go/types"
 
+	"github.com/pkg/errors"
 	ssz "github.com/prysmaticlabs/fastssz"
 	"golang.org/x/tools/go/packages"
 )
@@ -29,17 +31,30 @@ var _ = ssz.Marshaler(nil)
 var _ = ssz.Unmarshaler(nil)
 var _ = ssz.HashRoot(nil)
 
-func init() {
+func loadSsz() (*packages.Package, error) {
 	pkgs, err := packages.Load(&packages.Config{Mode: packages.NeedTypes}, "github.com/prysmaticlabs/fastssz")
+	if err != nil {
+		return nil, errors.Wrap(err, "error from packages.Load for fastssz")
+	}
+	if len(pkgs) == 0 {
+		return nil, fmt.Errorf("missing package, add github.com/prysmaticlabs/fastssz to your go.mod")
+	}
+	for _, p := range pkgs {
+		if p.ID == "github.com/prysmaticlabs/fastssz" {
+			return p, nil
+		}
+	}
+	return nil, fmt.Errorf("github.com/prysmaticlabs/fastssz not found in go package index - add to your go.mod")
+}
+
+func init() {
+	pkg, err := loadSsz()
 	if err != nil {
 		panic(err)
 	}
-	if len(pkgs) == 0 {
-		panic("missing package, add github.com/prysmaticlabs/fastssz to your go.mod")
-	}
-	SszMarshaler = pkgs[0].Types.Scope().Lookup("Marshaler").Type().Underlying().(*types.Interface)
-	SszUnmarshaler = pkgs[0].Types.Scope().Lookup("Unmarshaler").Type().Underlying().(*types.Interface)
-	SszFullHasher = pkgs[0].Types.Scope().Lookup("HashRoot").Type().Underlying().(*types.Interface)
+	SszMarshaler = pkg.Types.Scope().Lookup("Marshaler").Type().Underlying().(*types.Interface)
+	SszUnmarshaler = pkg.Types.Scope().Lookup("Unmarshaler").Type().Underlying().(*types.Interface)
+	SszFullHasher = pkg.Types.Scope().Lookup("HashRoot").Type().Underlying().(*types.Interface)
 
 	for i := 0; i < SszFullHasher.NumMethods(); i++ {
 		method := SszFullHasher.Method(i)

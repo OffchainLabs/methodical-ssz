@@ -28,7 +28,7 @@ func NewGoPathScoper(packageName string) (*GoPathScoper, error) {
 		return nil, err
 	}
 	for _, pkg := range pkgs {
-		if pkg.PkgPath != packageName {
+		if pkg.ID != packageName {
 			continue
 		}
 

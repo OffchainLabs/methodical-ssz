@@ -52,3 +52,8 @@ func (vps *VirtualPathScoper) Path() string {
 func (vps *VirtualPathScoper) Scope() *types.Scope {
 	return vps.scope
 }
+
+// TODO: make Importer an interface and figure out how to mock it here
+func (vps *VirtualPathScoper) Importer() *Importer {
+	return nil
+}

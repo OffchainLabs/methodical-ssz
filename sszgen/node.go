@@ -28,7 +28,7 @@ type FieldDef struct {
 	pkg  *types.Package
 }
 
-func newStructDef(fs *token.FileSet, imp types.Importer, typ *types.Named, packageName string) *TypeDef {
+func newStructDef(fs *token.FileSet, imp *Importer, typ *types.Named, packageName string) *TypeDef {
 	mtyp := &TypeDef{
 		Name:        typ.Obj().Name(),
 		PackageName: packageName,
@@ -80,7 +80,7 @@ func newStructDef(fs *token.FileSet, imp types.Importer, typ *types.Named, packa
 	return mtyp
 }
 
-func newPrimitiveDef(fs *token.FileSet, imp types.Importer, typ *types.Named, packageName string) *TypeDef {
+func newPrimitiveDef(fs *token.FileSet, imp *Importer, typ *types.Named, packageName string) *TypeDef {
 	mtyp := &TypeDef{
 		Name:        typ.Obj().Name(),
 		PackageName: packageName,

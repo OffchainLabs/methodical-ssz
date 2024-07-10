@@ -1,9 +1,7 @@
 package sszgen
 
 import (
-	"fmt"
 	"go/format"
-	"go/importer"
 	"go/token"
 	"go/types"
 	"regexp"
@@ -15,45 +13,39 @@ import (
 
 type GoPathScoper struct {
 	packagePath string
-	fieldNames  []string
-	pkg         *types.Package
+	pkg         *packages.Package
+	imp         *Importer
 }
 
 func NewGoPathScoper(packageName string) (*GoPathScoper, error) {
-	cfg := &packages.Config{
-		Mode: packages.NeedFiles | packages.NeedTypes | packages.NeedDeps | packages.NeedImports,
-	}
-	pkgs, err := packages.Load(cfg, []string{packageName}...)
+	imp := NewImporter()
+	pkg, err := imp.Load(packageName)
 	if err != nil {
 		return nil, err
 	}
-	for _, pkg := range pkgs {
-		if pkg.ID != packageName {
-			continue
-		}
-
-		pp := &GoPathScoper{packagePath: pkg.PkgPath, pkg: pkg.Types}
-		return pp, nil
-	}
-	return nil, fmt.Errorf("package named '%s' could not be loaded from the go build system. Please make sure the current folder contains the go.mod for the target package, or that its go.mod is in a parent directory", packageName)
+	return &GoPathScoper{pkg: pkg, imp: imp}, nil
 }
 
 type PathScoper interface {
 	Path() string
 	Scope() *types.Scope
+	Importer() *Importer
 }
 
 func (pp *GoPathScoper) Path() string {
-	return pp.packagePath
+	return pp.pkg.PkgPath
 }
 
 func (pp *GoPathScoper) Scope() *types.Scope {
-	return pp.pkg.Scope()
+	return pp.pkg.Types.Scope()
+}
+
+func (pp *GoPathScoper) Importer() *Importer {
+	return pp.imp
 }
 
 func TypeDefs(ps PathScoper, fieldNames ...string) ([]*TypeDef, error) {
 	fileSet := token.NewFileSet()
-	imp := importer.Default()
 
 	// If no field names are requested, use all
 	if fieldNames == nil {
@@ -68,9 +60,9 @@ func TypeDefs(ps PathScoper, fieldNames ...string) ([]*TypeDef, error) {
 		}
 		var mtyp *TypeDef
 		if _, ok := typ.Underlying().(*types.Struct); ok {
-			mtyp = newStructDef(fileSet, imp, typ, ps.Path())
+			mtyp = newStructDef(fileSet, ps.Importer(), typ, ps.Path())
 		} else {
-			mtyp = newPrimitiveDef(fileSet, imp, typ, ps.Path())
+			mtyp = newPrimitiveDef(fileSet, ps.Importer(), typ, ps.Path())
 		}
 		mtyp.object = obj
 		results[i] = mtyp
@@ -86,7 +78,7 @@ func reformatStructTag(line string) string {
 }
 
 func (pp *GoPathScoper) TypeDefSourceCode(defs []*TypeDef) ([]byte, error) {
-	in := backend.NewImportNamer(pp.pkg.Path(), nil)
+	in := backend.NewImportNamer(pp.Path(), nil)
 	structs := make([]string, 0)
 	for _, def := range defs {
 		obj := def.object
@@ -103,7 +95,7 @@ func (pp *GoPathScoper) TypeDefSourceCode(defs []*TypeDef) ([]byte, error) {
 		structs = append(structs, strings.Join(lines, "\n"))
 	}
 
-	source := "package " + backend.RenderedPackageName(pp.pkg.Path()) + "\n\n" +
+	source := "package " + backend.RenderedPackageName(pp.Path()) + "\n\n" +
 		in.ImportSource() +
 		strings.Join(structs, "\n")
 	return format.Source([]byte(source))

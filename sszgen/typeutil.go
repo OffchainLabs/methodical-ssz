@@ -157,10 +157,10 @@ type fileScope struct {
 	importNames   map[string]string
 	otherNames    map[string]bool // non-package identifiers
 	pkg           *types.Package
-	imp           types.Importer
+	imp           *Importer
 }
 
-func newFileScope(imp types.Importer, pkg *types.Package) *fileScope {
+func newFileScope(imp *Importer, pkg *types.Package) *fileScope {
 	return &fileScope{otherNames: make(map[string]bool), pkg: pkg, imp: imp}
 }
 

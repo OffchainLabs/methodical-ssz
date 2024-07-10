@@ -36,9 +36,10 @@ func (gc *generatedCode) merge(right *generatedCode) {
 // Generator needs to be initialized with the package name,
 // so use the new NewGenerator func for proper setup.
 type Generator struct {
-	gc          []*generatedCode
-	packagePath string
-	importNamer *ImportNamer
+	gc                  []*generatedCode
+	packagePath         string
+	packageNameOverride string
+	importNamer         *ImportNamer
 }
 
 var defaultSSZImports = map[string]string{
@@ -46,12 +47,24 @@ var defaultSSZImports = map[string]string{
 	"fmt":                              "",
 }
 
-func NewGenerator(packagePath string) *Generator {
+type GeneratorOption func(*Generator)
+
+func WithPackageNameOverride(name string) GeneratorOption {
+	return func(g *Generator) {
+		g.packageNameOverride = name
+	}
+}
+
+func NewGenerator(packagePath string, opts ...GeneratorOption) *Generator {
 	importNamer := NewImportNamer(packagePath, defaultSSZImports)
-	return &Generator{
+	g := &Generator{
 		packagePath: packagePath,
 		importNamer: importNamer,
 	}
+	for _, opt := range opts {
+		opt(g)
+	}
+	return g
 }
 
 // TODO Generate should be able to return an error
@@ -99,8 +112,8 @@ import (
 {{.Blocks}}`
 
 func (g *Generator) Render() ([]byte, error) {
-	if g.packagePath == "" {
-		return nil, fmt.Errorf("missing packagePath: Generator requires a packagePath for code generation.")
+	if g.packagePath == "" && g.packageNameOverride == "" {
+		return nil, fmt.Errorf("missing packagePath: Generator requires a packagePath for code generation")
 	}
 	ft := template.New("generated.ssz.go")
 	tmpl, err := ft.Parse(fileTemplate)
@@ -112,12 +125,16 @@ func (g *Generator) Render() ([]byte, error) {
 		final.merge(gc)
 	}
 	buf := bytes.NewBuffer(nil)
+	pn := g.packageNameOverride
+	if pn == "" {
+		pn = RenderedPackageName(g.packagePath)
+	}
 	err = tmpl.Execute(buf, struct {
 		Package string
 		Imports string
 		Blocks  string
 	}{
-		Package: RenderedPackageName(g.packagePath),
+		Package: pn,
 		Imports: g.importNamer.ImportPairs(),
 		Blocks:  final.renderBlocks(),
 	})

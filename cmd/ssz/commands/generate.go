@@ -12,7 +12,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-var sourcePackage, output, typeNames string
+var sourcePackage, output, typeNames, packageNameOverride string
 var disableDelegation bool
 var Generate = &cli.Command{
 	Name:      "generate",
@@ -36,6 +36,12 @@ var Generate = &cli.Command{
 			Name:        "disable-delegation",
 			Usage:       "if specified, do not check for existing ssz method sets. helpful when the codegen source has them already",
 			Destination: &disableDelegation,
+		},
+		&cli.StringFlag{
+			Name:        "override-package-name",
+			Value:       "",
+			Usage:       "Override the default package name (last component of package import path)",
+			Destination: &packageNameOverride,
 		},
 	},
 	Action: func(c *cli.Context) error {
@@ -65,7 +71,11 @@ var Generate = &cli.Command{
 		}
 		defer outFh.Close()
 
-		g := backend.NewGenerator(sourcePackage)
+		genOpts := []backend.GeneratorOption{}
+		if packageNameOverride != "" {
+			genOpts = append(genOpts, backend.WithPackageNameOverride(packageNameOverride))
+		}
+		g := backend.NewGenerator(sourcePackage, genOpts...)
 		defs, err := sszgen.TypeDefs(ps, fields...)
 		if err != nil {
 			return err

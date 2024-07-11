@@ -14,6 +14,7 @@ var (
 	SszUnmarshaler *types.Interface
 	SszFullHasher  *types.Interface
 	SszLightHasher *types.Interface
+	SszSizer       *types.Interface
 )
 
 func NewSSZSupportMap(t types.Type) map[*types.Interface]bool {
@@ -22,6 +23,7 @@ func NewSSZSupportMap(t types.Type) map[*types.Interface]bool {
 		SszUnmarshaler: types.Implements(t, SszUnmarshaler) || types.Implements(types.NewPointer(t), SszUnmarshaler),
 		SszLightHasher: types.Implements(t, SszLightHasher) || types.Implements(types.NewPointer(t), SszLightHasher),
 		SszFullHasher:  types.Implements(t, SszFullHasher) || types.Implements(types.NewPointer(t), SszFullHasher),
+		SszSizer:       types.Implements(t, SszSizer) || types.Implements(types.NewPointer(t), SszSizer),
 	}
 }
 
@@ -60,6 +62,13 @@ func init() {
 		method := SszFullHasher.Method(i)
 		if method.Name() == "HashTreeRoot" {
 			SszLightHasher = types.NewInterfaceType([]*types.Func{method}, nil)
+			break
+		}
+	}
+	for i := 0; i < SszMarshaler.NumMethods(); i++ {
+		method := SszMarshaler.Method(i)
+		if method.Name() == "SizeSSZ" {
+			SszSizer = types.NewInterfaceType([]*types.Func{method}, nil)
 			break
 		}
 	}

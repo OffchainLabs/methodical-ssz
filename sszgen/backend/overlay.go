@@ -61,7 +61,11 @@ func (g *generateOverlay) generateFixedMarshalValue(fieldName string) string {
 }
 
 func (g *generateOverlay) variableSizeSSZ(fieldname string) string {
-	return ""
+	if !g.Underlying.IsVariableSized() {
+		return ""
+	}
+	gg := newValueGenerator(interfaces.SszSizer, g.Underlying, g.targetPackage, g.importNamer)
+	return gg.variableSizeSSZ(fieldname)
 }
 
 func (g *generateOverlay) generateHTRPutter(fieldName string) string {

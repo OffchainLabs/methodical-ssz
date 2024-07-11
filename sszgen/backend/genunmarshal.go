@@ -42,8 +42,7 @@ func GenerateUnmarshalSSZ(g *generateContainer) (*generatedCode, error) {
 			}
 		}
 
-		sliceName := fmt.Sprintf("s%d", i)
-		mv := mg.generateUnmarshalValue(fieldName, sliceName)
+		mv := mg.generateUnmarshalValue(fieldName, sliceName(i))
 		if mv != "" {
 			//unmarshalBlocks = append(unmarshalBlocks, fmt.Sprintf("\t%s = %s", fieldName, mv))
 			unmarshalBlocks = append(unmarshalBlocks, mv)
@@ -111,13 +110,26 @@ func (us *unmarshalStep) fixedSize() int {
 	return us.valRep.FixedSize()
 }
 
+func (us *unmarshalStep) varOffsetName() string {
+	return fmt.Sprintf("sszVarOffset%d", us.fieldNumber)
+}
+
+func sliceName(fieldNumber int) string {
+	return fmt.Sprintf("sszSlice%d", fieldNumber)
+}
+
+func (us *unmarshalStep) sliceName() string {
+	return sliceName(us.fieldNumber)
+}
+
 func (us *unmarshalStep) variableOffset(outerFixedSize int) string {
-	o := fmt.Sprintf("v%d := ssz.ReadOffset(buf[%d:%d]) // %s", us.fieldNumber, us.beginByte, us.endByte, us.fieldName)
+	vname := us.varOffsetName()
+	o := fmt.Sprintf("%s := ssz.ReadOffset(buf[%d:%d]) // %s", vname, us.beginByte, us.endByte, us.fieldName)
 	if us.previousVariable == nil {
-		o += fmt.Sprintf("\nif v%d < %d {\n\treturn ssz.ErrInvalidVariableOffset\n}", us.fieldNumber, outerFixedSize)
-		o += fmt.Sprintf("\nif v%d > size {\n\treturn ssz.ErrOffset\n}", us.fieldNumber)
+		o += fmt.Sprintf("\nif %s < %d {\n\treturn ssz.ErrInvalidVariableOffset\n}", vname, outerFixedSize)
+		o += fmt.Sprintf("\nif %s > size {\n\treturn ssz.ErrOffset\n}", vname)
 	} else {
-		o += fmt.Sprintf("\nif v%d > size || v%d < v%d {\n\treturn ssz.ErrOffset\n}", us.fieldNumber, us.fieldNumber, us.previousVariable.fieldNumber)
+		o += fmt.Sprintf("\nif %s > size || %s < %s {\n\treturn ssz.ErrOffset\n}", vname, vname, us.previousVariable.varOffsetName())
 	}
 	return o
 }
@@ -125,11 +137,11 @@ func (us *unmarshalStep) variableOffset(outerFixedSize int) string {
 func (us *unmarshalStep) slice() string {
 	if us.valRep.IsVariableSized() {
 		if us.nextVariable == nil {
-			return fmt.Sprintf("s%d := buf[v%d:]\t\t// %s", us.fieldNumber, us.fieldNumber, us.fieldName)
+			return fmt.Sprintf("%s := buf[%s:]\t\t// %s", us.sliceName(), us.varOffsetName(), us.fieldName)
 		}
-		return fmt.Sprintf("s%d := buf[v%d:v%d]\t\t// %s", us.fieldNumber, us.fieldNumber, us.nextVariable.fieldNumber, us.fieldName)
+		return fmt.Sprintf("%s := buf[%s:%s]\t\t// %s", us.sliceName(), us.varOffsetName(), us.nextVariable.varOffsetName(), us.fieldName)
 	}
-	return fmt.Sprintf("s%d := buf[%d:%d]\t\t// %s", us.fieldNumber, us.beginByte, us.endByte, us.fieldName)
+	return fmt.Sprintf("%s := buf[%d:%d]\t\t// %s", us.sliceName(), us.beginByte, us.endByte, us.fieldName)
 }
 
 func (steps unmarshalStepSlice) fixedSlices() string {

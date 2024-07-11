@@ -25,7 +25,7 @@ func GenerateSizeSSZ(g *generateContainer) (*generatedCode, error) {
 	fixedSize := 0
 	variableComputations := make([]string, 0)
 	for _, c := range g.Contents {
-		vg := newValueGenerator(interfaces.SszMarshaler, c.Value, g.targetPackage, g.importNamer)
+		vg := newValueGenerator(interfaces.SszSizer, c.Value, g.targetPackage, g.importNamer)
 		fixedSize += c.Value.FixedSize()
 		if !c.Value.IsVariableSized() {
 			continue

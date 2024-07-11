@@ -288,7 +288,10 @@ var variableSizedListTmpl = `func() int {
 
 func (g *generateList) variableSizeSSZ(fieldName string) string {
 	if !g.valRep.ElementValue.IsVariableSized() {
-		return fmt.Sprintf("len(%s) * %d", fieldName, g.valRep.ElementValue.FixedSize())
+		if g.valRep.ElementValue.FixedSize() > 1 {
+			return fmt.Sprintf("len(%s) * %d", fieldName, g.valRep.ElementValue.FixedSize())
+		}
+		return fmt.Sprintf("len(%s)", fieldName)
 	}
 
 	gg := newValueGenerator(interfaces.SszMarshaler, g.valRep.ElementValue, g.targetPackage, g.importNamer)

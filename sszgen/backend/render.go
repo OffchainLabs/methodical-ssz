@@ -44,6 +44,7 @@ type Generator struct {
 
 var defaultSSZImports = map[string]string{
 	"github.com/prysmaticlabs/fastssz": "ssz",
+	"fmt":                              "",
 }
 
 type GeneratorOption func(*Generator)

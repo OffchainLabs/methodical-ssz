@@ -154,10 +154,10 @@ const ByteChunkSize = 32
 
 func (g *generateVector) renderByteSliceAppend(fieldName string) string {
 	if g.valRep.Size%ByteChunkSize == 0 {
-		if g.valRep.IsVariableSized() {
-			return fmt.Sprintf(byteSliceAppendTpl, fieldName, g.valRep.Size, fieldName)
+		if g.valRep.IsArray {
+			return fmt.Sprintf(byteArrayAppendTpl, fieldName, g.valRep.Size, fieldName)
 		} else {
-			return fmt.Sprintf(byteSliceAppendTplFixedSize, fieldName, g.valRep.Size, fieldName)
+			return fmt.Sprintf(byteSliceAppendTpl, fieldName, g.valRep.Size, fieldName)
 		}
 	} else {
 		return fmt.Sprintf(byteSlicePutBytesTpl, fieldName, g.valRep.Size, fieldName)
@@ -169,7 +169,7 @@ var byteSliceAppendTpl = `if len(%s) != %d {
 }
 hh.Append(%s)`
 
-var byteSliceAppendTplFixedSize = `if len(%s) != %d {
+var byteArrayAppendTpl = `if len(%s) != %d {
 	return ssz.ErrBytesLength
 }
 hh.Append(%s[:])`

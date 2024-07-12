@@ -86,9 +86,7 @@ func (g *generateList) generateHTRPutter(fieldName string) string {
 		gv := &generateVector{valRep: v, targetPackage: g.targetPackage}
 		if gv.isByteVector() {
 			lpe.AppendCall = gv.renderByteSliceAppend(nestedFieldName)
-			mtmpl := `numItems := uint64(len(%s))
-		hh.MerkleizeWithMixin(subIndx, numItems, ssz.CalculateLimit(%d, numItems, %d))`
-			lpe.Merkleize = fmt.Sprintf(mtmpl, fieldName, g.valRep.MaxSize, v.FixedSize())
+			lpe.Merkleize = fmt.Sprintf("hh.MerkleizeWithMixin(subIndx, uint64(len(%s)), %d)", fieldName, g.valRep.MaxSize)
 			return renderHtrListPutter(lpe)
 		}
 	case *types.ValueUint:

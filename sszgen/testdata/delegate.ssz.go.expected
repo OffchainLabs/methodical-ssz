@@ -1,0 +1,282 @@
+package delegatefixture
+
+import (
+	binary "encoding/binary"
+	"fmt"
+	ssz "github.com/OffchainLabs/methodical-ssz/ssz"
+)
+
+func (c *DelegateContainer) SizeSSZ() int {
+	size := 28
+	size += len(c.Items) * 8
+	if c.B == nil {
+		c.B = new(Blob)
+	}
+	size += c.B.SizeSSZ()
+	for _, o := range c.Blobs {
+		size += 4
+		size += o.SizeSSZ()
+	}
+	return size
+}
+
+func (c *DelegateContainer) MarshalSSZ() ([]byte, error) {
+	buf := make([]byte, c.SizeSSZ())
+	return c.MarshalSSZTo(buf[:0])
+}
+
+func (c *DelegateContainer) MarshalSSZTo(dst []byte) ([]byte, error) {
+	var err error
+	offset := 28
+
+	// Field 0: Full
+	if c.Full == nil {
+		c.Full = new(Wide)
+	}
+	if dst, err = c.Full.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("Full: %w", err)
+	}
+
+	// Field 1: Val
+	if dst, err = c.Val.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("Val: %w", err)
+	}
+
+	// Field 2: Items
+	dst = ssz.WriteOffset(dst, offset)
+	offset += len(c.Items) * 8
+
+	// Field 3: B
+	if c.B == nil {
+		c.B = new(Blob)
+	}
+	dst = ssz.WriteOffset(dst, offset)
+	offset += c.B.SizeSSZ()
+
+	// Field 4: Blobs
+	dst = ssz.WriteOffset(dst, offset)
+	for _, o := range c.Blobs {
+		offset += 4
+		offset += o.SizeSSZ()
+	}
+
+	// Field 2: Items
+	if len(c.Items) > 4 {
+		return nil, ssz.ErrListTooBig
+	}
+	for _, o := range c.Items {
+		if dst, err = o.MarshalSSZTo(dst); err != nil {
+			return nil, fmt.Errorf("Items: %w", err)
+		}
+	}
+
+	// Field 3: B
+	if dst, err = c.B.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("B: %w", err)
+	}
+
+	// Field 4: Blobs
+	if len(c.Blobs) > 256 {
+		return nil, ssz.ErrListTooBig
+	}
+	{
+		offset = 4 * len(c.Blobs)
+		for _, o := range c.Blobs {
+			dst = ssz.WriteOffset(dst, offset)
+			offset += o.SizeSSZ()
+		}
+	}
+	for _, o := range c.Blobs {
+		if dst, err = o.MarshalSSZTo(dst); err != nil {
+			return nil, fmt.Errorf("Blobs: %w", err)
+		}
+	}
+	return dst, err
+}
+
+func (c *DelegateContainer) UnmarshalSSZ(buf []byte) error {
+	var err error
+	size := uint64(len(buf))
+	if size < 28 {
+		return ssz.ErrSize
+	}
+
+	sszSlice0 := buf[0:8]  // c.Full
+	sszSlice1 := buf[8:16] // c.Val
+
+	sszVarOffset2 := ssz.ReadOffset(buf[16:20]) // c.Items
+	if sszVarOffset2 != 28 {
+		return ssz.ErrInvalidVariableOffset
+	}
+	if sszVarOffset2 > size {
+		return ssz.ErrOffset
+	}
+	sszVarOffset3 := ssz.ReadOffset(buf[20:24]) // c.B
+	if sszVarOffset3 > size || sszVarOffset3 < sszVarOffset2 {
+		return ssz.ErrOffset
+	}
+	sszVarOffset4 := ssz.ReadOffset(buf[24:28]) // c.Blobs
+	if sszVarOffset4 > size || sszVarOffset4 < sszVarOffset3 {
+		return ssz.ErrOffset
+	}
+	sszSlice2 := buf[sszVarOffset2:sszVarOffset3] // c.Items
+	sszSlice3 := buf[sszVarOffset3:sszVarOffset4] // c.B
+	sszSlice4 := buf[sszVarOffset4:]              // c.Blobs
+
+	// Field 0: Full
+	c.Full = new(Wide)
+	if err = c.Full.UnmarshalSSZ(sszSlice0); err != nil {
+		return fmt.Errorf("Full: %w", err)
+	}
+
+	// Field 1: Val
+	if err = c.Val.UnmarshalSSZ(sszSlice1); err != nil {
+		return fmt.Errorf("Val: %w", err)
+	}
+
+	// Field 2: Items
+	{
+		if len(sszSlice2)%8 != 0 {
+			return fmt.Errorf("misaligned bytes: c.Items length is %d, which is not a multiple of 8: %w", len(sszSlice2), ssz.ErrIncorrectListSize)
+		}
+		numElem := len(sszSlice2) / 8
+		if numElem > 4 {
+			return fmt.Errorf("ssz-max exceeded: c.Items has %d elements, ssz-max is 4: %w", numElem, ssz.ErrListTooBig)
+		}
+		c.Items = make([]*Wide, numElem)
+		for i := 0; i < numElem; i++ {
+			var tmp *Wide
+			tmp = new(Wide)
+			tmpSlice := sszSlice2[i*8 : (1+i)*8]
+			if err = tmp.UnmarshalSSZ(tmpSlice); err != nil {
+				return fmt.Errorf("Items: %w", err)
+			}
+			c.Items[i] = tmp
+		}
+	}
+
+	// Field 3: B
+	c.B = new(Blob)
+	if err = c.B.UnmarshalSSZ(sszSlice3); err != nil {
+		return fmt.Errorf("B: %w", err)
+	}
+
+	// Field 4: Blobs
+	{
+		// empty lists are zero length, so make sure there is room for an offset
+		// before attempting to unmarshal it
+		if len(sszSlice4) > 3 {
+			startOffset := ssz.ReadOffset(sszSlice4[0:4])
+			if startOffset == 0 {
+				return fmt.Errorf("encountered invalid offset of 0 when decoding c.Blobs")
+			}
+			if startOffset%4 != 0 {
+				return fmt.Errorf("misaligned list bytes: when decoding c.Blobs, end-of-list offset is %d, which is not a multiple of 4 (offset size)", startOffset)
+			}
+			listLen := startOffset / 4
+			if listLen > 256 {
+				return fmt.Errorf("ssz-max exceeded: c.Blobs has %d elements, ssz-max is 256: %w", listLen, ssz.ErrListTooBig)
+			}
+			totalVarBytes := uint64(len(sszSlice4))
+			if totalVarBytes < startOffset {
+				return fmt.Errorf("list bytes too short to contain an offset when decoding c.Blobs")
+			}
+			c.Blobs = make([]*Blob, listLen)
+			var tmpSlice []byte
+			for i := uint64(0); i < listLen; i++ {
+				var tmp *Blob
+				tmp = new(Blob)
+				endOffset := totalVarBytes
+				if i+1 != listLen {
+					endOffset = ssz.ReadOffset(sszSlice4[(i+1)*4 : (i+2)*4])
+					if totalVarBytes < endOffset {
+						return fmt.Errorf("offset %d points past the end of buffer when decoding c.Blobs", endOffset)
+					}
+				}
+				if endOffset < startOffset {
+					return fmt.Errorf("offset %d is not greater than start offset %d when decoding c.Blobs", endOffset, startOffset)
+				}
+				tmpSlice = sszSlice4[startOffset:endOffset]
+				if err = tmp.UnmarshalSSZ(tmpSlice); err != nil {
+					return fmt.Errorf("Blobs: %w", err)
+				}
+				c.Blobs[i] = tmp
+				startOffset = endOffset
+			}
+		} else {
+			if len(sszSlice4) > 0 {
+				return fmt.Errorf("list bytes too short to contain an offset when decoding c.Blobs")
+			}
+			c.Blobs = make([]*Blob, 0)
+		}
+	}
+	return err
+}
+
+func (c *DelegateContainer) HashTreeRoot() ([32]byte, error) {
+	hh := ssz.DefaultHasherPool.Get()
+	if err := c.HashTreeRootWith(hh); err != nil {
+		ssz.DefaultHasherPool.Put(hh)
+		return [32]byte{}, err
+	}
+	root, err := hh.HashRoot()
+	ssz.DefaultHasherPool.Put(hh)
+	return root, err
+}
+
+func (c *DelegateContainer) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+	indx := hh.Index()
+	// Field 0: Full
+	if err := c.Full.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("Full: %w", err)
+	}
+	// Field 1: Val
+	if hash, err := c.Val.HashTreeRoot(); err != nil {
+		return fmt.Errorf("Val: %w", err)
+	} else {
+		hh.AppendBytes32(hash[:])
+	}
+	// Field 2: Items
+	{
+		if len(c.Items) > 4 {
+			return ssz.ErrListTooBig
+		}
+		subIndx := hh.Index()
+		for _, o := range c.Items {
+			if len(o) != 8 {
+				return ssz.ErrBytesLength
+			}
+			hh.PutBytes(o[:])
+		}
+		hh.MerkleizeWithMixin(subIndx, uint64(len(c.Items)), 4)
+	}
+	// Field 3: B
+	if hash, err := c.B.HashTreeRoot(); err != nil {
+		return fmt.Errorf("B: %w", err)
+	} else {
+		hh.AppendBytes32(hash[:])
+	}
+	// Field 4: Blobs
+	{
+		if len(c.Blobs) > 256 {
+			return ssz.ErrListTooBig
+		}
+		subIndx := hh.Index()
+		for _, o := range c.Blobs {
+
+			{
+				if len(o) > 256 {
+					return ssz.ErrBytesLength
+				}
+				subIndx := hh.Index()
+				hh.AppendBytes32(o)
+				numItems := uint64(len(o))
+				hh.MerkleizeWithMixin(subIndx, numItems, (256*1+31)/32)
+			}
+
+		}
+		hh.MerkleizeWithMixin(subIndx, uint64(len(c.Blobs)), 256)
+	}
+	hh.Merkleize(indx)
+	return nil
+}

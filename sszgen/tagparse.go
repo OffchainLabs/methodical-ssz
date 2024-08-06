@@ -73,9 +73,7 @@ func (tp TagParser) GetSSZTags() map[string]string {
 	return tags
 }
 
-// cannot compare untyped nil to typed nil
-// this value gives us a nil with type of *int
-// to compare to ssz-size = '?' values
+// typed nil (*int) for comparing SSZDimension pointer fields.
 var nilInt *int
 
 func extractSSZDimensions(tag string) ([]*SSZDimension, error) {

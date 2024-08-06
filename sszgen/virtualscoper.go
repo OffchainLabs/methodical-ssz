@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"go/types"
 
+	"github.com/OffchainLabs/methodical-ssz/sszgen/config"
 	"github.com/pkg/errors"
 )
 
@@ -20,6 +21,7 @@ type VirtualPathScoper struct {
 	files  []*ast.File
 	scope  *types.Scope
 	path   string
+	gcfg   *config.GeneratorConfig
 }
 
 func NewVirtualPathScoper(pkgName string, vfs ...VirtualFile) (*VirtualPathScoper, error) {
@@ -51,4 +53,12 @@ func (vps *VirtualPathScoper) Path() string {
 
 func (vps *VirtualPathScoper) Scope() *types.Scope {
 	return vps.scope
+}
+
+// TODO: mock type configs?
+func (vps *VirtualPathScoper) TypeConfig(name string) config.TypeConfig {
+	if vps.gcfg == nil {
+		return config.TypeConfig{}
+	}
+	return vps.gcfg.TypeConfig(name)
 }

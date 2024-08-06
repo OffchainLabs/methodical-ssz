@@ -17,6 +17,10 @@ type ValueContainer struct {
 	HasSSZMethods bool
 	nameMap       map[string]ValRep
 	Interfaces    map[*types.Interface]bool
+	// ActiveFields marks the container as an SSZ ProgressiveContainer and
+	// holds its active_fields bitvector (true = a declared Go field occupies
+	// the position, false = reserved/removed). nil for regular containers.
+	ActiveFields []bool
 }
 
 func (vc *ValueContainer) Fields() []ContainerField {

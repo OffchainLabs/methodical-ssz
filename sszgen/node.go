@@ -5,6 +5,8 @@ import (
 	"go/token"
 	"go/types"
 	"os"
+
+	"github.com/OffchainLabs/methodical-ssz/sszgen/config"
 )
 
 // TypeDef represents the intermediate struct type used during marshaling.
@@ -16,8 +18,12 @@ type TypeDef struct {
 	Fields      []*FieldDef
 	fs          *token.FileSet
 	orig        *types.Named
-	scope       *fileScope
 	object      types.Object
+	cfg         config.TypeConfig
+}
+
+func (t *TypeDef) NaturalLeaves() int {
+	return len(t.Fields)
 }
 
 // FieldDef represents a field of the intermediate marshaling type.
@@ -28,23 +34,19 @@ type FieldDef struct {
 	pkg  *types.Package
 }
 
-func newStructDef(fs *token.FileSet, imp types.Importer, typ *types.Named, packageName string) *TypeDef {
+func newStructDef(fs *token.FileSet, ps PathScoper, typ *types.Named, obj types.Object) *TypeDef {
+	name := typ.Obj().Name()
 	mtyp := &TypeDef{
-		Name:        typ.Obj().Name(),
-		PackageName: packageName,
+		Name:        name,
+		PackageName: ps.Path(),
 		IsStruct:    true,
 		fs:          fs,
 		orig:        typ,
+		cfg:         ps.TypeConfig(name),
+		object:      obj,
 	}
 
 	styp := typ.Underlying().(*types.Struct)
-	mtyp.scope = newFileScope(imp, typ.Obj().Pkg())
-	mtyp.scope.addReferences(styp)
-
-	// Add packages which are always needed.
-	mtyp.scope.addImport("encoding/json")
-	mtyp.scope.addImport("errors")
-
 	for i := 0; i < styp.NumFields(); i++ {
 		f := styp.Field(i)
 		if !f.Exported() {
@@ -80,20 +82,17 @@ func newStructDef(fs *token.FileSet, imp types.Importer, typ *types.Named, packa
 	return mtyp
 }
 
-func newPrimitiveDef(fs *token.FileSet, imp types.Importer, typ *types.Named, packageName string) *TypeDef {
+func newPrimitiveDef(fs *token.FileSet, ps PathScoper, typ *types.Named, obj types.Object) *TypeDef {
+	name := typ.Obj().Name()
 	mtyp := &TypeDef{
-		Name:        typ.Obj().Name(),
-		PackageName: packageName,
+		Name:        name,
+		PackageName: ps.Path(),
 		IsStruct:    false,
 		fs:          fs,
 		orig:        typ,
+		cfg:         ps.TypeConfig(name),
+		object:      obj,
 	}
-	mtyp.scope = newFileScope(imp, typ.Obj().Pkg())
-	mtyp.scope.addReferences(typ.Underlying())
-
-	// Add packages which are always needed.
-	mtyp.scope.addImport("encoding/json")
-	mtyp.scope.addImport("errors")
 
 	fd := &FieldDef{
 		name: typ.Underlying().String(),

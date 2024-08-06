@@ -1,0 +1,256 @@
+package foo
+
+import (
+	binary "encoding/binary"
+	"fmt"
+	go_bitfield "github.com/OffchainLabs/go-bitfield"
+	ssz "github.com/OffchainLabs/methodical-ssz/ssz"
+)
+
+func (c *Prog) SizeSSZ() int {
+	size := 24
+	size += len(c.B) * 8
+	for _, o := range c.C {
+		size += 4
+		size += o.SizeSSZ()
+	}
+	size += len(c.D)
+	if c.E == nil {
+		c.E = new(NestedProg)
+	}
+	size += c.E.SizeSSZ()
+	return size
+}
+
+func (c *Prog) MarshalSSZ() ([]byte, error) {
+	buf := make([]byte, c.SizeSSZ())
+	return c.MarshalSSZTo(buf[:0])
+}
+
+func (c *Prog) MarshalSSZTo(dst []byte) ([]byte, error) {
+	var err error
+	offset := 24
+
+	// Field 0: A
+	dst = binary.LittleEndian.AppendUint64(dst, c.A)
+
+	// Field 1: B
+	dst = ssz.WriteOffset(dst, offset)
+	offset += len(c.B) * 8
+
+	// Field 2: C
+	dst = ssz.WriteOffset(dst, offset)
+	for _, o := range c.C {
+		offset += 4
+		offset += o.SizeSSZ()
+	}
+
+	// Field 3: D
+	dst = ssz.WriteOffset(dst, offset)
+	offset += len(c.D)
+
+	// Field 4: E
+	if c.E == nil {
+		c.E = new(NestedProg)
+	}
+	dst = ssz.WriteOffset(dst, offset)
+	offset += c.E.SizeSSZ()
+
+	// Field 1: B
+	for _, o := range c.B {
+		dst = binary.LittleEndian.AppendUint64(dst, o)
+	}
+
+	// Field 2: C
+	{
+		offset = 4 * len(c.C)
+		for _, o := range c.C {
+			dst = ssz.WriteOffset(dst, offset)
+			offset += o.SizeSSZ()
+		}
+	}
+	for _, o := range c.C {
+		if dst, err = o.MarshalSSZTo(dst); err != nil {
+			return nil, fmt.Errorf("C: %w", err)
+		}
+	}
+
+	// Field 3: D
+	dst = append(dst, c.D...)
+
+	// Field 4: E
+	if dst, err = c.E.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("E: %w", err)
+	}
+	return dst, err
+}
+
+func (c *Prog) UnmarshalSSZ(buf []byte) error {
+	var err error
+	size := uint64(len(buf))
+	if size < 24 {
+		return ssz.ErrSize
+	}
+
+	sszSlice0 := buf[0:8] // c.A
+
+	sszVarOffset1 := ssz.ReadOffset(buf[8:12]) // c.B
+	if sszVarOffset1 != 24 {
+		return ssz.ErrInvalidVariableOffset
+	}
+	if sszVarOffset1 > size {
+		return ssz.ErrOffset
+	}
+	sszVarOffset2 := ssz.ReadOffset(buf[12:16]) // c.C
+	if sszVarOffset2 > size || sszVarOffset2 < sszVarOffset1 {
+		return ssz.ErrOffset
+	}
+	sszVarOffset3 := ssz.ReadOffset(buf[16:20]) // c.D
+	if sszVarOffset3 > size || sszVarOffset3 < sszVarOffset2 {
+		return ssz.ErrOffset
+	}
+	sszVarOffset4 := ssz.ReadOffset(buf[20:24]) // c.E
+	if sszVarOffset4 > size || sszVarOffset4 < sszVarOffset3 {
+		return ssz.ErrOffset
+	}
+	sszSlice1 := buf[sszVarOffset1:sszVarOffset2] // c.B
+	sszSlice2 := buf[sszVarOffset2:sszVarOffset3] // c.C
+	sszSlice3 := buf[sszVarOffset3:sszVarOffset4] // c.D
+	sszSlice4 := buf[sszVarOffset4:]              // c.E
+
+	// Field 0: A
+	c.A = binary.LittleEndian.Uint64(sszSlice0)
+
+	// Field 1: B
+	{
+		if len(sszSlice1)%8 != 0 {
+			return fmt.Errorf("misaligned bytes: c.B length is %d, which is not a multiple of 8: %w", len(sszSlice1), ssz.ErrIncorrectListSize)
+		}
+		numElem := len(sszSlice1) / 8
+		c.B = make([]uint64, numElem)
+		for i := 0; i < numElem; i++ {
+			var tmp uint64
+
+			tmpSlice := sszSlice1[i*8 : (1+i)*8]
+			tmp = binary.LittleEndian.Uint64(tmpSlice)
+			c.B[i] = tmp
+		}
+	}
+
+	// Field 2: C
+	{
+		// empty lists are zero length, so make sure there is room for an offset
+		// before attempting to unmarshal it
+		if len(sszSlice2) > 3 {
+			startOffset := ssz.ReadOffset(sszSlice2[0:4])
+			if startOffset == 0 {
+				return fmt.Errorf("encountered invalid offset of 0 when decoding c.C")
+			}
+			if startOffset%4 != 0 {
+				return fmt.Errorf("misaligned list bytes: when decoding c.C, end-of-list offset is %d, which is not a multiple of 4 (offset size)", startOffset)
+			}
+			listLen := startOffset / 4
+			totalVarBytes := uint64(len(sszSlice2))
+			if totalVarBytes < startOffset {
+				return fmt.Errorf("list bytes too short to contain an offset when decoding c.C")
+			}
+			c.C = make([]*NestedProg, listLen)
+			var tmpSlice []byte
+			for i := uint64(0); i < listLen; i++ {
+				var tmp *NestedProg
+				tmp = new(NestedProg)
+				endOffset := totalVarBytes
+				if i+1 != listLen {
+					endOffset = ssz.ReadOffset(sszSlice2[(i+1)*4 : (i+2)*4])
+					if totalVarBytes < endOffset {
+						return fmt.Errorf("offset %d points past the end of buffer when decoding c.C", endOffset)
+					}
+				}
+				if endOffset < startOffset {
+					return fmt.Errorf("offset %d is not greater than start offset %d when decoding c.C", endOffset, startOffset)
+				}
+				tmpSlice = sszSlice2[startOffset:endOffset]
+				if err = tmp.UnmarshalSSZ(tmpSlice); err != nil {
+					return fmt.Errorf("C: %w", err)
+				}
+				c.C[i] = tmp
+				startOffset = endOffset
+			}
+		} else {
+			if len(sszSlice2) > 0 {
+				return fmt.Errorf("list bytes too short to contain an offset when decoding c.C")
+			}
+			c.C = make([]*NestedProg, 0)
+		}
+	}
+
+	// Field 3: D
+	if err = ssz.ValidateProgressiveBitlist(sszSlice3); err != nil {
+		return fmt.Errorf("D: %w", err)
+	}
+	c.D = append([]byte{}, go_bitfield.Bitlist(sszSlice3)...)
+
+	// Field 4: E
+	c.E = new(NestedProg)
+	if err = c.E.UnmarshalSSZ(sszSlice4); err != nil {
+		return fmt.Errorf("E: %w", err)
+	}
+	return err
+}
+
+func (c *Prog) HashTreeRoot() ([32]byte, error) {
+	return c.ProgressiveHashTreeRoot()
+}
+
+func (c *Prog) HashTreeRootWith(hh *ssz.Hasher) error {
+	return c.ProgressiveHashTreeRootWith(hh)
+}
+
+var activeFieldsProg = []byte{0b00111011}
+
+func (c *Prog) ProgressiveHashTreeRoot() ([32]byte, error) {
+	hh := ssz.DefaultHasherPool.Get()
+	if err := c.ProgressiveHashTreeRootWith(hh); err != nil {
+		ssz.DefaultHasherPool.Put(hh)
+		return [32]byte{}, err
+	}
+	root, err := hh.HashRoot()
+	ssz.DefaultHasherPool.Put(hh)
+	return root, err
+}
+
+func (c *Prog) ProgressiveHashTreeRootWith(hh *ssz.Hasher) (err error) {
+	indx := hh.Index()
+	// Field 0: A
+	hh.PutUint64(c.A)
+	// Field 1: B
+	{
+		subIndx := hh.Index()
+		for _, o := range c.B {
+			hh.AppendUint64(o)
+		}
+		hh.FillUpTo32()
+		hh.MerkleizeProgressiveWithMixin(subIndx, uint64(len(c.B)))
+	}
+	// Field 2: C
+	{
+		subIndx := hh.Index()
+		for _, o := range c.C {
+			if err := o.HashTreeRootWith(hh); err != nil {
+				return fmt.Errorf("C: %w", err)
+			}
+		}
+		hh.MerkleizeProgressiveWithMixin(subIndx, uint64(len(c.C)))
+	}
+	// Field 3: D
+	if len(c.D) == 0 {
+		return ssz.ErrEmptyBitlist
+	}
+	hh.PutProgressiveBitlist(c.D)
+	// Field 4: E
+	if err := c.E.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("E: %w", err)
+	}
+	hh.MerkleizeProgressiveWithActiveFields(indx, activeFieldsProg)
+	return nil
+}

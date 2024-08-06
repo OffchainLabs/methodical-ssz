@@ -4,14 +4,14 @@ import (
 	"log"
 	"os"
 
+	"github.com/OffchainLabs/methodical-ssz/cmd/ssz/commands"
 	"github.com/urfave/cli/v2"
 )
 
 func main() {
 	app := &cli.App{
-		Usage: "ssz support for prysm",
-		// TODO: implement benchmark
-		Commands: []*cli.Command{ /*benchmark,*/ generate, ir, tests},
+		Usage:    "ssz codegen tools",
+		Commands: commands.All,
 	}
 
 	err := app.Run(os.Args)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/types"
 
+	"github.com/OffchainLabs/methodical-ssz/sszgen/config"
 	"github.com/OffchainLabs/methodical-ssz/sszgen/interfaces"
 	gentypes "github.com/OffchainLabs/methodical-ssz/sszgen/types"
 	"github.com/pkg/errors"
@@ -28,11 +29,18 @@ func ParseTypeDef(typ *TypeDef, opts ...FieldParserOpt) (gentypes.ValRep, error)
 			Package: typ.orig.Obj().Pkg().Path(),
 		}
 		for _, f := range typ.Fields {
-			rep, err := p.expand(f)
+			rep, err := p.expandField(f, typ.cfg.Fields[f.name])
 			if err != nil {
 				return nil, err
 			}
 			vr.Append(f.name, rep)
+		}
+		if typ.cfg.Progressive != nil {
+			af, err := typ.cfg.Progressive.ActiveFields(len(typ.Fields))
+			if err != nil {
+				return nil, fmt.Errorf("type %s: %w", typ.Name, err)
+			}
+			vr.ActiveFields = af
 		}
 		return vr, nil
 	}
@@ -51,6 +59,137 @@ func ParseTypeDef(typ *TypeDef, opts ...FieldParserOpt) (gentypes.ValRep, error)
 
 type FieldParser struct {
 	disableDelegation bool
+	typeConfig        *config.GeneratorConfig
+	// ifaces is the delegation interface set used to build support maps. Its
+	// pointers are identity keys shared with the render GenContext; the
+	// default is interfaces.DefaultSet(), injectable via WithInterfaceSet for
+	// a plugin targeting its own interfaces.
+	ifaces *interfaces.Set
+}
+
+// WithInterfaceSet injects the delegation interface set used to build the
+// ValReps' support maps. The same Set instance must be supplied to the render
+// GenContext — the interface pointers are identity keys.
+func WithInterfaceSet(s *interfaces.Set) FieldParserOpt {
+	return func(p *FieldParser) {
+		p.ifaces = s
+	}
+}
+
+// supportMap builds the delegation support map for ty from the parser's
+// interface set, defaulting to interfaces.DefaultSet on first use.
+func (p *FieldParser) supportMap(ty types.Type) (map[*types.Interface]bool, error) {
+	if p.ifaces == nil {
+		s, err := interfaces.DefaultSet()
+		if err != nil {
+			return nil, err
+		}
+		p.ifaces = s
+	}
+	return p.ifaces.SupportMap(ty), nil
+}
+
+// expandField expands a struct field, applying any yaml field-config override
+// (progressive collections are declared in the generator config rather than
+// struct tags — they need no ssz-max, having no limit).
+func (p *FieldParser) expandField(f *FieldDef, fc config.FieldConfig) (gentypes.ValRep, error) {
+	switch fc.Type {
+	case "":
+		return p.expand(f)
+	case config.FieldTypeProgressiveList, config.FieldTypeProgressiveByteList:
+		return p.expandProgressiveList(f, fc)
+	case config.FieldTypeProgressiveBitlist:
+		return p.expandProgressiveBitlist(f)
+	default:
+		return nil, fmt.Errorf("field %s: unknown field config type %q", f.name, fc.Type)
+	}
+}
+
+// expandProgressiveList expands a slice-typed field as an SSZ ProgressiveList.
+func (p *FieldParser) expandProgressiveList(f *FieldDef, fc config.FieldConfig) (gentypes.ValRep, error) {
+	if _, ok := f.typ.(*types.Slice); !ok {
+		return nil, fmt.Errorf("field %s: %s requires a slice type, got %v", f.name, fc.Type, f.typ)
+	}
+	// Expand as a bounded list first to resolve element SSZ dimensions against
+	// the tag, then mark it progressive (progressive lists are unbounded, so
+	// MaxSize stays unset).
+	vr, err := p.expand(f)
+	if err != nil {
+		return nil, err
+	}
+	list, ok := vr.(*gentypes.ValueList)
+	if !ok {
+		return nil, fmt.Errorf("field %s: %s requires a list type, got %v", f.name, fc.Type, f.typ)
+	}
+	if fc.Type == config.FieldTypeProgressiveByteList {
+		if _, isByte := list.ElementValue.(*gentypes.ValueByte); !isByte {
+			return nil, fmt.Errorf("field %s: ProgressiveByteList requires a byte slice, got %v", f.name, f.typ)
+		}
+	}
+	// Apply an optional element override for nested progressive collections
+	// whose element has no named Go type to delegate to.
+	elem, err := applyElementConfig(f.name, list.ElementValue, fc.Element)
+	if err != nil {
+		return nil, err
+	}
+	return &gentypes.ValueList{ElementValue: elem, Progressive: true}, nil
+}
+
+// applyElementConfig rewrites an already-expanded element value to its
+// progressive form (recursing for deeper nesting), honoring a nested FieldConfig.
+func applyElementConfig(field string, elem gentypes.ValRep, ec *config.FieldConfig) (gentypes.ValRep, error) {
+	if ec == nil {
+		return elem, nil
+	}
+	switch ec.Type {
+	case config.FieldTypeProgressiveList, config.FieldTypeProgressiveByteList:
+		list, ok := elem.(*gentypes.ValueList)
+		if !ok {
+			return nil, fmt.Errorf("field %s: element %s requires a list element, got %T", field, ec.Type, elem)
+		}
+		if ec.Type == config.FieldTypeProgressiveByteList {
+			if _, isByte := list.ElementValue.(*gentypes.ValueByte); !isByte {
+				return nil, fmt.Errorf("field %s: element ProgressiveByteList requires a byte slice, got %v", field, elem)
+			}
+		}
+		inner, err := applyElementConfig(field, list.ElementValue, ec.Element)
+		if err != nil {
+			return nil, err
+		}
+		return &gentypes.ValueList{ElementValue: inner, Progressive: true}, nil
+	default:
+		return nil, fmt.Errorf("field %s: unsupported element config type %q", field, ec.Type)
+	}
+}
+
+// expandProgressiveBitlist expands a go-bitfield Bitlist-style field (a named
+// type whose underlying type is a byte slice) as an SSZ ProgressiveBitlist.
+func (p *FieldParser) expandProgressiveBitlist(f *FieldDef) (gentypes.ValRep, error) {
+	named, ok := f.typ.(*types.Named)
+	if !ok {
+		return nil, fmt.Errorf("field %s: ProgressiveBitlist requires a named bitlist type, got %v", f.name, f.typ)
+	}
+	slice, ok := named.Underlying().(*types.Slice)
+	if !ok {
+		return nil, fmt.Errorf("field %s: ProgressiveBitlist requires a byte-slice-backed type, got %v", f.name, f.typ)
+	}
+	basic, ok := slice.Elem().(*types.Basic)
+	if !ok || basic.Kind() != types.Byte {
+		return nil, fmt.Errorf("field %s: ProgressiveBitlist requires a byte-slice-backed type, got %v", f.name, f.typ)
+	}
+	v := &gentypes.ValueOverlay{
+		Name:       named.Obj().Name(),
+		Package:    named.Obj().Pkg().Path(),
+		Underlying: &gentypes.ValueList{ElementValue: &gentypes.ValueByte{Name: "byte"}, Progressive: true},
+	}
+	if !p.disableDelegation {
+		ifs, err := p.supportMap(named)
+		if err != nil {
+			return nil, err
+		}
+		v.Interfaces = ifs
+	}
+	return v, nil
 }
 
 func (p *FieldParser) expand(f *FieldDef) (gentypes.ValRep, error) {
@@ -67,7 +206,14 @@ func (p *FieldParser) expand(f *FieldDef) (gentypes.ValRep, error) {
 		}
 		v := &gentypes.ValuePointer{Referent: vr}
 		if !p.disableDelegation {
-			v.Interfaces = interfaces.NewSSZSupportMap(ty)
+			ifs, err := p.supportMap(ty)
+			if err != nil {
+				return nil, err
+			}
+			v.Interfaces = ifs
+			// the pointer's SatisfiesInterface needs to recognize the
+			// unmarshaler key to refuse referent fall-through for it
+			v.Unmarshaler = p.ifaces.Unmarshaler
 		}
 		return v, nil
 	case *types.Struct:
@@ -76,7 +222,11 @@ func (p *FieldParser) expand(f *FieldDef) (gentypes.ValRep, error) {
 			Package: f.pkg.Path(),
 		}
 		if !p.disableDelegation {
-			container.Interfaces = interfaces.NewSSZSupportMap(ty)
+			ifs, err := p.supportMap(ty)
+			if err != nil {
+				return nil, err
+			}
+			container.Interfaces = ifs
 		}
 		for i := 0; i < ty.NumFields(); i++ {
 			field := ty.Field(i)
@@ -91,7 +241,14 @@ func (p *FieldParser) expand(f *FieldDef) (gentypes.ValRep, error) {
 		}
 		return &container, nil
 	case *types.Named:
-		exp, err := p.expand(&FieldDef{name: ty.Obj().Name(), tag: f.tag, typ: ty.Underlying(), pkg: f.pkg})
+		pkg := ty.Obj().Pkg()
+		// Recognize github.com/holiman/uint256.Int (by package+name) as the SSZ
+		// uint256 basic type. Pointer fields still delegate via the pointer
+		// wrapper; this native form serves value fields and collection elements.
+		if pkg != nil && pkg.Path() == "github.com/holiman/uint256" && ty.Obj().Name() == "Int" {
+			return &gentypes.ValueUint{Name: "Int", Package: pkg.Path(), Size: gentypes.Uint256}, nil
+		}
+		exp, err := p.expand(&FieldDef{name: ty.Obj().Name(), tag: f.tag, typ: ty.Underlying(), pkg: pkg})
 		switch ty.Underlying().(type) {
 		case *types.Struct:
 			return exp, err
@@ -102,7 +259,11 @@ func (p *FieldParser) expand(f *FieldDef) (gentypes.ValRep, error) {
 				Underlying: exp,
 			}
 			if !p.disableDelegation {
-				v.Interfaces = interfaces.NewSSZSupportMap(ty)
+				ifs, err := p.supportMap(ty)
+				if err != nil {
+					return nil, err
+				}
+				v.Interfaces = ifs
 			}
 			return v, err
 		}
@@ -142,7 +303,6 @@ func (p *FieldParser) expandArray(dims []*SSZDimension, f *FieldDef) (gentypes.V
 		return nil, fmt.Errorf("invalid typ in expand array: %v with name: %v ", f.typ, f.name)
 	}
 
-	// Only expand the inner array if it is not a named type
 	if _, ok := elem.(*types.Named); !ok && len(dims) > 1 {
 		elv, err = p.expandArray(dims[1:], &FieldDef{name: f.name, typ: elem.Underlying(), pkg: f.pkg})
 		if err != nil {
@@ -183,12 +343,7 @@ func (p *FieldParser) expandIdent(ident types.BasicKind, name string) (gentypes.
 		return &gentypes.ValueUint{Size: 32, Name: name}, nil
 	case types.Uint64:
 		return &gentypes.ValueUint{Size: 64, Name: name}, nil
-		/*
-			case "uint128":
-				return &gentypes.ValueUint{Size: 128, Name: ident.name}, nil
-			case "uint256":
-				return &gentypes.ValueUint{Size: 256, Name: ident.name}, nil
-		*/
+		// TODO: uint128 unimplemented (no blessed Go representation).
 	default:
 		return nil, fmt.Errorf("unknown ident: %v", name)
 	}

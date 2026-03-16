@@ -91,7 +91,7 @@ func (p *FieldParser) expand(f *FieldDef) (gentypes.ValRep, error) {
 		}
 		return &container, nil
 	case *types.Named:
-		exp, err := p.expand(&FieldDef{name: ty.Obj().Name(), tag: f.tag, typ: ty.Underlying(), pkg: f.pkg})
+		exp, err := p.expand(&FieldDef{name: ty.Obj().Name(), tag: f.tag, typ: ty.Underlying(), pkg: f.pkg, dims: f.dims})
 		switch ty.Underlying().(type) {
 		case *types.Struct:
 			return exp, err
@@ -114,6 +114,10 @@ func (p *FieldParser) expand(f *FieldDef) (gentypes.ValRep, error) {
 }
 
 func (p *FieldParser) expandArrayHead(f *FieldDef) (gentypes.ValRep, error) {
+	// when recursing through a nested vector/list, receive dimensions parsed through parents
+	if f.dims != nil {
+		return p.expandArray(*f.dims, f)
+	}
 	dims, err := extractSSZDimensions(fmt.Sprintf("`%v`", f.tag))
 	if err != nil {
 		return nil, errors.Wrapf(err, "name=%s, package=%s, tag=%s", f.name, f.pkg.Path(), f.tag)
@@ -142,17 +146,14 @@ func (p *FieldParser) expandArray(dims []*SSZDimension, f *FieldDef) (gentypes.V
 		return nil, fmt.Errorf("invalid typ in expand array: %v with name: %v ", f.typ, f.name)
 	}
 
-	// Only expand the inner array if it is not a named type
-	if _, ok := elem.(*types.Named); !ok && len(dims) > 1 {
-		elv, err = p.expandArray(dims[1:], &FieldDef{name: f.name, typ: elem.Underlying(), pkg: f.pkg})
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		elv, err = p.expand(&FieldDef{name: f.name, tag: f.tag, typ: elem, pkg: f.pkg})
-		if err != nil {
-			return nil, err
-		}
+	var dimTail *[]*SSZDimension
+	if len(dims) > 1 {
+		dt := dims[1:]
+		dimTail = &dt
+	}
+	elv, err = p.expand(&FieldDef{name: f.name, tag: f.tag, typ: elem, pkg: f.pkg, dims: dimTail})
+	if err != nil {
+		return nil, err
 	}
 
 	if d.IsVector() {

@@ -15,7 +15,6 @@ import (
 
 type GoPathScoper struct {
 	packagePath string
-	fieldNames  []string
 	pkg         *types.Package
 }
 

@@ -45,25 +45,8 @@ func GenerateUnmarshalSSZ(g *generateContainer) (*generatedCode, error) {
 		sliceName := fmt.Sprintf("s%d", i)
 		mv := mg.generateUnmarshalValue(fieldName, sliceName)
 		if mv != "" {
-			//unmarshalBlocks = append(unmarshalBlocks, fmt.Sprintf("\t%s = %s", fieldName, mv))
 			unmarshalBlocks = append(unmarshalBlocks, mv)
 		}
-
-		/*
-					if !c.Value.IsVariableSized() {
-						continue
-					}
-			_, ok := mg.(variableUnmarshaller)
-			if !ok {
-				continue
-			}
-			vm := mg.(variableUnmarshaller)
-			vmc := vm.generateVariableUnmarshalValue(fieldName)
-			if vmc != "" {
-				unmarshalVariableBlocks = append(unmarshalVariableBlocks, fmt.Sprintf("\n\t// Field %d: %s", i, c.Key))
-				unmarshalVariableBlocks = append(unmarshalVariableBlocks, "\t" + vmc)
-			}
-		*/
 	}
 
 	sliceDeclarations := strings.Join([]string{ums.fixedSlices(), "", ums.variableSlices(g.fixedOffset())}, "\n")

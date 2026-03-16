@@ -49,7 +49,7 @@ func TestGenerator_GenerateBeaconState(t *testing.T) {
 	g := &Generator{
 		packagePath: "github.com/prysmaticlabs/prysm/v3/proto/beacon/p2p/v1",
 	}
-	g.Generate(testFixBeaconState)
+	require.NoError(t, g.Generate(testFixBeaconState))
 	rendered, err := g.Render()
 	require.NoError(t, err)
 	actual := string(rendered)

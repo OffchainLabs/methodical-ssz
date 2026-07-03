@@ -14,7 +14,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-var sourcePackage, typeNamesArg, genConfigPath, output, packageNameOverride, buildTagsArg string
+var sourcePackage, typeNamesArg, genConfigPath, output, packageNameOverride, buildTagsArg, goBuildConstraint string
 var disableDelegation, disableProgressive bool
 
 var packageFlag = &cli.StringFlag{
@@ -74,6 +74,12 @@ var Generate = &cli.Command{
 			Usage:       "comma-separated build tags used when loading the source package (e.g. 'minimal'). Selects which tag-gated source variant the type checker sees.",
 			Destination: &buildTagsArg,
 		},
+		&cli.StringFlag{
+			Name:        "go-build-constraint",
+			Value:       "",
+			Usage:       "if set, emit a `//go:build <constraint>` header at the top of the generated file (e.g. 'minimal' or '!minimal'). Independent of --build-tags, which only controls source loading.",
+			Destination: &goBuildConstraint,
+		},
 	},
 	Action: func(c *cli.Context) error {
 		gc, err := genConfig(sourcePackage, typeNamesArg, genConfigPath)
@@ -123,6 +129,13 @@ var Generate = &cli.Command{
 		rbytes, err := render.Render(gc.Package, packageNameOverride, vrs)
 		if err != nil {
 			return err
+		}
+		// A //go:build constraint must precede the package clause and be
+		// separated from it by a blank line.
+		if goBuildConstraint != "" {
+			if _, err := fmt.Fprintf(outFh, "//go:build %s\n\n", goBuildConstraint); err != nil {
+				return err
+			}
 		}
 		_, err = io.Copy(outFh, bytes.NewReader(rbytes))
 		return err

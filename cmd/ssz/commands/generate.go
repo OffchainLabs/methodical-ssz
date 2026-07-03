@@ -14,7 +14,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-var sourcePackage, typeNamesArg, genConfigPath, output, packageNameOverride string
+var sourcePackage, typeNamesArg, genConfigPath, output, packageNameOverride, buildTagsArg string
 var disableDelegation, disableProgressive bool
 
 var packageFlag = &cli.StringFlag{
@@ -68,6 +68,12 @@ var Generate = &cli.Command{
 			Usage:       "Override the default package name (last component of package import path).",
 			Destination: &packageNameOverride,
 		},
+		&cli.StringFlag{
+			Name:        "build-tags",
+			Value:       "",
+			Usage:       "comma-separated build tags used when loading the source package (e.g. 'minimal'). Selects which tag-gated source variant the type checker sees.",
+			Destination: &buildTagsArg,
+		},
 	},
 	Action: func(c *cli.Context) error {
 		gc, err := genConfig(sourcePackage, typeNamesArg, genConfigPath)
@@ -77,8 +83,12 @@ var Generate = &cli.Command{
 		if disableProgressive {
 			gc.DisableProgressive()
 		}
-		fmt.Printf("Parsing package %v\n", gc.Package)
-		ps, err := sszgen.NewGoPathScoper(gc.Package, gc)
+		var buildTags []string
+		if buildTagsArg != "" {
+			buildTags = strings.Split(buildTagsArg, ",")
+		}
+		fmt.Printf("Parsing package %v (build tags: %q)\n", gc.Package, buildTags)
+		ps, err := sszgen.NewGoPathScoper(gc.Package, gc, buildTags...)
 		if err != nil {
 			return err
 		}

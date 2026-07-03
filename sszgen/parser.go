@@ -28,8 +28,8 @@ type GoPathScoper struct {
 	gcfg        *config.GeneratorConfig
 }
 
-func NewGoPathScoper(packageName string, gcfg *config.GeneratorConfig) (*GoPathScoper, error) {
-	pkg, err := NewImporter().Load(packageName)
+func NewGoPathScoper(packageName string, gcfg *config.GeneratorConfig, buildTags ...string) (*GoPathScoper, error) {
+	pkg, err := NewImporter(buildTags...).Load(packageName)
 	if err != nil {
 		return nil, err
 	}

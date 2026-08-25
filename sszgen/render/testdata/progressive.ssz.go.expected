@@ -127,6 +127,9 @@ func (c *Prog) UnmarshalSSZ(buf []byte) error {
 			return fmt.Errorf("misaligned bytes: c.B length is %d, which is not a multiple of 8: %w", len(sszSlice1), ssz.ErrIncorrectListSize)
 		}
 		numElem := len(sszSlice1) / 8
+		if numElem > 1024 {
+			return fmt.Errorf("ssz-max exceeded: c.B has %d elements, ssz-max is 1024: %w", numElem, ssz.ErrListTooBig)
+		}
 		c.B = make([]uint64, numElem)
 		for i := 0; i < numElem; i++ {
 			var tmp uint64
@@ -150,6 +153,9 @@ func (c *Prog) UnmarshalSSZ(buf []byte) error {
 				return fmt.Errorf("misaligned list bytes: when decoding c.C, end-of-list offset is %d, which is not a multiple of 4 (offset size)", startOffset)
 			}
 			listLen := startOffset / 4
+			if listLen > 32 {
+				return fmt.Errorf("ssz-max exceeded: c.C has %d elements, ssz-max is 32: %w", listLen, ssz.ErrListTooBig)
+			}
 			totalVarBytes := uint64(len(sszSlice2))
 			if totalVarBytes < startOffset {
 				return fmt.Errorf("list bytes too short to contain an offset when decoding c.C")

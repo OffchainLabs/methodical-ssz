@@ -9,9 +9,10 @@ import (
 
 // The yaml config drives the progressive frontend: a `progressive` object
 // marks the container (computing its active-fields bitvector), and `fields`
-// entries override individual fields as progressive collections (which need
-// no ssz-max tag). Reuses the compiled delegatefixture package through the
-// production GoPathScoper.
+// entries override individual fields as progressive collections (whose
+// ssz-max tag, when present, is used in generated unmarshal code to bound input size).
+// Reuses the compiled delegatefixture package through the production
+// GoPathScoper.
 func TestProgressiveConfigFrontend(t *testing.T) {
 	pkgPath := "github.com/OffchainLabs/methodical-ssz/sszgen/testutil/delegatefixture"
 	gc := &config.GeneratorConfig{
@@ -62,6 +63,9 @@ func TestProgressiveConfigFrontend(t *testing.T) {
 	}
 	if !list.Progressive {
 		t.Fatal("Blobs should be a progressive list")
+	}
+	if list.MaxSize != 256 {
+		t.Fatalf("Blobs should retain the ssz-max tag as a decode bound, want MaxSize 256, got %d", list.MaxSize)
 	}
 	if _, ok := list.ElementValue.(*gentypes.ValuePointer); !ok {
 		t.Fatalf("Blobs element: want *ValuePointer, got %T", list.ElementValue)
@@ -170,7 +174,7 @@ func TestApplyElementConfig(t *testing.T) {
 		}
 	})
 
-	t.Run("ProgressiveByteList element flips to progressive, drops MaxSize", func(t *testing.T) {
+	t.Run("ProgressiveByteList element flips to progressive, keeps MaxSize", func(t *testing.T) {
 		got, err := applyElementConfig("Transactions", boundedByteList(),
 			&config.FieldConfig{Type: config.FieldTypeProgressiveByteList})
 		if err != nil {
@@ -183,8 +187,8 @@ func TestApplyElementConfig(t *testing.T) {
 		if !gl.Progressive {
 			t.Fatal("element list should be progressive")
 		}
-		if gl.MaxSize != 0 {
-			t.Fatalf("progressive list must not carry MaxSize, got %d", gl.MaxSize)
+		if gl.MaxSize != 256 {
+			t.Fatalf("progressive list should retain the ssz-max decode bound, want 256, got %d", gl.MaxSize)
 		}
 		if _, ok := gl.ElementValue.(*gentypes.ValueByte); !ok {
 			t.Fatalf("want byte element, got %T", gl.ElementValue)

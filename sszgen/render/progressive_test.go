@@ -13,7 +13,9 @@ import (
 // marked container (with an inactive position), progressive lists of basic,
 // byte, and composite elements, a progressive bitlist, and a nested marked
 // container (whose standard HashTreeRootWith — called by the parent's field
-// putter — redirects to its progressive form).
+// putter — redirects to its progressive form). B and C carry an ssz-max
+// limit config (enforced when unmarshaling, ignored by progressive hashing);
+// D has none, exercising the limitless fallback.
 func progressiveContainer() *gentypes.ValueContainer {
 	nested := &gentypes.ValueContainer{
 		Name:         "NestedProg",
@@ -31,8 +33,8 @@ func progressiveContainer() *gentypes.ValueContainer {
 		ActiveFields: []bool{true, true, false, true, true, true},
 		Contents: []gentypes.ContainerField{
 			{Key: "A", Value: &gentypes.ValueUint{Name: "uint64", Size: 64}},
-			{Key: "B", Value: &gentypes.ValueList{Progressive: true, ElementValue: &gentypes.ValueUint{Name: "uint64", Size: 64}}},                                                                                          // ProgressiveList[uint64]
-			{Key: "C", Value: &gentypes.ValueList{Progressive: true, ElementValue: &gentypes.ValuePointer{Referent: nested}}},                                                                                               // ProgressiveList of containers
+			{Key: "B", Value: &gentypes.ValueList{Progressive: true, MaxSize: 1024, ElementValue: &gentypes.ValueUint{Name: "uint64", Size: 64}}},                                                                           // ProgressiveList[uint64] with an ssz-max limit
+			{Key: "C", Value: &gentypes.ValueList{Progressive: true, MaxSize: 32, ElementValue: &gentypes.ValuePointer{Referent: nested}}},                                                                                  // ProgressiveList of containers with an ssz-max limit
 			{Key: "D", Value: &gentypes.ValueOverlay{Name: "Bitlist", Package: "github.com/OffchainLabs/go-bitfield", Underlying: &gentypes.ValueList{Progressive: true, ElementValue: &gentypes.ValueByte{Name: "byte"}}}}, // ProgressiveBitlist
 			{Key: "E", Value: &gentypes.ValuePointer{Referent: nested}},                                                                                                                                                     // nested progressive container
 		},
@@ -42,8 +44,9 @@ func progressiveContainer() *gentypes.ValueContainer {
 // TestRenderProgressive gates the progressive method set: marked containers
 // get ProgressiveHashTreeRoot[With] plus standard-name wrappers; progressive
 // collections merkleize with no limit. Serialization output is identical to
-// the regular forms (the spec serializes progressive types like their
-// non-progressive counterparts, minus the max checks).
+// the regular forms; unmarshaling enforces a field's ssz-max limit
+// when one is known, and only omits the limit check for progressive
+// collections without one.
 func TestRenderProgressive(t *testing.T) {
 	got, err := Render("github.com/example/foo", "", []gentypes.ValRep{progressiveContainer()})
 	if err != nil {

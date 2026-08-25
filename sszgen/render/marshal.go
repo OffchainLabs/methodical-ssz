@@ -240,7 +240,9 @@ func marshalListVariable(v *gentypes.ValueList, ref string, ctx *core.GenContext
 		marshalValue = execTmpl(rangeLoopTmpl, rangeLoopElements{NestedFieldName: nested, FieldName: ref, Body: internal})
 	}
 	if v.Progressive {
-		// progressive lists have no limit, hence no max check
+		// progressive lists have no spec limit, so marshaling locally
+		// constructed data performs no max check (the field's ssz-max is only
+		// enforced as a decode bound when unmarshaling untrusted input)
 		return execTmpl(tmplGenerateMarshalValueProgressiveList, marshalListElements{
 			FieldName:        ref,
 			MarshalValue:     marshalValue,

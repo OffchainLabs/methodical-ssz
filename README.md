@@ -66,7 +66,7 @@ The spec's validity rules are enforced at generation time: a progressive contain
 ProgressiveList, ProgressiveBitlist, ProgressiveByteList
 ========================================================
 
-Progressive collections are unlimited (they have no `ssz-max`), so they are also declared in the config rather than struct tags: a type entry's `fields` key maps Go struct field names to an object with a `type` key.
+Progressive collections have no spec limit, so they are also declared in the config rather than struct tags: a type entry's `fields` key maps Go struct field names to an object with a `type` key.
 ```yaml
 types:
   - name: BeaconState
@@ -77,7 +77,7 @@ types:
       ExtraData:         {type: "ProgressiveByteList"} # go type: []byte
 ```
 
-`ProgressiveList` applies to any slice-typed field (`ProgressiveByteList` is the byte-slice special case, equivalent to the spec's alias for `ProgressiveList[byte]`). `ProgressiveBitlist` applies to a named bitlist type backed by a byte slice, like `github.com/OffchainLabs/go-bitfield`'s `Bitlist`. No `ssz-size`/`ssz-max` struct tags are needed on these fields, and the generated code performs no max-size checks for them — their hashing uses the spec's `merkleize_progressive` with a length mixin. Progressive collection fields may be used in any generated type; the containing type does not need to be marked `progressive`.
+`ProgressiveList` is the progressive merkleization form of the ssz `List` type (`ProgressiveByteList` is the byte-slice special case, equivalent to the spec's alias for `ProgressiveList[byte]`). `ProgressiveBitlist` applies to a named bitlist type backed by a byte slice, like `github.com/OffchainLabs/go-bitfield`'s `Bitlist`. Hashing uses the spec's `merkleize_progressive` with a length mixin, with no limit. ProgressiveList family fields still use the `ssz-size`/`ssz-max` struct tags, so element dimensions can be resolved, and the field's `ssz-max` (present on `ProgressiveBitlist` fields optionally) is enforced at unmarshal time as a defensive check: generated `UnmarshalSSZ` rejects inputs exceeding it, exactly like the non-progressive form, so malicious inputs cannot trigger unbounded allocation. Progressive collection fields may be used in any generated type; the containing type does not need to be marked `progressive`.
 
 Generate spectests for a package
 --------------------------------

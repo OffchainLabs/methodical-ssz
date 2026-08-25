@@ -91,7 +91,8 @@ func (p *FieldParser) supportMap(ty types.Type) (map[*types.Interface]bool, erro
 
 // expandField expands a struct field, applying any yaml field-config override
 // (progressive collections are declared in the generator config rather than
-// struct tags — they need no ssz-max, having no limit).
+// struct tags — they have no spec limit, but an ssz-max tag on the field is
+// retained as a limit on how large of a list unmarshal will allow.
 func (p *FieldParser) expandField(f *FieldDef, fc config.FieldConfig) (gentypes.ValRep, error) {
 	switch fc.Type {
 	case "":
@@ -111,8 +112,10 @@ func (p *FieldParser) expandProgressiveList(f *FieldDef, fc config.FieldConfig) 
 		return nil, fmt.Errorf("field %s: %s requires a slice type, got %v", f.name, fc.Type, f.typ)
 	}
 	// Expand as a bounded list first to resolve element SSZ dimensions against
-	// the tag, then mark it progressive (progressive lists are unbounded, so
-	// MaxSize stays unset).
+	// the tag, then mark it progressive. MaxSize is preserved: progressive
+	// lists have no spec limit, but the ssz-max limit is enforced when
+	// unmarshaling to prevent malicious inputs from triggering unbounded
+	// allocation.
 	vr, err := p.expand(f)
 	if err != nil {
 		return nil, err
@@ -132,7 +135,7 @@ func (p *FieldParser) expandProgressiveList(f *FieldDef, fc config.FieldConfig) 
 	if err != nil {
 		return nil, err
 	}
-	return &gentypes.ValueList{ElementValue: elem, Progressive: true}, nil
+	return &gentypes.ValueList{ElementValue: elem, Progressive: true, MaxSize: list.MaxSize}, nil
 }
 
 // applyElementConfig rewrites an already-expanded element value to its
@@ -156,7 +159,7 @@ func applyElementConfig(field string, elem gentypes.ValRep, ec *config.FieldConf
 		if err != nil {
 			return nil, err
 		}
-		return &gentypes.ValueList{ElementValue: inner, Progressive: true}, nil
+		return &gentypes.ValueList{ElementValue: inner, Progressive: true, MaxSize: list.MaxSize}, nil
 	default:
 		return nil, fmt.Errorf("field %s: unsupported element config type %q", field, ec.Type)
 	}
@@ -177,10 +180,17 @@ func (p *FieldParser) expandProgressiveBitlist(f *FieldDef) (gentypes.ValRep, er
 	if !ok || basic.Kind() != types.Byte {
 		return nil, fmt.Errorf("field %s: ProgressiveBitlist requires a byte-slice-backed type, got %v", f.name, f.typ)
 	}
+	// A progressive bitlist has no spec limit and needs no tag, but when the
+	// field carries an ssz-max tag (in bits) it is retained so unmarshaling
+	// enforces the same limit as the non-progressive form.
+	maxSize := 0
+	if dims, err := extractSSZDimensions(fmt.Sprintf("`%v`", f.tag)); err == nil && len(dims) > 0 && dims[0].IsList() {
+		maxSize = dims[0].ListLen()
+	}
 	v := &gentypes.ValueOverlay{
 		Name:       named.Obj().Name(),
 		Package:    named.Obj().Pkg().Path(),
-		Underlying: &gentypes.ValueList{ElementValue: &gentypes.ValueByte{Name: "byte"}, Progressive: true},
+		Underlying: &gentypes.ValueList{ElementValue: &gentypes.ValueByte{Name: "byte"}, Progressive: true, MaxSize: maxSize},
 	}
 	if !p.disableDelegation {
 		ifs, err := p.supportMap(named)

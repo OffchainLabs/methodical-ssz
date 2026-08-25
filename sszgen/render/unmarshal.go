@@ -193,7 +193,10 @@ func (unmarshalOp) Overlay(v *gentypes.ValueOverlay, ref unmarshalRef, ctx *core
 	umv := core.Dispatch(unmarshalOp{}, v.Underlying, child, ctx)
 	if v.IsBitfield() {
 		if ul, ok := v.Underlying.(*gentypes.ValueList); ok {
-			if ul.Progressive {
+			// A progressive bitlist with a known ssz-max limit is validated like
+			// the non-progressive form; only fields without an ssz-max tag
+			// get the limitless progressive validation.
+			if ul.Progressive && ul.MaxSize == 0 {
 				return execTmpl(validateProgressiveBitlistTmpl, validateBitlistElements{SliceName: ref.SliceName, Unmarshal: umv, Field: ref.Field})
 			}
 			return execTmpl(validateBitlistTmpl, validateBitlistElements{SliceName: ref.SliceName, MaxSize: ul.MaxSize, Unmarshal: umv, Field: ref.Field})
@@ -240,9 +243,13 @@ func (unmarshalOp) Vector(v *gentypes.ValueVector, ref unmarshalRef, ctx *core.G
 
 func (unmarshalOp) List(v *gentypes.ValueList, ref unmarshalRef, ctx *core.GenContext) string {
 	elem := v.ElementValue
+	// A progressive list has no spec limit, but when the field declares an
+	// ssz-max limit, it is enforced exactly like the non-progressive form so
+	// malicious inputs cannot trigger unbounded allocation; the limitless
+	// templates only serve progressive lists with no known limit.
+	unbounded := v.Progressive && v.MaxSize == 0
 	if elem.IsVariableSized() {
-		if v.Progressive {
-			// progressive lists have no limit, hence no ssz-max check
+		if unbounded {
 			return execTmpl(unmarshalProgressiveListVariableTmpl, unmarshalListData(v, ref, ctx))
 		}
 		return execTmpl(unmarshalListVariableTmpl, unmarshalListData(v, ref, ctx))
@@ -250,7 +257,7 @@ func (unmarshalOp) List(v *gentypes.ValueList, ref unmarshalRef, ctx *core.GenCo
 	if _, isByte := elem.(*gentypes.ValueByte); isByte {
 		return fmt.Sprintf("%s = append([]byte{}, %s...)", ref.FieldName, ref.Cast(ref.SliceName))
 	}
-	if v.Progressive {
+	if unbounded {
 		return execTmpl(unmarshalProgressiveListFixedTmpl, unmarshalListData(v, ref, ctx))
 	}
 	return execTmpl(unmarshalListFixedTmpl, unmarshalListData(v, ref, ctx))
@@ -601,8 +608,10 @@ if len({{.SliceName}}) > 3 {
 }`))
 )
 
-// Progressive list variants: same decoding loops, but no ssz-max check
-// (progressive lists are unlimited).
+// Progressive list variants: same decoding loops, but no ssz-max check. These
+// only serve progressive collections without an ssz-max tag on
+// the field); when a limit is specified, the limit-checking templates above
+// are used instead.
 var (
 	validateProgressiveBitlistTmpl = template.Must(template.New("validateProgressiveBitlist").Parse(
 		`if err = ssz.ValidateProgressiveBitlist({{.SliceName}}); err != nil {

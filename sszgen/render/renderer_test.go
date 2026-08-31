@@ -2,6 +2,9 @@ package render
 
 import (
 	"flag"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"os"
 	"path/filepath"
 	"strings"
@@ -132,6 +135,77 @@ func TestRenderTopLevelOverlaySkipped(t *testing.T) {
 	}
 	if strings.Contains(string(got), "func ") {
 		t.Fatalf("expected no generated methods for a top-level overlay, got:\n%s", got)
+	}
+}
+
+func TestRenderOmitsUnusedImports(t *testing.T) {
+	inner := &gentypes.ValueContainer{
+		Name:    "Inner",
+		Package: "github.com/example/foo",
+		Contents: []gentypes.ContainerField{
+			{Key: "X", Value: &gentypes.ValueList{MaxSize: 64, ElementValue: &gentypes.ValueByte{Name: "byte"}}},
+		},
+	}
+	vc := &gentypes.ValueContainer{
+		Name:    "NoIntegers",
+		Package: "github.com/example/foo",
+		Contents: []gentypes.ContainerField{
+			{Key: "A", Value: &gentypes.ValueVector{Size: 32, ElementValue: &gentypes.ValueByte{Name: "byte"}}},
+			{Key: "B", Value: &gentypes.ValueBool{Name: "bool"}},
+			{Key: "C", Value: &gentypes.ValueList{MaxSize: 256, ElementValue: &gentypes.ValueByte{Name: "byte"}}},
+			{Key: "D", Value: &gentypes.ValuePointer{Referent: inner}},
+		},
+	}
+	got, err := Render("github.com/example/foo", "", []gentypes.ValRep{vc})
+	if err != nil {
+		t.Fatalf("render.Render: %v", err)
+	}
+	if strings.Contains(string(got), "encoding/binary") {
+		t.Fatalf("no field uses binary.LittleEndian, but encoding/binary was imported:\n%s", got)
+	}
+	assertNoUnusedImports(t, got)
+	// the imports it does need are still there
+	assertNoUnusedImports(t, mustRender(t, exampleContainer()))
+}
+
+func mustRender(t *testing.T, vr gentypes.ValRep) []byte {
+	t.Helper()
+	got, err := Render("github.com/example/foo", "", []gentypes.ValRep{vr})
+	if err != nil {
+		t.Fatalf("render.Render: %v", err)
+	}
+	return got
+}
+
+// assertNoUnusedImports fails if src imports a package whose identifier appears
+// nowhere outside the import block — the compile error this all guards against.
+func assertNoUnusedImports(t *testing.T, src []byte) {
+	t.Helper()
+	f, err := parser.ParseFile(token.NewFileSet(), "generated.ssz.go", src, 0)
+	if err != nil {
+		t.Fatalf("generated file does not parse: %v", err)
+	}
+	referenced := make(map[string]bool)
+	for _, d := range f.Decls {
+		if g, ok := d.(*ast.GenDecl); ok && g.Tok == token.IMPORT {
+			continue
+		}
+		ast.Inspect(d, func(n ast.Node) bool {
+			if id, ok := n.(*ast.Ident); ok {
+				referenced[id.Name] = true
+			}
+			return true
+		})
+	}
+	for _, spec := range f.Imports {
+		path := strings.Trim(spec.Path.Value, `"`)
+		name := path[strings.LastIndex(path, "/")+1:]
+		if spec.Name != nil {
+			name = spec.Name.Name
+		}
+		if !referenced[name] {
+			t.Fatalf("import %q is not referenced by the generated code", path)
+		}
 	}
 }
 

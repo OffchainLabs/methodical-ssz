@@ -107,9 +107,44 @@ func TestImportNamerReserveUnusedNotEmitted(t *testing.T) {
 	if strings.Contains(pairs, "widget") {
 		t.Fatalf("reserved-but-unused package emitted:\n%s", pairs)
 	}
-	// defaults are always emitted (body templates reference them unconditionally)
+	// seeded defaults are emitted until PruneUnreferenced says otherwise
 	if !strings.Contains(pairs, `"fmt"`) {
 		t.Fatalf("default missing:\n%s", pairs)
+	}
+}
+
+func TestImportNamerPruneUnreferenced(t *testing.T) {
+	n := NewImportNamer("github.com/example/target", DefaultSSZImports)
+	n.NameString("github.com/example/engine/v1")
+	n.PruneUnreferenced(`func (c *X) MarshalSSZ() ([]byte, error) {
+	if c.Inner == nil {
+		c.Inner = new(v1.Inner)
+	}
+	return nil, fmt.Errorf("nope")
+}`)
+	pairs := n.ImportPairs()
+	for _, want := range []string{`"fmt"`, `v1 "github.com/example/engine/v1"`} {
+		if !strings.Contains(pairs, want) {
+			t.Fatalf("referenced import %s dropped:\n%s", want, pairs)
+		}
+	}
+	for _, unwanted := range []string{"encoding/binary", "methodical-ssz/ssz"} {
+		if strings.Contains(pairs, unwanted) {
+			t.Fatalf("unreferenced import %s emitted:\n%s", unwanted, pairs)
+		}
+	}
+}
+
+func TestImportNamerPruneIgnoresCommentsAndStrings(t *testing.T) {
+	n := NewImportNamer("github.com/example/target", DefaultSSZImports)
+	n.PruneUnreferenced(`// binary.LittleEndian would go here
+func (c *X) Err() error { return fmt.Errorf("ssz.ErrBytesLength: %w", nil) }`)
+	pairs := n.ImportPairs()
+	if !strings.Contains(pairs, `"fmt"`) {
+		t.Fatalf("referenced import dropped:\n%s", pairs)
+	}
+	if strings.Contains(pairs, "encoding/binary") || strings.Contains(pairs, "methodical-ssz/ssz") {
+		t.Fatalf("comment/string mention counted as a reference:\n%s", pairs)
 	}
 }
 

@@ -2,6 +2,8 @@ package core
 
 import (
 	"fmt"
+	"go/scanner"
+	"go/token"
 	"go/types"
 	"sort"
 	"strings"
@@ -35,10 +37,11 @@ type importNode struct {
 	depth    int
 	imported bool
 	// used marks packages whose name has been handed to code generation
-	// (NameString) — only those are emitted by ImportPairs, so reserving more
-	// packages than the generated code references is harmless. A used node's
-	// name is frozen: it may already appear in generated text, so the
-	// shortest-path-wins reorganization never steals from it.
+	// (NameString) or seeded as a default — only those are emitted by
+	// ImportPairs, so reserving more packages than the generated code
+	// references is harmless. A used node's name is frozen: it may already
+	// appear in generated text, so the shortest-path-wins reorganization never
+	// steals from it.
 	used bool
 	// name is the identifier generated code uses for this package. bare means
 	// the import is emitted without an explicit alias (the identifier is the
@@ -212,6 +215,36 @@ func (n *ImportNamer) ImportPairs() string {
 		lines = append(lines, fmt.Sprintf("%s %q", nd.name, nd.path()))
 	})
 	return strings.Join(lines, "\n")
+}
+
+// PruneUnreferenced drops every registered import whose identifier does not
+// appear in src, the rendered body of the file being generated.
+func (n *ImportNamer) PruneUnreferenced(src string) {
+	idents := referencedIdents(src)
+	n.walk(func(nd *importNode) {
+		if !idents[nd.name] {
+			nd.used = false
+		}
+	})
+}
+
+// referencedIdents returns the identifiers appearing as Go tokens in src.
+func referencedIdents(src string) map[string]bool {
+	fset := token.NewFileSet()
+
+	var s scanner.Scanner
+	s.Init(fset.AddFile("", fset.Base(), len(src)), []byte(src), nil, 0)
+
+	idents := make(map[string]bool)
+	for {
+		_, tok, lit := s.Scan()
+		switch tok {
+		case token.EOF:
+			return idents
+		case token.IDENT:
+			idents[lit] = true
+		}
+	}
 }
 
 // ImportSource renders a complete import declaration block (see ImportPairs).

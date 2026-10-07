@@ -36,3 +36,16 @@ jobs:
         go-version: 1.19
     - name: Test
       run: go test -v ./...
+
+  tidy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: 'go.mod'
+
+    - name: Tidy checker
+      run: go mod tidy -diff

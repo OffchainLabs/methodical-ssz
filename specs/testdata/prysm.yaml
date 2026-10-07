@@ -1,4 +1,4 @@
-package: github.com/prysmaticlabs/prysm/v3/proto/prysm/v1alpha1
+package: github.com/prysmaticlabs/prysm/v5/proto/prysm/v1alpha1
 preset: mainnet
 defs:
   - fork: phase0

@@ -50,7 +50,6 @@ func (ti TestIdent) LessThan(other TestIdent) bool {
 	if ti.Name == other.Name {
 		return ti.Offset < other.Offset
 	}
-	// strings.Compare will return -1 if ti.Name is < other.Name
 	return strings.Compare(ti.Name, other.Name) == -1
 }
 

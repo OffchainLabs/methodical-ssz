@@ -36,7 +36,7 @@ func (vo *ValueOverlay) SatisfiesInterface(ti *types.Interface) bool {
 }
 
 func (vo *ValueOverlay) IsBitfield() bool {
-	return vo.Package == "github.com/prysmaticlabs/go-bitfield"
+	return vo.Package == "github.com/OffchainLabs/go-bitfield"
 }
 
 func (vo *ValueOverlay) bitfieldFixedSize() int {
@@ -49,6 +49,8 @@ func (vo *ValueOverlay) bitfieldFixedSize() int {
 		return 1
 	case "Bitvector8":
 		return 1
+	case "Bitvector16":
+		return 2
 	case "Bitvector32":
 		return 4
 	case "Bitvector64":

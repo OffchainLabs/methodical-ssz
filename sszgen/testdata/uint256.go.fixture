@@ -32,7 +32,7 @@ func (z *Int) SetUint64(x uint64) *Int {
 	return z
 }
 
-// MarshalSSZTo implements the fastssz.Marshaler interface and serializes the
+// MarshalSSZTo implements the Marshaler interface and serializes the
 // integer into an already pre-allocated buffer.
 func (z *Int) MarshalSSZTo(dst []byte) ([]byte, error) {
 	if len(dst) < 32 {
@@ -46,7 +46,7 @@ func (z *Int) MarshalSSZTo(dst []byte) ([]byte, error) {
 	return dst[32:], nil
 }
 
-// MarshalSSZ implements the fastssz.Marshaler interface and returns the integer
+// MarshalSSZ implements the Marshaler interface and returns the integer
 // marshalled into a newly allocated byte slice.
 func (z *Int) MarshalSSZ() ([]byte, error) {
 	blob := make([]byte, 32)
@@ -54,13 +54,13 @@ func (z *Int) MarshalSSZ() ([]byte, error) {
 	return blob, nil
 }
 
-// SizeSSZ implements the fastssz.Marshaler interface and returns the byte size
+// SizeSSZ implements the Marshaler interface and returns the byte size
 // of the 256 bit int.
 func (*Int) SizeSSZ() int {
 	return 32
 }
 
-// UnmarshalSSZ implements the fastssz.Unmarshaler interface and parses an encoded
+// UnmarshalSSZ implements the Unmarshaler interface and parses an encoded
 // integer into the local struct.
 func (z *Int) UnmarshalSSZ(buf []byte) error {
 	if len(buf) != 32 {
@@ -74,7 +74,7 @@ func (z *Int) UnmarshalSSZ(buf []byte) error {
 	return nil
 }
 
-// HashTreeRoot implements the fastssz.HashRoot interface's non-dependent part.
+// HashTreeRoot implements the HashRoot interface's non-dependent part.
 func (z *Int) HashTreeRoot() ([32]byte, error) {
 	var hash [32]byte
 	_, _ = z.MarshalSSZTo(hash[:]) // ignore error, cannot fail

@@ -2,10 +2,9 @@ package specs
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
-
-	"github.com/prysmaticlabs/prysm/v3/testing/require"
 )
 
 func TestParsePath(t *testing.T) {
@@ -31,11 +30,15 @@ func TestParsePath(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			other, fname, err := ParsePath(c.path)
-			if c.err == nil {
-				require.NoError(t, err)
+			if c.err == nil && err != nil {
+				t.Fatalf("unexpected error=%s", err.Error())
 			}
-			require.Equal(t, c.match, c.ident.Match(other))
-			require.Equal(t, c.fname, fname)
+			if c.ident.Match(other) != c.match {
+				t.Fatalf("unexpected test identifier, want=%t, got=%t", c.match, c.ident.Match(other))
+			}
+			if fname != c.fname {
+				t.Fatalf("unexpected file name for identifier config, want=%s, got=%s", c.fname, fname)
+			}
 		})
 	}
 }
@@ -84,15 +87,19 @@ func TestUnmarshalIdentFields(t *testing.T) {
 			ti := &TestIdent{}
 			err := json.Unmarshal([]byte(c.marshaled), ti)
 			if c.err == nil {
-				require.NoError(t, err)
+				if err != nil {
+					t.Fatalf("unexpected error=%s", err.Error())
+				}
 			} else {
-				require.ErrorIs(t, err, c.err)
+				if !errors.Is(err, c.err) {
+					t.Fatalf("did not get expected error, want=%s, got=%s", c.err.Error(), err.Error())
+				}
 			}
-			if c.fork != nil {
-				require.Equal(t, *c.fork, ti.Fork)
+			if c.fork != nil && ti.Fork != *c.fork {
+				t.Fatalf("wanted fork=%s, got=%s", *c.fork, ti.Fork)
 			}
-			if c.preset != nil {
-				require.Equal(t, *c.preset, ti.Preset)
+			if c.preset != nil && ti.Preset != *c.preset {
+				t.Fatalf("wanted preset=%s, got=%s", *c.preset, ti.Preset)
 			}
 		})
 	}

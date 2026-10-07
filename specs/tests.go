@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"slices"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/golang/snappy"
@@ -157,6 +158,16 @@ func ExtractTarballCases(tgz io.Reader, filter TestIdent) (map[TestIdent]Fixture
 		}
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to read file header from spectest tarball")
+		}
+		// Fixtures are regular files. Skip directory entries such as "tests/mainnet/" (fs.ValidPath rejects the
+		// trailing slash) and links, which could point outside the output root.
+		if header.Typeflag != tar.TypeReg {
+			continue
+		}
+		// Reject "..", absolute and unclean paths so Directory cannot escape the output root (Zip Slip).
+		// The strings.Contains check is the form CodeQL recognizes as a sanitizer.
+		if strings.Contains(header.Name, "..") || !fs.ValidPath(header.Name) {
+			return nil, errors.Errorf("invalid path %q in spectest tarball", header.Name)
 		}
 		ident, fname, err := ParsePath(header.Name)
 		if err != nil {

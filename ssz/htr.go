@@ -223,7 +223,7 @@ func (h *Hasher) PutUint16(i uint16) {
 
 // PutUint8 appends a uint8 in 32 bytes
 func (h *Hasher) PutUint8(i uint8) {
-	h.AppendBytes32([]byte{byte(i)})
+	h.AppendBytes32([]byte{i})
 }
 
 // PutUint64Array appends an array of uint64

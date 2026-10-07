@@ -262,7 +262,6 @@ func TestVectorInListInStruct(t *testing.T) {
 	_, ok = vector.ElementValue.(*types.ValueByte)
 	if !ok {
 		t.Fatalf("Expected the ElementValue a ValueByte type, got %v", typename(vector.ElementValue))
-
 	}
 }
 
@@ -363,7 +362,6 @@ func TestListContainers(t *testing.T) {
 	conlist, ok := conlistValRep.(*types.ValueList)
 	if !ok {
 		t.Fatalf("Expected the result to be a ValueList type, got %v", typename(conlistValRep))
-
 	}
 	if conlist.MaxSize != 23 {
 		t.Fatalf("expected max size 23, got %d", conlist.MaxSize)
@@ -600,7 +598,6 @@ func TestVectorOfOverlays(t *testing.T) {
 	underlying, ok := overlay.Underlying.(*types.ValueUint)
 	if !ok {
 		t.Fatalf("Expected a ValueUint, got %v", typename(overlay.Underlying))
-
 	}
 	if underlying.Size != types.UintSize(64) {
 		t.Fatalf("expected size 64, got %d", underlying.Size)
@@ -626,7 +623,6 @@ func TestVectorOfOverlays(t *testing.T) {
 	overlayPointer, ok := overlayRefVector.ElementValue.(*types.ValuePointer)
 	if !ok {
 		t.Fatalf("Expected a ValuePointer, got %v", typename(overlayRefVector.ElementValue))
-
 	}
 	if overlayPointer.Referent.TypeName() != "AliasedPrimitive" {
 		t.Fatalf("expected referent type name AliasedPrimitive, got %s", overlayPointer.Referent.TypeName())
@@ -772,7 +768,7 @@ func TestFixedSizeArray(t *testing.T) {
 
 func typename(v interface{}) string {
 	ty := reflect.TypeOf(v)
-	if ty.Kind() == reflect.Ptr {
+	if ty.Kind() == reflect.Pointer {
 		return "*" + ty.Elem().Name()
 	} else {
 		return ty.Name()

@@ -3,20 +3,17 @@ run:
   tests: true
 linters:
   default: none
+  # goconst: repeated literals in test tables read better inline.
   enable:
     - bidichk
     - durationcheck
-    - goconst
+    # - goconst 
     - govet
     - ineffassign
     - misspell
     - staticcheck
     - unconvert
     - whitespace
-  settings:
-    goconst:
-      min-len: 3
-      min-occurrences: 6
   exclusions:
     generated: lax
     presets:

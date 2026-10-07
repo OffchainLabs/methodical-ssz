@@ -1,7 +1,6 @@
 package ssz
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -26,7 +25,7 @@ func TestBitlist(t *testing.T) {
 
 	for _, i := range res {
 		t.Run(i, func(t *testing.T) {
-			serialized, err := ioutil.ReadFile(i)
+			serialized, err := os.ReadFile(i)
 			if err != nil {
 				t.Fatal(err)
 			}

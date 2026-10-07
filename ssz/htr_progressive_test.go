@@ -198,10 +198,10 @@ func TestPutProgressiveBitlistTrailingZeroChunks(t *testing.T) {
 	}
 	cases := map[string][]bool{
 		"empty":                   {},
-		"single_zero_bit":         {false},        // 1 chunk, all zero (would trim to 0 chunks)
-		"single_set_bit":          {true},         // sanity
-		"two_bits_10":             {true, false},  // sanity
-		"trailing_zero_chunk_257": zeros(257, 0),  // 2 chunks, 2nd all zero (would trim to 1 chunk)
+		"single_zero_bit":         {false},       // 1 chunk, all zero (would trim to 0 chunks)
+		"single_set_bit":          {true},        // sanity
+		"two_bits_10":             {true, false}, // sanity
+		"trailing_zero_chunk_257": zeros(257, 0), // 2 chunks, 2nd all zero (would trim to 1 chunk)
 	}
 	for name, bits := range cases {
 		t.Run(name, func(t *testing.T) {

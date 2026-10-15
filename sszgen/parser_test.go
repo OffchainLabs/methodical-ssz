@@ -2,8 +2,6 @@ package sszgen
 
 import (
 	"testing"
-
-	"github.com/prysmaticlabs/prysm/v3/testing/require"
 )
 
 func TestReformatStructTags(t *testing.T) {
@@ -11,5 +9,7 @@ func TestReformatStructTags(t *testing.T) {
 	// unquoted quotation marks should be converted to backticks
 	expected := "PublicKey                  []byte `protobuf:\"bytes,1,opt,name=public_key,json=publicKey,proto3\" json:\"public_key,omitempty\" spec-name:\"pubkey\" ssz-size:\"48\"`"
 	got := reformatStructTag(decl)
-	require.Equal(t, expected, got)
+	if got != expected {
+		t.Fatalf("unexpected result from reformatStructTag, want=%q, got=%q", expected, got)
+	}
 }

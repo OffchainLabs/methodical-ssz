@@ -227,9 +227,9 @@ func (c *Prog) ProgressiveHashTreeRoot() ([32]byte, error) {
 
 func (c *Prog) ProgressiveHashTreeRootWith(hh *ssz.Hasher) (err error) {
 	indx := hh.Index()
-	// Field 0: A
+	// Position 0: A
 	hh.PutUint64(c.A)
-	// Field 1: B
+	// Position 1: B
 	{
 		subIndx := hh.Index()
 		for _, o := range c.B {
@@ -238,7 +238,9 @@ func (c *Prog) ProgressiveHashTreeRootWith(hh *ssz.Hasher) (err error) {
 		hh.FillUpTo32()
 		hh.MerkleizeProgressiveWithMixin(subIndx, uint64(len(c.B)))
 	}
-	// Field 2: C
+	// Position 2: inactive (zero chunk)
+	hh.PutBool(false)
+	// Position 3: C
 	{
 		subIndx := hh.Index()
 		for _, o := range c.C {
@@ -248,12 +250,12 @@ func (c *Prog) ProgressiveHashTreeRootWith(hh *ssz.Hasher) (err error) {
 		}
 		hh.MerkleizeProgressiveWithMixin(subIndx, uint64(len(c.C)))
 	}
-	// Field 3: D
+	// Position 4: D
 	if len(c.D) == 0 {
 		return ssz.ErrEmptyBitlist
 	}
 	hh.PutProgressiveBitlist(c.D)
-	// Field 4: E
+	// Position 5: E
 	if err := c.E.HashTreeRootWith(hh); err != nil {
 		return fmt.Errorf("E: %w", err)
 	}

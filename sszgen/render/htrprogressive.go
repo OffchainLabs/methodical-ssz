@@ -47,11 +47,20 @@ func generateProgressiveHTR(vc *gentypes.ValueContainer, ctx *core.GenContext) (
 	if vc.ActiveFields == nil {
 		return nil, nil
 	}
+
+	// Inactive positions need zero leaves to preserve the positions of later fields.
 	steps := make([]string, 0)
-	for i, c := range vc.Contents {
+	i := 0
+	for pos, active := range vc.ActiveFields {
+		if !active {
+			steps = append(steps, fmt.Sprintf("\t// Position %d: inactive (zero chunk)\n\thh.PutBool(false)", pos))
+			continue
+		}
+		c := vc.Contents[i]
 		ref := fmt.Sprintf("%s.%s", htrReceiver, c.Key)
-		steps = append(steps, fmt.Sprintf("\t// Field %d: %s", i, c.Key))
+		steps = append(steps, fmt.Sprintf("\t// Position %d: %s", pos, c.Key))
 		steps = append(steps, core.Dispatch(htrOp{field: c.Key}, c.Value, ref, ctx))
+		i++
 	}
 	buf := bytes.NewBuffer(nil)
 	err := progressiveHTRTmpl.Execute(buf, struct {

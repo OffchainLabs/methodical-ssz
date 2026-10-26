@@ -8,9 +8,9 @@ import (
 	"text/template"
 )
 
-// DefaultSSZImports is seeded into the ImportNamer for a generated SSZ file. The
-// entries are always emitted (ImportPairs serializes the whole set), which is
-// valid only when a complete method set is generated into one file.
+// DefaultSSZImports is seeded into the ImportNamer for a generated SSZ file.
+// Seeding claims the identifiers up front so alias assignment is stable, but an
+// entry is only emitted if the rendered body actually references it.
 var DefaultSSZImports = map[string]string{
 	"github.com/OffchainLabs/methodical-ssz/ssz": "ssz",
 	"fmt":             "",
@@ -41,6 +41,10 @@ func RenderFile(pkgName string, namer *ImportNamer, blockGroups ...[]string) ([]
 	for _, g := range blockGroups {
 		blocks = append(blocks, g...)
 	}
+
+	body := strings.Join(blocks, "\n\n")
+	namer.PruneUnreferenced(body)
+
 	buf := bytes.NewBuffer(nil)
 	err := fileTemplate.Execute(buf, struct {
 		Package string
@@ -49,7 +53,7 @@ func RenderFile(pkgName string, namer *ImportNamer, blockGroups ...[]string) ([]
 	}{
 		Package: pkgName,
 		Imports: namer.ImportPairs(),
-		Blocks:  strings.Join(blocks, "\n\n"),
+		Blocks:  body,
 	})
 	if err != nil {
 		return nil, err

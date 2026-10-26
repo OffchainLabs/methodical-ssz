@@ -1,6 +1,9 @@
 package types
 
-import "go/types"
+import (
+	"fmt"
+	"go/types"
+)
 
 type ValueVector struct {
 	ElementValue ValRep
@@ -9,6 +12,9 @@ type ValueVector struct {
 }
 
 func (vv *ValueVector) TypeName() string {
+	if vv.IsArray {
+		return fmt.Sprintf("[%d]%s", vv.Size, vv.ElementValue.TypeName())
+	}
 	return "[]" + vv.ElementValue.TypeName()
 }
 

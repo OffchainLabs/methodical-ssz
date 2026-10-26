@@ -22,11 +22,16 @@ var (
 	Altair      Fork = "altair"
 	Bellatrix   Fork = "bellatrix"
 	Capella     Fork = "capella"
-	//EIP4844     Fork = "eip4844"
+	Deneb       Fork = "deneb"
+	Electra     Fork = "electra"
+	Fulu        Fork = "fulu"
+	Gloas       Fork = "gloas"
 )
 
-// var ForkOrder = []Fork{Phase0, Altair, Bellatrix, Capella, EIP4844}
-var ForkOrder = []Fork{Phase0, Altair, Bellatrix, Capella}
+// ForkOrder is the canonical, chronological ordering of forks. RelationsAtFork
+// walks it backwards to resolve type inheritance, so new forks must be appended
+// in activation order.
+var ForkOrder = []Fork{Phase0, Altair, Bellatrix, Capella, Deneb, Electra, Fulu, Gloas}
 
 func stringToFork(s string) Fork {
 	switch s {
@@ -38,16 +43,20 @@ func stringToFork(s string) Fork {
 		return Bellatrix
 	case string(Capella):
 		return Capella
-		/*
-			case string(EIP4844):
-				return EIP4844
-		*/
+	case string(Deneb):
+		return Deneb
+	case string(Electra):
+		return Electra
+	case string(Fulu):
+		return Fulu
+	case string(Gloas):
+		return Gloas
 	default:
 		return ForkUnknown
 	}
 }
 
-func forkIndex(f Fork) (int, error) {
+func ForkIndex(f Fork) (int, error) {
 	for i := 0; i < len(ForkOrder); i++ {
 		if ForkOrder[i] == f {
 			return i, nil

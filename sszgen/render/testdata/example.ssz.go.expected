@@ -1,0 +1,1919 @@
+package foo
+
+import (
+	binary "encoding/binary"
+	"fmt"
+	go_bitfield "github.com/OffchainLabs/go-bitfield"
+	ssz "github.com/OffchainLabs/methodical-ssz/ssz"
+	uint256 "github.com/holiman/uint256"
+)
+
+func (c *Example) SizeSSZ() int {
+	size := 781
+	size += len(c.C) * 8
+	for _, o := range c.D {
+		size += 4
+		size += len(o)
+	}
+	for _, o := range c.E {
+		size += 4
+		size += o.SizeSSZ()
+	}
+	if c.F == nil {
+		c.F = new(Inner)
+	}
+	size += c.F.SizeSSZ()
+	size += len(c.K)
+	size += len(c.L)
+	size += len(c.N) * 8
+	for _, o := range c.P {
+		size += 4
+		size += len(o)
+	}
+	for _, o := range c.Q {
+		size += 4
+		size += o.SizeSSZ()
+	}
+	for _, o := range c.U {
+		size += 4
+		size += len(o) * 8
+	}
+	for _, o := range c.V {
+		size += 4
+		size += len(o) * 8
+	}
+	size += len(c.Z) * 2
+	size += len(c.AB) * 32
+	size += len(c.AF)
+	for _, o := range c.AG {
+		size += 4
+		size += len(o)
+	}
+	for _, o := range c.AH {
+		size += 4
+		size += len(o)
+	}
+	size += len(c.AJ) * 32
+	size += len(c.AL) * 48
+	size += len(c.AO) * 32
+	return size
+}
+
+func (c *Example) MarshalSSZ() ([]byte, error) {
+	buf := make([]byte, c.SizeSSZ())
+	return c.MarshalSSZTo(buf[:0])
+}
+
+func (c *Example) MarshalSSZTo(dst []byte) ([]byte, error) {
+	var err error
+	offset := 781
+
+	// Field 0: A
+	dst = binary.LittleEndian.AppendUint64(dst, c.A)
+
+	// Field 1: B
+	if len(c.B) != 32 {
+		return nil, ssz.ErrBytesLength
+	}
+	dst = append(dst, c.B...)
+
+	// Field 2: C
+	dst = ssz.WriteOffset(dst, offset)
+	offset += len(c.C) * 8
+
+	// Field 3: D
+	dst = ssz.WriteOffset(dst, offset)
+	for _, o := range c.D {
+		offset += 4
+		offset += len(o)
+	}
+
+	// Field 4: E
+	dst = ssz.WriteOffset(dst, offset)
+	for _, o := range c.E {
+		offset += 4
+		offset += o.SizeSSZ()
+	}
+
+	// Field 5: F
+	if c.F == nil {
+		c.F = new(Inner)
+	}
+	dst = ssz.WriteOffset(dst, offset)
+	offset += c.F.SizeSSZ()
+
+	// Field 6: G
+	if len(c.G) != 4 {
+		return nil, ssz.ErrBytesLength
+	}
+	for _, o := range c.G {
+		if len(o) != 32 {
+			return nil, ssz.ErrBytesLength
+		}
+		dst = append(dst, o...)
+	}
+
+	// Field 7: H
+	dst = binary.LittleEndian.AppendUint64(dst, uint64(c.H))
+
+	// Field 8: I
+	if len(c.I) != 4 {
+		return nil, ssz.ErrBytesLength
+	}
+	for _, o := range c.I {
+		dst = binary.LittleEndian.AppendUint64(dst, o)
+	}
+
+	// Field 9: J
+	if len([]byte(c.J)) != 1 {
+		return nil, ssz.ErrBytesLength
+	}
+	dst = append(dst, []byte(c.J)...)
+
+	// Field 10: K
+	dst = ssz.WriteOffset(dst, offset)
+	offset += len(c.K)
+
+	// Field 11: L
+	dst = ssz.WriteOffset(dst, offset)
+	offset += len(c.L)
+
+	// Field 12: M
+	if len(c.M) != 4 {
+		return nil, ssz.ErrBytesLength
+	}
+	for _, o := range c.M {
+		dst = binary.LittleEndian.AppendUint64(dst, uint64(o))
+	}
+
+	// Field 13: N
+	dst = ssz.WriteOffset(dst, offset)
+	offset += len(c.N) * 8
+
+	// Field 14: O
+	if len(c.O) != 4 {
+		return nil, ssz.ErrBytesLength
+	}
+	for _, o := range c.O {
+		if dst, err = o.MarshalSSZTo(dst); err != nil {
+			return nil, fmt.Errorf("O: %w", err)
+		}
+	}
+
+	// Field 15: P
+	dst = ssz.WriteOffset(dst, offset)
+	for _, o := range c.P {
+		offset += 4
+		offset += len(o)
+	}
+
+	// Field 16: Q
+	dst = ssz.WriteOffset(dst, offset)
+	for _, o := range c.Q {
+		offset += 4
+		offset += o.SizeSSZ()
+	}
+
+	// Field 17: R
+	if c.R {
+		dst = append(dst, 1)
+	} else {
+		dst = append(dst, 0)
+	}
+
+	// Field 18: S
+	dst = binary.LittleEndian.AppendUint16(dst, c.S)
+
+	// Field 19: T
+	dst = binary.LittleEndian.AppendUint32(dst, c.T)
+
+	// Field 20: U
+	dst = ssz.WriteOffset(dst, offset)
+	for _, o := range c.U {
+		offset += 4
+		offset += len(o) * 8
+	}
+
+	// Field 21: V
+	dst = ssz.WriteOffset(dst, offset)
+	for _, o := range c.V {
+		offset += 4
+		offset += len(o) * 8
+	}
+
+	// Field 22: W
+	if len([]byte(c.W)) != 32 {
+		return nil, ssz.ErrBytesLength
+	}
+	dst = append(dst, []byte(c.W)...)
+
+	// Field 23: X
+	if len(c.X) != 4 {
+		return nil, ssz.ErrBytesLength
+	}
+	for _, o := range c.X {
+		if len([]byte(o)) != 1 {
+			return nil, ssz.ErrBytesLength
+		}
+		dst = append(dst, []byte(o)...)
+	}
+
+	// Field 24: Y
+	if len(c.Y) != 8 {
+		return nil, ssz.ErrBytesLength
+	}
+	for _, o := range c.Y {
+		dst = binary.LittleEndian.AppendUint32(dst, o)
+	}
+
+	// Field 25: Z
+	dst = ssz.WriteOffset(dst, offset)
+	offset += len(c.Z) * 2
+
+	// Field 26: AA
+	if len(c.AA) != 2 {
+		return nil, ssz.ErrBytesLength
+	}
+	for _, o := range c.AA {
+		if len(o) != 4 {
+			return nil, ssz.ErrBytesLength
+		}
+		for _, oo := range o {
+			dst = binary.LittleEndian.AppendUint64(dst, oo)
+		}
+	}
+
+	// Field 27: AB
+	dst = ssz.WriteOffset(dst, offset)
+	offset += len(c.AB) * 32
+
+	// Field 28: AC
+	if len(c.AC) != 32 {
+		return nil, ssz.ErrBytesLength
+	}
+	dst = append(dst, c.AC[:]...)
+
+	// Field 29: AD
+	dst = append(dst, c.AD)
+
+	// Field 30: AE
+	if len(c.AE) != 4 {
+		return nil, ssz.ErrBytesLength
+	}
+	for _, o := range c.AE {
+		if o {
+			dst = append(dst, 1)
+		} else {
+			dst = append(dst, 0)
+		}
+	}
+
+	// Field 31: AF
+	dst = ssz.WriteOffset(dst, offset)
+	offset += len(c.AF)
+
+	// Field 32: AG
+	dst = ssz.WriteOffset(dst, offset)
+	for _, o := range c.AG {
+		offset += 4
+		offset += len(o)
+	}
+
+	// Field 33: AH
+	dst = ssz.WriteOffset(dst, offset)
+	for _, o := range c.AH {
+		offset += 4
+		offset += len(o)
+	}
+
+	// Field 34: AI
+	dst = binary.LittleEndian.AppendUint64(dst, c.AI[0])
+	dst = binary.LittleEndian.AppendUint64(dst, c.AI[1])
+	dst = binary.LittleEndian.AppendUint64(dst, c.AI[2])
+	dst = binary.LittleEndian.AppendUint64(dst, c.AI[3])
+
+	// Field 35: AJ
+	dst = ssz.WriteOffset(dst, offset)
+	offset += len(c.AJ) * 32
+
+	// Field 36: AK
+	if len(c.AK) != 2 {
+		return nil, ssz.ErrBytesLength
+	}
+	for _, o := range c.AK {
+		dst = binary.LittleEndian.AppendUint64(dst, o[0])
+		dst = binary.LittleEndian.AppendUint64(dst, o[1])
+		dst = binary.LittleEndian.AppendUint64(dst, o[2])
+		dst = binary.LittleEndian.AppendUint64(dst, o[3])
+	}
+
+	// Field 37: AL
+	dst = ssz.WriteOffset(dst, offset)
+	offset += len(c.AL) * 48
+
+	// Field 38: AM
+	if len(c.AM) != 4 {
+		return nil, ssz.ErrBytesLength
+	}
+	for _, o := range c.AM {
+		if len(o) != 32 {
+			return nil, ssz.ErrBytesLength
+		}
+		dst = append(dst, o[:]...)
+	}
+
+	// Field 39: AN
+	if len(c.AN) != 32 {
+		return nil, ssz.ErrBytesLength
+	}
+	dst = append(dst, c.AN[:]...)
+
+	// Field 40: AO
+	dst = ssz.WriteOffset(dst, offset)
+	offset += len(c.AO) * 32
+
+	// Field 2: C
+	if len(c.C) > 1024 {
+		return nil, ssz.ErrListTooBig
+	}
+	for _, o := range c.C {
+		dst = binary.LittleEndian.AppendUint64(dst, o)
+	}
+
+	// Field 3: D
+	if len(c.D) > 256 {
+		return nil, ssz.ErrListTooBig
+	}
+	{
+		offset = 4 * len(c.D)
+		for _, o := range c.D {
+			dst = ssz.WriteOffset(dst, offset)
+			offset += len(o)
+		}
+	}
+	for _, o := range c.D {
+		if len(o) > 64 {
+			return nil, ssz.ErrListTooBig
+		}
+		dst = append(dst, o...)
+	}
+
+	// Field 4: E
+	if len(c.E) > 128 {
+		return nil, ssz.ErrListTooBig
+	}
+	{
+		offset = 4 * len(c.E)
+		for _, o := range c.E {
+			dst = ssz.WriteOffset(dst, offset)
+			offset += o.SizeSSZ()
+		}
+	}
+	for _, o := range c.E {
+		if dst, err = o.MarshalSSZTo(dst); err != nil {
+			return nil, fmt.Errorf("E: %w", err)
+		}
+	}
+
+	// Field 5: F
+	if dst, err = c.F.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("F: %w", err)
+	}
+
+	// Field 10: K
+	if len(c.K) > 256 {
+		return nil, ssz.ErrListTooBig
+	}
+	dst = append(dst, c.K...)
+
+	// Field 11: L
+	if len(c.L) > 2048 {
+		return nil, ssz.ErrListTooBig
+	}
+	dst = append(dst, c.L...)
+
+	// Field 13: N
+	if len(c.N) > 1024 {
+		return nil, ssz.ErrListTooBig
+	}
+	for _, o := range c.N {
+		dst = binary.LittleEndian.AppendUint64(dst, uint64(o))
+	}
+
+	// Field 15: P
+	if len(c.P) != 4 {
+		return nil, ssz.ErrBytesLength
+	}
+	{
+		offset = 4 * len(c.P)
+		for _, o := range c.P {
+			dst = ssz.WriteOffset(dst, offset)
+			offset += len(o)
+		}
+	}
+	for _, o := range c.P {
+		if len(o) > 64 {
+			return nil, ssz.ErrListTooBig
+		}
+		dst = append(dst, o...)
+	}
+
+	// Field 16: Q
+	if len(c.Q) != 4 {
+		return nil, ssz.ErrBytesLength
+	}
+	{
+		offset = 4 * len(c.Q)
+		for _, o := range c.Q {
+			dst = ssz.WriteOffset(dst, offset)
+			offset += o.SizeSSZ()
+		}
+	}
+	for _, o := range c.Q {
+		if dst, err = o.MarshalSSZTo(dst); err != nil {
+			return nil, fmt.Errorf("Q: %w", err)
+		}
+	}
+
+	// Field 20: U
+	if len(c.U) > 32 {
+		return nil, ssz.ErrListTooBig
+	}
+	{
+		offset = 4 * len(c.U)
+		for _, o := range c.U {
+			dst = ssz.WriteOffset(dst, offset)
+			offset += len(o) * 8
+		}
+	}
+	for _, o := range c.U {
+		if len(o) > 16 {
+			return nil, ssz.ErrListTooBig
+		}
+		for _, oo := range o {
+			dst = binary.LittleEndian.AppendUint64(dst, oo)
+		}
+	}
+
+	// Field 21: V
+	if len(c.V) != 4 {
+		return nil, ssz.ErrBytesLength
+	}
+	{
+		offset = 4 * len(c.V)
+		for _, o := range c.V {
+			dst = ssz.WriteOffset(dst, offset)
+			offset += len(o) * 8
+		}
+	}
+	for _, o := range c.V {
+		if len(o) > 16 {
+			return nil, ssz.ErrListTooBig
+		}
+		for _, oo := range o {
+			dst = binary.LittleEndian.AppendUint64(dst, oo)
+		}
+	}
+
+	// Field 25: Z
+	if len(c.Z) > 100 {
+		return nil, ssz.ErrListTooBig
+	}
+	for _, o := range c.Z {
+		dst = binary.LittleEndian.AppendUint16(dst, o)
+	}
+
+	// Field 27: AB
+	if len(c.AB) > 32 {
+		return nil, ssz.ErrListTooBig
+	}
+	for _, o := range c.AB {
+		if len(o) != 4 {
+			return nil, ssz.ErrBytesLength
+		}
+		for _, oo := range o {
+			dst = binary.LittleEndian.AppendUint64(dst, oo)
+		}
+	}
+
+	// Field 31: AF
+	if len(c.AF) > 100 {
+		return nil, ssz.ErrListTooBig
+	}
+	for _, o := range c.AF {
+		if o {
+			dst = append(dst, 1)
+		} else {
+			dst = append(dst, 0)
+		}
+	}
+
+	// Field 32: AG
+	if len(c.AG) > 4 {
+		return nil, ssz.ErrListTooBig
+	}
+	{
+		offset = 4 * len(c.AG)
+		for _, o := range c.AG {
+			dst = ssz.WriteOffset(dst, offset)
+			offset += len(o)
+		}
+	}
+	for _, o := range c.AG {
+		if len(o) > 2048 {
+			return nil, ssz.ErrListTooBig
+		}
+		dst = append(dst, o...)
+	}
+
+	// Field 33: AH
+	if len(c.AH) != 2 {
+		return nil, ssz.ErrBytesLength
+	}
+	{
+		offset = 4 * len(c.AH)
+		for _, o := range c.AH {
+			dst = ssz.WriteOffset(dst, offset)
+			offset += len(o)
+		}
+	}
+	for _, o := range c.AH {
+		if len(o) > 2048 {
+			return nil, ssz.ErrListTooBig
+		}
+		dst = append(dst, o...)
+	}
+
+	// Field 35: AJ
+	if len(c.AJ) > 8 {
+		return nil, ssz.ErrListTooBig
+	}
+	for _, o := range c.AJ {
+		dst = binary.LittleEndian.AppendUint64(dst, o[0])
+		dst = binary.LittleEndian.AppendUint64(dst, o[1])
+		dst = binary.LittleEndian.AppendUint64(dst, o[2])
+		dst = binary.LittleEndian.AppendUint64(dst, o[3])
+	}
+
+	// Field 37: AL
+	if len(c.AL) > 16 {
+		return nil, ssz.ErrListTooBig
+	}
+	for _, o := range c.AL {
+		if len(o) != 48 {
+			return nil, ssz.ErrBytesLength
+		}
+		dst = append(dst, o[:]...)
+	}
+
+	// Field 40: AO
+	if len(c.AO) > 8 {
+		return nil, ssz.ErrListTooBig
+	}
+	for _, o := range c.AO {
+		if len(o) != 32 {
+			return nil, ssz.ErrBytesLength
+		}
+		dst = append(dst, o[:]...)
+	}
+	return dst, err
+}
+
+func (c *Example) UnmarshalSSZ(buf []byte) error {
+	var err error
+	size := uint64(len(buf))
+	if size < 781 {
+		return ssz.ErrSize
+	}
+
+	sszSlice0 := buf[0:8]      // c.A
+	sszSlice1 := buf[8:40]     // c.B
+	sszSlice6 := buf[56:184]   // c.G
+	sszSlice7 := buf[184:192]  // c.H
+	sszSlice8 := buf[192:224]  // c.I
+	sszSlice9 := buf[224:225]  // c.J
+	sszSlice12 := buf[233:265] // c.M
+	sszSlice14 := buf[269:301] // c.O
+	sszSlice17 := buf[309:310] // c.R
+	sszSlice18 := buf[310:312] // c.S
+	sszSlice19 := buf[312:316] // c.T
+	sszSlice22 := buf[324:356] // c.W
+	sszSlice23 := buf[356:360] // c.X
+	sszSlice24 := buf[360:392] // c.Y
+	sszSlice26 := buf[396:460] // c.AA
+	sszSlice28 := buf[464:496] // c.AC
+	sszSlice29 := buf[496:497] // c.AD
+	sszSlice30 := buf[497:501] // c.AE
+	sszSlice34 := buf[513:545] // c.AI
+	sszSlice36 := buf[549:613] // c.AK
+	sszSlice38 := buf[617:745] // c.AM
+	sszSlice39 := buf[745:777] // c.AN
+
+	sszVarOffset2 := ssz.ReadOffset(buf[40:44]) // c.C
+	if sszVarOffset2 != 781 {
+		return ssz.ErrInvalidVariableOffset
+	}
+	if sszVarOffset2 > size {
+		return ssz.ErrOffset
+	}
+	sszVarOffset3 := ssz.ReadOffset(buf[44:48]) // c.D
+	if sszVarOffset3 > size || sszVarOffset3 < sszVarOffset2 {
+		return ssz.ErrOffset
+	}
+	sszVarOffset4 := ssz.ReadOffset(buf[48:52]) // c.E
+	if sszVarOffset4 > size || sszVarOffset4 < sszVarOffset3 {
+		return ssz.ErrOffset
+	}
+	sszVarOffset5 := ssz.ReadOffset(buf[52:56]) // c.F
+	if sszVarOffset5 > size || sszVarOffset5 < sszVarOffset4 {
+		return ssz.ErrOffset
+	}
+	sszVarOffset10 := ssz.ReadOffset(buf[225:229]) // c.K
+	if sszVarOffset10 > size || sszVarOffset10 < sszVarOffset5 {
+		return ssz.ErrOffset
+	}
+	sszVarOffset11 := ssz.ReadOffset(buf[229:233]) // c.L
+	if sszVarOffset11 > size || sszVarOffset11 < sszVarOffset10 {
+		return ssz.ErrOffset
+	}
+	sszVarOffset13 := ssz.ReadOffset(buf[265:269]) // c.N
+	if sszVarOffset13 > size || sszVarOffset13 < sszVarOffset11 {
+		return ssz.ErrOffset
+	}
+	sszVarOffset15 := ssz.ReadOffset(buf[301:305]) // c.P
+	if sszVarOffset15 > size || sszVarOffset15 < sszVarOffset13 {
+		return ssz.ErrOffset
+	}
+	sszVarOffset16 := ssz.ReadOffset(buf[305:309]) // c.Q
+	if sszVarOffset16 > size || sszVarOffset16 < sszVarOffset15 {
+		return ssz.ErrOffset
+	}
+	sszVarOffset20 := ssz.ReadOffset(buf[316:320]) // c.U
+	if sszVarOffset20 > size || sszVarOffset20 < sszVarOffset16 {
+		return ssz.ErrOffset
+	}
+	sszVarOffset21 := ssz.ReadOffset(buf[320:324]) // c.V
+	if sszVarOffset21 > size || sszVarOffset21 < sszVarOffset20 {
+		return ssz.ErrOffset
+	}
+	sszVarOffset25 := ssz.ReadOffset(buf[392:396]) // c.Z
+	if sszVarOffset25 > size || sszVarOffset25 < sszVarOffset21 {
+		return ssz.ErrOffset
+	}
+	sszVarOffset27 := ssz.ReadOffset(buf[460:464]) // c.AB
+	if sszVarOffset27 > size || sszVarOffset27 < sszVarOffset25 {
+		return ssz.ErrOffset
+	}
+	sszVarOffset31 := ssz.ReadOffset(buf[501:505]) // c.AF
+	if sszVarOffset31 > size || sszVarOffset31 < sszVarOffset27 {
+		return ssz.ErrOffset
+	}
+	sszVarOffset32 := ssz.ReadOffset(buf[505:509]) // c.AG
+	if sszVarOffset32 > size || sszVarOffset32 < sszVarOffset31 {
+		return ssz.ErrOffset
+	}
+	sszVarOffset33 := ssz.ReadOffset(buf[509:513]) // c.AH
+	if sszVarOffset33 > size || sszVarOffset33 < sszVarOffset32 {
+		return ssz.ErrOffset
+	}
+	sszVarOffset35 := ssz.ReadOffset(buf[545:549]) // c.AJ
+	if sszVarOffset35 > size || sszVarOffset35 < sszVarOffset33 {
+		return ssz.ErrOffset
+	}
+	sszVarOffset37 := ssz.ReadOffset(buf[613:617]) // c.AL
+	if sszVarOffset37 > size || sszVarOffset37 < sszVarOffset35 {
+		return ssz.ErrOffset
+	}
+	sszVarOffset40 := ssz.ReadOffset(buf[777:781]) // c.AO
+	if sszVarOffset40 > size || sszVarOffset40 < sszVarOffset37 {
+		return ssz.ErrOffset
+	}
+	sszSlice2 := buf[sszVarOffset2:sszVarOffset3]    // c.C
+	sszSlice3 := buf[sszVarOffset3:sszVarOffset4]    // c.D
+	sszSlice4 := buf[sszVarOffset4:sszVarOffset5]    // c.E
+	sszSlice5 := buf[sszVarOffset5:sszVarOffset10]   // c.F
+	sszSlice10 := buf[sszVarOffset10:sszVarOffset11] // c.K
+	sszSlice11 := buf[sszVarOffset11:sszVarOffset13] // c.L
+	sszSlice13 := buf[sszVarOffset13:sszVarOffset15] // c.N
+	sszSlice15 := buf[sszVarOffset15:sszVarOffset16] // c.P
+	sszSlice16 := buf[sszVarOffset16:sszVarOffset20] // c.Q
+	sszSlice20 := buf[sszVarOffset20:sszVarOffset21] // c.U
+	sszSlice21 := buf[sszVarOffset21:sszVarOffset25] // c.V
+	sszSlice25 := buf[sszVarOffset25:sszVarOffset27] // c.Z
+	sszSlice27 := buf[sszVarOffset27:sszVarOffset31] // c.AB
+	sszSlice31 := buf[sszVarOffset31:sszVarOffset32] // c.AF
+	sszSlice32 := buf[sszVarOffset32:sszVarOffset33] // c.AG
+	sszSlice33 := buf[sszVarOffset33:sszVarOffset35] // c.AH
+	sszSlice35 := buf[sszVarOffset35:sszVarOffset37] // c.AJ
+	sszSlice37 := buf[sszVarOffset37:sszVarOffset40] // c.AL
+	sszSlice40 := buf[sszVarOffset40:]               // c.AO
+
+	// Field 0: A
+	c.A = binary.LittleEndian.Uint64(sszSlice0)
+
+	// Field 1: B
+	c.B = make([]byte, 0, 32)
+	c.B = append(c.B, sszSlice1...)
+
+	// Field 2: C
+	{
+		if len(sszSlice2)%8 != 0 {
+			return fmt.Errorf("misaligned bytes: c.C length is %d, which is not a multiple of 8: %w", len(sszSlice2), ssz.ErrIncorrectListSize)
+		}
+		numElem := len(sszSlice2) / 8
+		if numElem > 1024 {
+			return fmt.Errorf("ssz-max exceeded: c.C has %d elements, ssz-max is 1024: %w", numElem, ssz.ErrListTooBig)
+		}
+		c.C = make([]uint64, numElem)
+		for i := 0; i < numElem; i++ {
+			var tmp uint64
+
+			tmpSlice := sszSlice2[i*8 : (1+i)*8]
+			tmp = binary.LittleEndian.Uint64(tmpSlice)
+			c.C[i] = tmp
+		}
+	}
+
+	// Field 3: D
+	{
+		// empty lists are zero length, so make sure there is room for an offset
+		// before attempting to unmarshal it
+		if len(sszSlice3) > 3 {
+			startOffset := ssz.ReadOffset(sszSlice3[0:4])
+			if startOffset == 0 {
+				return fmt.Errorf("encountered invalid offset of 0 when decoding c.D")
+			}
+			if startOffset%4 != 0 {
+				return fmt.Errorf("misaligned list bytes: when decoding c.D, end-of-list offset is %d, which is not a multiple of 4 (offset size)", startOffset)
+			}
+			listLen := startOffset / 4
+			if listLen > 256 {
+				return fmt.Errorf("ssz-max exceeded: c.D has %d elements, ssz-max is 256: %w", listLen, ssz.ErrListTooBig)
+			}
+			totalVarBytes := uint64(len(sszSlice3))
+			if totalVarBytes < startOffset {
+				return fmt.Errorf("list bytes too short to contain an offset when decoding c.D")
+			}
+			c.D = make([][]byte, listLen)
+			var tmpSlice []byte
+			for i := uint64(0); i < listLen; i++ {
+				var tmp []byte
+
+				endOffset := totalVarBytes
+				if i+1 != listLen {
+					endOffset = ssz.ReadOffset(sszSlice3[(i+1)*4 : (i+2)*4])
+					if totalVarBytes < endOffset {
+						return fmt.Errorf("offset %d points past the end of buffer when decoding c.D", endOffset)
+					}
+				}
+				if endOffset < startOffset {
+					return fmt.Errorf("offset %d is not greater than start offset %d when decoding c.D", endOffset, startOffset)
+				}
+				tmpSlice = sszSlice3[startOffset:endOffset]
+				tmp = append([]byte{}, tmpSlice...)
+				c.D[i] = tmp
+				startOffset = endOffset
+			}
+		} else {
+			if len(sszSlice3) > 0 {
+				return fmt.Errorf("list bytes too short to contain an offset when decoding c.D")
+			}
+			c.D = make([][]byte, 0)
+		}
+	}
+
+	// Field 4: E
+	{
+		// empty lists are zero length, so make sure there is room for an offset
+		// before attempting to unmarshal it
+		if len(sszSlice4) > 3 {
+			startOffset := ssz.ReadOffset(sszSlice4[0:4])
+			if startOffset == 0 {
+				return fmt.Errorf("encountered invalid offset of 0 when decoding c.E")
+			}
+			if startOffset%4 != 0 {
+				return fmt.Errorf("misaligned list bytes: when decoding c.E, end-of-list offset is %d, which is not a multiple of 4 (offset size)", startOffset)
+			}
+			listLen := startOffset / 4
+			if listLen > 128 {
+				return fmt.Errorf("ssz-max exceeded: c.E has %d elements, ssz-max is 128: %w", listLen, ssz.ErrListTooBig)
+			}
+			totalVarBytes := uint64(len(sszSlice4))
+			if totalVarBytes < startOffset {
+				return fmt.Errorf("list bytes too short to contain an offset when decoding c.E")
+			}
+			c.E = make([]*Inner, listLen)
+			var tmpSlice []byte
+			for i := uint64(0); i < listLen; i++ {
+				var tmp *Inner
+				tmp = new(Inner)
+				endOffset := totalVarBytes
+				if i+1 != listLen {
+					endOffset = ssz.ReadOffset(sszSlice4[(i+1)*4 : (i+2)*4])
+					if totalVarBytes < endOffset {
+						return fmt.Errorf("offset %d points past the end of buffer when decoding c.E", endOffset)
+					}
+				}
+				if endOffset < startOffset {
+					return fmt.Errorf("offset %d is not greater than start offset %d when decoding c.E", endOffset, startOffset)
+				}
+				tmpSlice = sszSlice4[startOffset:endOffset]
+				if err = tmp.UnmarshalSSZ(tmpSlice); err != nil {
+					return fmt.Errorf("E: %w", err)
+				}
+				c.E[i] = tmp
+				startOffset = endOffset
+			}
+		} else {
+			if len(sszSlice4) > 0 {
+				return fmt.Errorf("list bytes too short to contain an offset when decoding c.E")
+			}
+			c.E = make([]*Inner, 0)
+		}
+	}
+
+	// Field 5: F
+	c.F = new(Inner)
+	if err = c.F.UnmarshalSSZ(sszSlice5); err != nil {
+		return fmt.Errorf("F: %w", err)
+	}
+
+	// Field 6: G
+	{
+		c.G = make([][]byte, 4)
+		for i := 0; i < 4; i++ {
+			var tmp []byte
+
+			tmpSlice := sszSlice6[i*32 : (1+i)*32]
+			tmp = make([]byte, 0, 32)
+			tmp = append(tmp, tmpSlice...)
+			c.G[i] = tmp
+		}
+	}
+
+	// Field 7: H
+	c.H = MyInt(binary.LittleEndian.Uint64(sszSlice7))
+
+	// Field 8: I
+	{
+		c.I = make([]uint64, 4)
+		for i := 0; i < 4; i++ {
+			var tmp uint64
+
+			tmpSlice := sszSlice8[i*8 : (1+i)*8]
+			tmp = binary.LittleEndian.Uint64(tmpSlice)
+			c.I[i] = tmp
+		}
+	}
+
+	// Field 9: J
+	c.J = make([]byte, 0, 1)
+	c.J = append(c.J, go_bitfield.Bitvector4(sszSlice9)...)
+
+	// Field 10: K
+	c.K = append([]byte{}, sszSlice10...)
+
+	// Field 11: L
+	if err = ssz.ValidateBitlist(sszSlice11, 2048); err != nil {
+		return fmt.Errorf("L: %w", err)
+	}
+	c.L = append([]byte{}, go_bitfield.Bitlist(sszSlice11)...)
+
+	// Field 12: M
+	{
+		c.M = make([]Slot, 4)
+		for i := 0; i < 4; i++ {
+			var tmp Slot
+
+			tmpSlice := sszSlice12[i*8 : (1+i)*8]
+			tmp = Slot(binary.LittleEndian.Uint64(tmpSlice))
+			c.M[i] = tmp
+		}
+	}
+
+	// Field 13: N
+	{
+		if len(sszSlice13)%8 != 0 {
+			return fmt.Errorf("misaligned bytes: c.N length is %d, which is not a multiple of 8: %w", len(sszSlice13), ssz.ErrIncorrectListSize)
+		}
+		numElem := len(sszSlice13) / 8
+		if numElem > 1024 {
+			return fmt.Errorf("ssz-max exceeded: c.N has %d elements, ssz-max is 1024: %w", numElem, ssz.ErrListTooBig)
+		}
+		c.N = make([]Slot, numElem)
+		for i := 0; i < numElem; i++ {
+			var tmp Slot
+
+			tmpSlice := sszSlice13[i*8 : (1+i)*8]
+			tmp = Slot(binary.LittleEndian.Uint64(tmpSlice))
+			c.N[i] = tmp
+		}
+	}
+
+	// Field 14: O
+	{
+		c.O = make([]*FixedInner, 4)
+		for i := 0; i < 4; i++ {
+			var tmp *FixedInner
+			tmp = new(FixedInner)
+			tmpSlice := sszSlice14[i*8 : (1+i)*8]
+			if err = tmp.UnmarshalSSZ(tmpSlice); err != nil {
+				return fmt.Errorf("O: %w", err)
+			}
+			c.O[i] = tmp
+		}
+	}
+
+	// Field 15: P
+	{
+		if len(sszSlice15) < 4*4 {
+			return fmt.Errorf("vector bytes too short to contain offsets when decoding c.P: %w", ssz.ErrSize)
+		}
+		startOffset := ssz.ReadOffset(sszSlice15[0:4])
+		if startOffset != 4*4 {
+			return fmt.Errorf("invalid initial offset %d when decoding c.P, expected %d: %w", startOffset, 4*4, ssz.ErrInvalidVariableOffset)
+		}
+		totalVarBytes := uint64(len(sszSlice15))
+		c.P = make([][]byte, 4)
+		var tmpSlice []byte
+		for i := uint64(0); i < 4; i++ {
+			var tmp []byte
+
+			endOffset := totalVarBytes
+			if i+1 != 4 {
+				endOffset = ssz.ReadOffset(sszSlice15[(i+1)*4 : (i+2)*4])
+				if totalVarBytes < endOffset {
+					return fmt.Errorf("offset %d points past the end of buffer when decoding c.P", endOffset)
+				}
+			}
+			if endOffset < startOffset {
+				return fmt.Errorf("offset %d is not greater than start offset %d when decoding c.P", endOffset, startOffset)
+			}
+			tmpSlice = sszSlice15[startOffset:endOffset]
+			tmp = append([]byte{}, tmpSlice...)
+			c.P[i] = tmp
+			startOffset = endOffset
+		}
+	}
+
+	// Field 16: Q
+	{
+		if len(sszSlice16) < 4*4 {
+			return fmt.Errorf("vector bytes too short to contain offsets when decoding c.Q: %w", ssz.ErrSize)
+		}
+		startOffset := ssz.ReadOffset(sszSlice16[0:4])
+		if startOffset != 4*4 {
+			return fmt.Errorf("invalid initial offset %d when decoding c.Q, expected %d: %w", startOffset, 4*4, ssz.ErrInvalidVariableOffset)
+		}
+		totalVarBytes := uint64(len(sszSlice16))
+		c.Q = make([]*Inner, 4)
+		var tmpSlice []byte
+		for i := uint64(0); i < 4; i++ {
+			var tmp *Inner
+			tmp = new(Inner)
+			endOffset := totalVarBytes
+			if i+1 != 4 {
+				endOffset = ssz.ReadOffset(sszSlice16[(i+1)*4 : (i+2)*4])
+				if totalVarBytes < endOffset {
+					return fmt.Errorf("offset %d points past the end of buffer when decoding c.Q", endOffset)
+				}
+			}
+			if endOffset < startOffset {
+				return fmt.Errorf("offset %d is not greater than start offset %d when decoding c.Q", endOffset, startOffset)
+			}
+			tmpSlice = sszSlice16[startOffset:endOffset]
+			if err = tmp.UnmarshalSSZ(tmpSlice); err != nil {
+				return fmt.Errorf("Q: %w", err)
+			}
+			c.Q[i] = tmp
+			startOffset = endOffset
+		}
+	}
+
+	// Field 17: R
+	if sszSlice17[0] > 1 {
+		return ssz.ErrInvalidSerialization
+	}
+	if sszSlice17[0] == 1 {
+		c.R = true
+	} else {
+		c.R = false
+	}
+
+	// Field 18: S
+	c.S = binary.LittleEndian.Uint16(sszSlice18)
+
+	// Field 19: T
+	c.T = binary.LittleEndian.Uint32(sszSlice19)
+
+	// Field 20: U
+	{
+		// empty lists are zero length, so make sure there is room for an offset
+		// before attempting to unmarshal it
+		if len(sszSlice20) > 3 {
+			startOffset := ssz.ReadOffset(sszSlice20[0:4])
+			if startOffset == 0 {
+				return fmt.Errorf("encountered invalid offset of 0 when decoding c.U")
+			}
+			if startOffset%4 != 0 {
+				return fmt.Errorf("misaligned list bytes: when decoding c.U, end-of-list offset is %d, which is not a multiple of 4 (offset size)", startOffset)
+			}
+			listLen := startOffset / 4
+			if listLen > 32 {
+				return fmt.Errorf("ssz-max exceeded: c.U has %d elements, ssz-max is 32: %w", listLen, ssz.ErrListTooBig)
+			}
+			totalVarBytes := uint64(len(sszSlice20))
+			if totalVarBytes < startOffset {
+				return fmt.Errorf("list bytes too short to contain an offset when decoding c.U")
+			}
+			c.U = make([][]uint64, listLen)
+			var tmpSlice []byte
+			for i := uint64(0); i < listLen; i++ {
+				var tmp []uint64
+
+				endOffset := totalVarBytes
+				if i+1 != listLen {
+					endOffset = ssz.ReadOffset(sszSlice20[(i+1)*4 : (i+2)*4])
+					if totalVarBytes < endOffset {
+						return fmt.Errorf("offset %d points past the end of buffer when decoding c.U", endOffset)
+					}
+				}
+				if endOffset < startOffset {
+					return fmt.Errorf("offset %d is not greater than start offset %d when decoding c.U", endOffset, startOffset)
+				}
+				tmpSlice = sszSlice20[startOffset:endOffset]
+				{
+					if len(tmpSlice)%8 != 0 {
+						return fmt.Errorf("misaligned bytes: tmp length is %d, which is not a multiple of 8: %w", len(tmpSlice), ssz.ErrIncorrectListSize)
+					}
+					numElem := len(tmpSlice) / 8
+					if numElem > 16 {
+						return fmt.Errorf("ssz-max exceeded: tmp has %d elements, ssz-max is 16: %w", numElem, ssz.ErrListTooBig)
+					}
+					tmp = make([]uint64, numElem)
+					for i := 0; i < numElem; i++ {
+						var tmp2 uint64
+
+						tmpSlice2 := tmpSlice[i*8 : (1+i)*8]
+						tmp2 = binary.LittleEndian.Uint64(tmpSlice2)
+						tmp[i] = tmp2
+					}
+				}
+				c.U[i] = tmp
+				startOffset = endOffset
+			}
+		} else {
+			if len(sszSlice20) > 0 {
+				return fmt.Errorf("list bytes too short to contain an offset when decoding c.U")
+			}
+			c.U = make([][]uint64, 0)
+		}
+	}
+
+	// Field 21: V
+	{
+		if len(sszSlice21) < 4*4 {
+			return fmt.Errorf("vector bytes too short to contain offsets when decoding c.V: %w", ssz.ErrSize)
+		}
+		startOffset := ssz.ReadOffset(sszSlice21[0:4])
+		if startOffset != 4*4 {
+			return fmt.Errorf("invalid initial offset %d when decoding c.V, expected %d: %w", startOffset, 4*4, ssz.ErrInvalidVariableOffset)
+		}
+		totalVarBytes := uint64(len(sszSlice21))
+		c.V = make([][]uint64, 4)
+		var tmpSlice []byte
+		for i := uint64(0); i < 4; i++ {
+			var tmp []uint64
+
+			endOffset := totalVarBytes
+			if i+1 != 4 {
+				endOffset = ssz.ReadOffset(sszSlice21[(i+1)*4 : (i+2)*4])
+				if totalVarBytes < endOffset {
+					return fmt.Errorf("offset %d points past the end of buffer when decoding c.V", endOffset)
+				}
+			}
+			if endOffset < startOffset {
+				return fmt.Errorf("offset %d is not greater than start offset %d when decoding c.V", endOffset, startOffset)
+			}
+			tmpSlice = sszSlice21[startOffset:endOffset]
+			{
+				if len(tmpSlice)%8 != 0 {
+					return fmt.Errorf("misaligned bytes: tmp length is %d, which is not a multiple of 8: %w", len(tmpSlice), ssz.ErrIncorrectListSize)
+				}
+				numElem := len(tmpSlice) / 8
+				if numElem > 16 {
+					return fmt.Errorf("ssz-max exceeded: tmp has %d elements, ssz-max is 16: %w", numElem, ssz.ErrListTooBig)
+				}
+				tmp = make([]uint64, numElem)
+				for i := 0; i < numElem; i++ {
+					var tmp2 uint64
+
+					tmpSlice2 := tmpSlice[i*8 : (1+i)*8]
+					tmp2 = binary.LittleEndian.Uint64(tmpSlice2)
+					tmp[i] = tmp2
+				}
+			}
+			c.V[i] = tmp
+			startOffset = endOffset
+		}
+	}
+
+	// Field 22: W
+	c.W = make([]byte, 0, 32)
+	c.W = append(c.W, Root(sszSlice22)...)
+
+	// Field 23: X
+	{
+		c.X = make([]go_bitfield.Bitvector8, 4)
+		for i := 0; i < 4; i++ {
+			var tmp go_bitfield.Bitvector8
+
+			tmpSlice := sszSlice23[i*1 : (1+i)*1]
+			tmp = make([]byte, 0, 1)
+			tmp = append(tmp, go_bitfield.Bitvector8(tmpSlice)...)
+			c.X[i] = tmp
+		}
+	}
+
+	// Field 24: Y
+	{
+		c.Y = make([]uint32, 8)
+		for i := 0; i < 8; i++ {
+			var tmp uint32
+
+			tmpSlice := sszSlice24[i*4 : (1+i)*4]
+			tmp = binary.LittleEndian.Uint32(tmpSlice)
+			c.Y[i] = tmp
+		}
+	}
+
+	// Field 25: Z
+	{
+		if len(sszSlice25)%2 != 0 {
+			return fmt.Errorf("misaligned bytes: c.Z length is %d, which is not a multiple of 2: %w", len(sszSlice25), ssz.ErrIncorrectListSize)
+		}
+		numElem := len(sszSlice25) / 2
+		if numElem > 100 {
+			return fmt.Errorf("ssz-max exceeded: c.Z has %d elements, ssz-max is 100: %w", numElem, ssz.ErrListTooBig)
+		}
+		c.Z = make([]uint16, numElem)
+		for i := 0; i < numElem; i++ {
+			var tmp uint16
+
+			tmpSlice := sszSlice25[i*2 : (1+i)*2]
+			tmp = binary.LittleEndian.Uint16(tmpSlice)
+			c.Z[i] = tmp
+		}
+	}
+
+	// Field 26: AA
+	{
+		c.AA = make([][]uint64, 2)
+		for i := 0; i < 2; i++ {
+			var tmp []uint64
+
+			tmpSlice := sszSlice26[i*32 : (1+i)*32]
+			{
+				tmp = make([]uint64, 4)
+				for i := 0; i < 4; i++ {
+					var tmp2 uint64
+
+					tmpSlice2 := tmpSlice[i*8 : (1+i)*8]
+					tmp2 = binary.LittleEndian.Uint64(tmpSlice2)
+					tmp[i] = tmp2
+				}
+			}
+			c.AA[i] = tmp
+		}
+	}
+
+	// Field 27: AB
+	{
+		if len(sszSlice27)%32 != 0 {
+			return fmt.Errorf("misaligned bytes: c.AB length is %d, which is not a multiple of 32: %w", len(sszSlice27), ssz.ErrIncorrectListSize)
+		}
+		numElem := len(sszSlice27) / 32
+		if numElem > 32 {
+			return fmt.Errorf("ssz-max exceeded: c.AB has %d elements, ssz-max is 32: %w", numElem, ssz.ErrListTooBig)
+		}
+		c.AB = make([][]uint64, numElem)
+		for i := 0; i < numElem; i++ {
+			var tmp []uint64
+
+			tmpSlice := sszSlice27[i*32 : (1+i)*32]
+			{
+				tmp = make([]uint64, 4)
+				for i := 0; i < 4; i++ {
+					var tmp2 uint64
+
+					tmpSlice2 := tmpSlice[i*8 : (1+i)*8]
+					tmp2 = binary.LittleEndian.Uint64(tmpSlice2)
+					tmp[i] = tmp2
+				}
+			}
+			c.AB[i] = tmp
+		}
+	}
+
+	// Field 28: AC
+	copy(c.AC[:], sszSlice28)
+
+	// Field 29: AD
+	c.AD = sszSlice29[0]
+
+	// Field 30: AE
+	{
+		c.AE = make([]bool, 4)
+		for i := 0; i < 4; i++ {
+			var tmp bool
+
+			tmpSlice := sszSlice30[i*1 : (1+i)*1]
+			if tmpSlice[0] > 1 {
+				return ssz.ErrInvalidSerialization
+			}
+			if tmpSlice[0] == 1 {
+				tmp = true
+			} else {
+				tmp = false
+			}
+			c.AE[i] = tmp
+		}
+	}
+
+	// Field 31: AF
+	{
+		if len(sszSlice31)%1 != 0 {
+			return fmt.Errorf("misaligned bytes: c.AF length is %d, which is not a multiple of 1: %w", len(sszSlice31), ssz.ErrIncorrectListSize)
+		}
+		numElem := len(sszSlice31) / 1
+		if numElem > 100 {
+			return fmt.Errorf("ssz-max exceeded: c.AF has %d elements, ssz-max is 100: %w", numElem, ssz.ErrListTooBig)
+		}
+		c.AF = make([]bool, numElem)
+		for i := 0; i < numElem; i++ {
+			var tmp bool
+
+			tmpSlice := sszSlice31[i*1 : (1+i)*1]
+			if tmpSlice[0] > 1 {
+				return ssz.ErrInvalidSerialization
+			}
+			if tmpSlice[0] == 1 {
+				tmp = true
+			} else {
+				tmp = false
+			}
+			c.AF[i] = tmp
+		}
+	}
+
+	// Field 32: AG
+	{
+		// empty lists are zero length, so make sure there is room for an offset
+		// before attempting to unmarshal it
+		if len(sszSlice32) > 3 {
+			startOffset := ssz.ReadOffset(sszSlice32[0:4])
+			if startOffset == 0 {
+				return fmt.Errorf("encountered invalid offset of 0 when decoding c.AG")
+			}
+			if startOffset%4 != 0 {
+				return fmt.Errorf("misaligned list bytes: when decoding c.AG, end-of-list offset is %d, which is not a multiple of 4 (offset size)", startOffset)
+			}
+			listLen := startOffset / 4
+			if listLen > 4 {
+				return fmt.Errorf("ssz-max exceeded: c.AG has %d elements, ssz-max is 4: %w", listLen, ssz.ErrListTooBig)
+			}
+			totalVarBytes := uint64(len(sszSlice32))
+			if totalVarBytes < startOffset {
+				return fmt.Errorf("list bytes too short to contain an offset when decoding c.AG")
+			}
+			c.AG = make([]go_bitfield.Bitlist, listLen)
+			var tmpSlice []byte
+			for i := uint64(0); i < listLen; i++ {
+				var tmp go_bitfield.Bitlist
+
+				endOffset := totalVarBytes
+				if i+1 != listLen {
+					endOffset = ssz.ReadOffset(sszSlice32[(i+1)*4 : (i+2)*4])
+					if totalVarBytes < endOffset {
+						return fmt.Errorf("offset %d points past the end of buffer when decoding c.AG", endOffset)
+					}
+				}
+				if endOffset < startOffset {
+					return fmt.Errorf("offset %d is not greater than start offset %d when decoding c.AG", endOffset, startOffset)
+				}
+				tmpSlice = sszSlice32[startOffset:endOffset]
+				if err = ssz.ValidateBitlist(tmpSlice, 2048); err != nil {
+					return fmt.Errorf("AG: %w", err)
+				}
+				tmp = append([]byte{}, go_bitfield.Bitlist(tmpSlice)...)
+				c.AG[i] = tmp
+				startOffset = endOffset
+			}
+		} else {
+			if len(sszSlice32) > 0 {
+				return fmt.Errorf("list bytes too short to contain an offset when decoding c.AG")
+			}
+			c.AG = make([]go_bitfield.Bitlist, 0)
+		}
+	}
+
+	// Field 33: AH
+	{
+		if len(sszSlice33) < 4*2 {
+			return fmt.Errorf("vector bytes too short to contain offsets when decoding c.AH: %w", ssz.ErrSize)
+		}
+		startOffset := ssz.ReadOffset(sszSlice33[0:4])
+		if startOffset != 4*2 {
+			return fmt.Errorf("invalid initial offset %d when decoding c.AH, expected %d: %w", startOffset, 4*2, ssz.ErrInvalidVariableOffset)
+		}
+		totalVarBytes := uint64(len(sszSlice33))
+		c.AH = make([]go_bitfield.Bitlist, 2)
+		var tmpSlice []byte
+		for i := uint64(0); i < 2; i++ {
+			var tmp go_bitfield.Bitlist
+
+			endOffset := totalVarBytes
+			if i+1 != 2 {
+				endOffset = ssz.ReadOffset(sszSlice33[(i+1)*4 : (i+2)*4])
+				if totalVarBytes < endOffset {
+					return fmt.Errorf("offset %d points past the end of buffer when decoding c.AH", endOffset)
+				}
+			}
+			if endOffset < startOffset {
+				return fmt.Errorf("offset %d is not greater than start offset %d when decoding c.AH", endOffset, startOffset)
+			}
+			tmpSlice = sszSlice33[startOffset:endOffset]
+			if err = ssz.ValidateBitlist(tmpSlice, 2048); err != nil {
+				return fmt.Errorf("AH: %w", err)
+			}
+			tmp = append([]byte{}, go_bitfield.Bitlist(tmpSlice)...)
+			c.AH[i] = tmp
+			startOffset = endOffset
+		}
+	}
+
+	// Field 34: AI
+	c.AI[0] = binary.LittleEndian.Uint64(sszSlice34[0:8])
+	c.AI[1] = binary.LittleEndian.Uint64(sszSlice34[8:16])
+	c.AI[2] = binary.LittleEndian.Uint64(sszSlice34[16:24])
+	c.AI[3] = binary.LittleEndian.Uint64(sszSlice34[24:32])
+
+	// Field 35: AJ
+	{
+		if len(sszSlice35)%32 != 0 {
+			return fmt.Errorf("misaligned bytes: c.AJ length is %d, which is not a multiple of 32: %w", len(sszSlice35), ssz.ErrIncorrectListSize)
+		}
+		numElem := len(sszSlice35) / 32
+		if numElem > 8 {
+			return fmt.Errorf("ssz-max exceeded: c.AJ has %d elements, ssz-max is 8: %w", numElem, ssz.ErrListTooBig)
+		}
+		c.AJ = make([]uint256.Int, numElem)
+		for i := 0; i < numElem; i++ {
+			var tmp uint256.Int
+
+			tmpSlice := sszSlice35[i*32 : (1+i)*32]
+			tmp[0] = binary.LittleEndian.Uint64(tmpSlice[0:8])
+			tmp[1] = binary.LittleEndian.Uint64(tmpSlice[8:16])
+			tmp[2] = binary.LittleEndian.Uint64(tmpSlice[16:24])
+			tmp[3] = binary.LittleEndian.Uint64(tmpSlice[24:32])
+			c.AJ[i] = tmp
+		}
+	}
+
+	// Field 36: AK
+	{
+		c.AK = make([]uint256.Int, 2)
+		for i := 0; i < 2; i++ {
+			var tmp uint256.Int
+
+			tmpSlice := sszSlice36[i*32 : (1+i)*32]
+			tmp[0] = binary.LittleEndian.Uint64(tmpSlice[0:8])
+			tmp[1] = binary.LittleEndian.Uint64(tmpSlice[8:16])
+			tmp[2] = binary.LittleEndian.Uint64(tmpSlice[16:24])
+			tmp[3] = binary.LittleEndian.Uint64(tmpSlice[24:32])
+			c.AK[i] = tmp
+		}
+	}
+
+	// Field 37: AL
+	{
+		if len(sszSlice37)%48 != 0 {
+			return fmt.Errorf("misaligned bytes: c.AL length is %d, which is not a multiple of 48: %w", len(sszSlice37), ssz.ErrIncorrectListSize)
+		}
+		numElem := len(sszSlice37) / 48
+		if numElem > 16 {
+			return fmt.Errorf("ssz-max exceeded: c.AL has %d elements, ssz-max is 16: %w", numElem, ssz.ErrListTooBig)
+		}
+		c.AL = make([][48]byte, numElem)
+		for i := 0; i < numElem; i++ {
+			var tmp [48]byte
+
+			tmpSlice := sszSlice37[i*48 : (1+i)*48]
+			copy(tmp[:], tmpSlice)
+			c.AL[i] = tmp
+		}
+	}
+
+	// Field 38: AM
+	{
+		c.AM = make([][32]byte, 4)
+		for i := 0; i < 4; i++ {
+			var tmp [32]byte
+
+			tmpSlice := sszSlice38[i*32 : (1+i)*32]
+			copy(tmp[:], tmpSlice)
+			c.AM[i] = tmp
+		}
+	}
+
+	// Field 39: AN
+	copy(c.AN[:], sszSlice39)
+
+	// Field 40: AO
+	{
+		if len(sszSlice40)%32 != 0 {
+			return fmt.Errorf("misaligned bytes: c.AO length is %d, which is not a multiple of 32: %w", len(sszSlice40), ssz.ErrIncorrectListSize)
+		}
+		numElem := len(sszSlice40) / 32
+		if numElem > 8 {
+			return fmt.Errorf("ssz-max exceeded: c.AO has %d elements, ssz-max is 8: %w", numElem, ssz.ErrListTooBig)
+		}
+		c.AO = make([]ArrayRoot, numElem)
+		for i := 0; i < numElem; i++ {
+			var tmp ArrayRoot
+
+			tmpSlice := sszSlice40[i*32 : (1+i)*32]
+			copy(tmp[:], tmpSlice)
+			c.AO[i] = tmp
+		}
+	}
+	return err
+}
+
+func (c *Example) HashTreeRoot() ([32]byte, error) {
+	hh := ssz.DefaultHasherPool.Get()
+	if err := c.HashTreeRootWith(hh); err != nil {
+		ssz.DefaultHasherPool.Put(hh)
+		return [32]byte{}, err
+	}
+	root, err := hh.HashRoot()
+	ssz.DefaultHasherPool.Put(hh)
+	return root, err
+}
+
+func (c *Example) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+	indx := hh.Index()
+	// Field 0: A
+	hh.PutUint64(c.A)
+	// Field 1: B
+	if len(c.B) != 32 {
+		return ssz.ErrBytesLength
+	}
+	hh.PutBytes(c.B)
+	// Field 2: C
+	{
+		if len(c.C) > 1024 {
+			return ssz.ErrListTooBig
+		}
+		subIndx := hh.Index()
+		for _, o := range c.C {
+			hh.AppendUint64(o)
+		}
+		hh.FillUpTo32()
+		numItems := uint64(len(c.C))
+		hh.MerkleizeWithMixin(subIndx, numItems, ssz.CalculateLimit(1024, numItems, 8))
+	}
+	// Field 3: D
+	{
+		if len(c.D) > 256 {
+			return ssz.ErrListTooBig
+		}
+		subIndx := hh.Index()
+		for _, o := range c.D {
+
+			{
+				if len(o) > 64 {
+					return ssz.ErrBytesLength
+				}
+				subIndx := hh.Index()
+				hh.AppendBytes32(o)
+				numItems := uint64(len(o))
+				hh.MerkleizeWithMixin(subIndx, numItems, (64*1+31)/32)
+			}
+
+		}
+		hh.MerkleizeWithMixin(subIndx, uint64(len(c.D)), 256)
+	}
+	// Field 4: E
+	{
+		if len(c.E) > 128 {
+			return ssz.ErrListTooBig
+		}
+		subIndx := hh.Index()
+		for _, o := range c.E {
+			if err := o.HashTreeRootWith(hh); err != nil {
+				return fmt.Errorf("E: %w", err)
+			}
+		}
+		hh.MerkleizeWithMixin(subIndx, uint64(len(c.E)), 128)
+	}
+	// Field 5: F
+	if err := c.F.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("F: %w", err)
+	}
+	// Field 6: G
+	{
+		if len(c.G) != 4 {
+			return ssz.ErrVectorLength
+		}
+		subIndx := hh.Index()
+		for _, o := range c.G {
+			if len(o) != 32 {
+				return ssz.ErrBytesLength
+			}
+			hh.Append(o)
+		}
+		hh.Merkleize(subIndx)
+	}
+	// Field 7: H
+	hh.PutUint64(uint64(c.H))
+	// Field 8: I
+	{
+		if len(c.I) != 4 {
+			return ssz.ErrVectorLength
+		}
+		subIndx := hh.Index()
+		for _, o := range c.I {
+			hh.AppendUint64(o)
+		}
+		hh.Merkleize(subIndx)
+	}
+	// Field 9: J
+	if len([]byte(c.J)) != 1 {
+		return ssz.ErrBytesLength
+	}
+	hh.PutBytes([]byte(c.J))
+	// Field 10: K
+
+	{
+		if len(c.K) > 256 {
+			return ssz.ErrBytesLength
+		}
+		subIndx := hh.Index()
+		hh.AppendBytes32(c.K)
+		numItems := uint64(len(c.K))
+		hh.MerkleizeWithMixin(subIndx, numItems, (256*1+31)/32)
+	}
+
+	// Field 11: L
+	if len(c.L) == 0 {
+		return ssz.ErrEmptyBitlist
+	}
+	hh.PutBitlist(c.L, 2048)
+	// Field 12: M
+	{
+		if len(c.M) != 4 {
+			return ssz.ErrVectorLength
+		}
+		subIndx := hh.Index()
+		for _, o := range c.M {
+			hh.AppendUint64(uint64(o))
+		}
+		hh.Merkleize(subIndx)
+	}
+	// Field 13: N
+	{
+		if len(c.N) > 1024 {
+			return ssz.ErrListTooBig
+		}
+		subIndx := hh.Index()
+		for _, o := range c.N {
+			hh.AppendUint64(uint64(o))
+		}
+		hh.FillUpTo32()
+		numItems := uint64(len(c.N))
+		hh.MerkleizeWithMixin(subIndx, numItems, ssz.CalculateLimit(1024, numItems, 8))
+	}
+	// Field 14: O
+	{
+		if len(c.O) != 4 {
+			return ssz.ErrVectorLength
+		}
+		subIndx := hh.Index()
+		for _, o := range c.O {
+			if err := o.HashTreeRootWith(hh); err != nil {
+				return fmt.Errorf("O: %w", err)
+			}
+		}
+		hh.Merkleize(subIndx)
+	}
+	// Field 15: P
+	{
+		if len(c.P) != 4 {
+			return ssz.ErrVectorLength
+		}
+		subIndx := hh.Index()
+		for _, o := range c.P {
+
+			{
+				if len(o) > 64 {
+					return ssz.ErrBytesLength
+				}
+				subIndx := hh.Index()
+				hh.AppendBytes32(o)
+				numItems := uint64(len(o))
+				hh.MerkleizeWithMixin(subIndx, numItems, (64*1+31)/32)
+			}
+
+		}
+		hh.Merkleize(subIndx)
+	}
+	// Field 16: Q
+	{
+		if len(c.Q) != 4 {
+			return ssz.ErrVectorLength
+		}
+		subIndx := hh.Index()
+		for _, o := range c.Q {
+			if err := o.HashTreeRootWith(hh); err != nil {
+				return fmt.Errorf("Q: %w", err)
+			}
+		}
+		hh.Merkleize(subIndx)
+	}
+	// Field 17: R
+	hh.PutBool(c.R)
+	// Field 18: S
+	hh.PutUint16(c.S)
+	// Field 19: T
+	hh.PutUint32(c.T)
+	// Field 20: U
+	{
+		if len(c.U) > 32 {
+			return ssz.ErrListTooBig
+		}
+		subIndx := hh.Index()
+		for _, o := range c.U {
+			{
+				if len(o) > 16 {
+					return ssz.ErrListTooBig
+				}
+				subIndx := hh.Index()
+				for _, oo := range o {
+					hh.AppendUint64(oo)
+				}
+				hh.FillUpTo32()
+				numItems := uint64(len(o))
+				hh.MerkleizeWithMixin(subIndx, numItems, ssz.CalculateLimit(16, numItems, 8))
+			}
+		}
+		hh.MerkleizeWithMixin(subIndx, uint64(len(c.U)), 32)
+	}
+	// Field 21: V
+	{
+		if len(c.V) != 4 {
+			return ssz.ErrVectorLength
+		}
+		subIndx := hh.Index()
+		for _, o := range c.V {
+			{
+				if len(o) > 16 {
+					return ssz.ErrListTooBig
+				}
+				subIndx := hh.Index()
+				for _, oo := range o {
+					hh.AppendUint64(oo)
+				}
+				hh.FillUpTo32()
+				numItems := uint64(len(o))
+				hh.MerkleizeWithMixin(subIndx, numItems, ssz.CalculateLimit(16, numItems, 8))
+			}
+		}
+		hh.Merkleize(subIndx)
+	}
+	// Field 22: W
+	if len([]byte(c.W)) != 32 {
+		return ssz.ErrBytesLength
+	}
+	hh.PutBytes([]byte(c.W))
+	// Field 23: X
+	{
+		if len(c.X) != 4 {
+			return ssz.ErrVectorLength
+		}
+		subIndx := hh.Index()
+		for _, o := range c.X {
+			if len(o) != 1 {
+				return ssz.ErrBytesLength
+			}
+			hh.PutBytes(o)
+		}
+		hh.Merkleize(subIndx)
+	}
+	// Field 24: Y
+	{
+		if len(c.Y) != 8 {
+			return ssz.ErrVectorLength
+		}
+		subIndx := hh.Index()
+		for _, o := range c.Y {
+			hh.AppendUint32(o)
+		}
+		hh.Merkleize(subIndx)
+	}
+	// Field 25: Z
+	{
+		if len(c.Z) > 100 {
+			return ssz.ErrListTooBig
+		}
+		subIndx := hh.Index()
+		for _, o := range c.Z {
+			hh.AppendUint16(o)
+		}
+		hh.FillUpTo32()
+		numItems := uint64(len(c.Z))
+		hh.MerkleizeWithMixin(subIndx, numItems, ssz.CalculateLimit(100, numItems, 2))
+	}
+	// Field 26: AA
+	{
+		if len(c.AA) != 2 {
+			return ssz.ErrVectorLength
+		}
+		subIndx := hh.Index()
+		for _, o := range c.AA {
+			{
+				if len(o) != 4 {
+					return ssz.ErrVectorLength
+				}
+				subIndx := hh.Index()
+				for _, oo := range o {
+					hh.AppendUint64(oo)
+				}
+				hh.Merkleize(subIndx)
+			}
+		}
+		hh.Merkleize(subIndx)
+	}
+	// Field 27: AB
+	{
+		if len(c.AB) > 32 {
+			return ssz.ErrListTooBig
+		}
+		subIndx := hh.Index()
+		for _, o := range c.AB {
+			{
+				if len(o) != 4 {
+					return ssz.ErrVectorLength
+				}
+				subIndx := hh.Index()
+				for _, oo := range o {
+					hh.AppendUint64(oo)
+				}
+				hh.Merkleize(subIndx)
+			}
+		}
+		hh.MerkleizeWithMixin(subIndx, uint64(len(c.AB)), 32)
+	}
+	// Field 28: AC
+	if len(c.AC) != 32 {
+		return ssz.ErrBytesLength
+	}
+	hh.PutBytes(c.AC[:])
+	// Field 29: AD
+	hh.PutUint8(c.AD)
+	// Field 30: AE
+	{
+		if len(c.AE) != 4 {
+			return ssz.ErrVectorLength
+		}
+		subIndx := hh.Index()
+		for _, o := range c.AE {
+			hh.AppendBool(o)
+		}
+		hh.Merkleize(subIndx)
+	}
+	// Field 31: AF
+	{
+		if len(c.AF) > 100 {
+			return ssz.ErrListTooBig
+		}
+		subIndx := hh.Index()
+		for _, o := range c.AF {
+			hh.AppendBool(o)
+		}
+		hh.FillUpTo32()
+		numItems := uint64(len(c.AF))
+		hh.MerkleizeWithMixin(subIndx, numItems, ssz.CalculateLimit(100, numItems, 1))
+	}
+	// Field 32: AG
+	{
+		if len(c.AG) > 4 {
+			return ssz.ErrListTooBig
+		}
+		subIndx := hh.Index()
+		for _, o := range c.AG {
+			if len(o) == 0 {
+				return ssz.ErrEmptyBitlist
+			}
+			hh.PutBitlist(o, 2048)
+		}
+		hh.MerkleizeWithMixin(subIndx, uint64(len(c.AG)), 4)
+	}
+	// Field 33: AH
+	{
+		if len(c.AH) != 2 {
+			return ssz.ErrVectorLength
+		}
+		subIndx := hh.Index()
+		for _, o := range c.AH {
+			if len(o) == 0 {
+				return ssz.ErrEmptyBitlist
+			}
+			hh.PutBitlist(o, 2048)
+		}
+		hh.Merkleize(subIndx)
+	}
+	// Field 34: AI
+	hh.AppendUint64(c.AI[0])
+	hh.AppendUint64(c.AI[1])
+	hh.AppendUint64(c.AI[2])
+	hh.AppendUint64(c.AI[3])
+	// Field 35: AJ
+	{
+		if len(c.AJ) > 8 {
+			return ssz.ErrListTooBig
+		}
+		subIndx := hh.Index()
+		for _, o := range c.AJ {
+			hh.AppendUint64(o[0])
+			hh.AppendUint64(o[1])
+			hh.AppendUint64(o[2])
+			hh.AppendUint64(o[3])
+		}
+		numItems := uint64(len(c.AJ))
+		hh.MerkleizeWithMixin(subIndx, numItems, ssz.CalculateLimit(8, numItems, 32))
+	}
+	// Field 36: AK
+	{
+		if len(c.AK) != 2 {
+			return ssz.ErrVectorLength
+		}
+		subIndx := hh.Index()
+		for _, o := range c.AK {
+			hh.AppendUint64(o[0])
+			hh.AppendUint64(o[1])
+			hh.AppendUint64(o[2])
+			hh.AppendUint64(o[3])
+		}
+		hh.Merkleize(subIndx)
+	}
+	// Field 37: AL
+	{
+		if len(c.AL) > 16 {
+			return ssz.ErrListTooBig
+		}
+		subIndx := hh.Index()
+		for _, o := range c.AL {
+			if len(o) != 48 {
+				return ssz.ErrBytesLength
+			}
+			hh.PutBytes(o[:])
+		}
+		hh.MerkleizeWithMixin(subIndx, uint64(len(c.AL)), 16)
+	}
+	// Field 38: AM
+	{
+		if len(c.AM) != 4 {
+			return ssz.ErrVectorLength
+		}
+		subIndx := hh.Index()
+		for _, o := range c.AM {
+			if len(o) != 32 {
+				return ssz.ErrBytesLength
+			}
+			hh.Append(o[:])
+		}
+		hh.Merkleize(subIndx)
+	}
+	// Field 39: AN
+	if len(c.AN) != 32 {
+		return ssz.ErrBytesLength
+	}
+	hh.PutBytes(c.AN[:])
+	// Field 40: AO
+	{
+		if len(c.AO) > 8 {
+			return ssz.ErrListTooBig
+		}
+		subIndx := hh.Index()
+		for _, o := range c.AO {
+			if len(o) != 32 {
+				return ssz.ErrBytesLength
+			}
+			hh.Append(o[:])
+		}
+		hh.MerkleizeWithMixin(subIndx, uint64(len(c.AO)), 8)
+	}
+	hh.Merkleize(indx)
+	return nil
+}

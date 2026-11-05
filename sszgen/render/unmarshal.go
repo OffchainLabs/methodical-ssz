@@ -240,6 +240,7 @@ func (unmarshalOp) Vector(v *gentypes.ValueVector, ref unmarshalRef, ctx *core.G
 		FieldName:       ref.FieldName,
 		TypeName:        ctx.QualifiedTypeName(elem),
 		NumElements:     v.Size,
+		IsArray:         v.IsArray,
 		LoopVar:         loopVarFor(ref.FieldName),
 		Initializer:     elemInitializer(elem, ctx, tmpName(ref.Depth+1)),
 		SliceName:       ref.SliceName,
@@ -293,6 +294,7 @@ type unmarshalLoopElements struct {
 	Tmp             string
 	TmpSlice        string
 	NumElements     int
+	IsArray         bool // vector-only: a Go array destination needs no make
 	ElementSize     int
 	MaxSize         int
 }
@@ -519,7 +521,7 @@ if {{.VarOffsetName}} > size || {{.VarOffsetName}} < {{.PrevOffsetName}} {
 }`))
 
 	unmarshalVectorTmpl = template.Must(template.New("unmarshalVector").Parse(`{
-	{{.FieldName}} = make([]{{.TypeName}}, {{.NumElements}})
+	{{if not .IsArray}}{{.FieldName}} = make([]{{.TypeName}}, {{.NumElements}}){{end}}
 	for {{.LoopVar}} := 0; {{.LoopVar}} < {{.NumElements}}; {{.LoopVar}} ++ {
 		var {{.Tmp}} {{.TypeName}}
 		{{.Initializer}}
@@ -541,7 +543,7 @@ if {{.VarOffsetName}} > size || {{.VarOffsetName}} < {{.PrevOffsetName}} {
 		return fmt.Errorf("invalid initial offset %d when decoding {{.FieldName}}, expected %d: %w", startOffset, 4*{{.NumElements}}, ssz.ErrInvalidVariableOffset)
 	}
 	totalVarBytes := uint64(len({{.SliceName}}))
-	{{.FieldName}} = make([]{{.TypeName}}, {{.NumElements}})
+	{{if not .IsArray}}{{.FieldName}} = make([]{{.TypeName}}, {{.NumElements}}){{end}}
 	var {{.TmpSlice}} []byte
 	for {{.LoopVar}} := uint64(0); {{.LoopVar}} < {{.NumElements}}; {{.LoopVar}}++ {
 		var {{.Tmp}} {{.TypeName}}

@@ -14,3 +14,8 @@ type Bits struct {
 	V16 bitfield.Bitvector16 `ssz-size:"2"`
 	L   bitfield.Bitlist     `ssz-max:"2048"`
 }
+
+// Limbs covers a Go array of uint64 (Vector[uint64, 4] as [4]uint64).
+type Limbs struct {
+	A [4]uint64
+}

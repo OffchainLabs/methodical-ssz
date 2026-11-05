@@ -94,3 +94,28 @@ func TestBitlistLimit(t *testing.T) {
 		})
 	}
 }
+
+// G1. A [4]uint64 field decodes into the array in place. Expected values
+// from consensus-specs: Vector[uint64, 4] serializes as 4 little-endian
+// uint64s (32 bytes). Its root is pack(A), one 32-byte chunk, and the root of
+// a one-field container with a one-chunk field is that chunk, so the root of
+// Limbs equals its serialization.
+func TestUint64Array(t *testing.T) {
+	in := Limbs{A: [4]uint64{1, 2, 3, 0xffffffffffffffff}}
+	want := []byte{}
+	for _, x := range in.A {
+		want = binary.LittleEndian.AppendUint64(want, x)
+	}
+	enc, err := in.MarshalSSZ()
+	if err != nil || !bytes.Equal(enc, want) {
+		t.Fatalf("MarshalSSZ() = %x, %v; want %x", enc, err, want)
+	}
+	var dec Limbs
+	if err := dec.UnmarshalSSZ(enc); err != nil || dec != in {
+		t.Fatalf("UnmarshalSSZ = %v, %v; want %v", dec, err, in)
+	}
+	root, err := in.HashTreeRoot()
+	if err != nil || !bytes.Equal(root[:], want) {
+		t.Fatalf("HashTreeRoot() = %x, %v; want %x", root, err, want)
+	}
+}

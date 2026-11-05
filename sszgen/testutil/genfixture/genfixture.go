@@ -19,3 +19,9 @@ type Bits struct {
 type Limbs struct {
 	A [4]uint64
 }
+
+// ListU64 covers a fixed field followed by a bounded uint64 list.
+type ListU64 struct {
+	A uint64
+	L []uint64 `ssz-max:"4"`
+}

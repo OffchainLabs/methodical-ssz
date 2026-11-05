@@ -3,7 +3,10 @@ package genfixture
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"testing"
+
+	"github.com/OffchainLabs/methodical-ssz/ssz"
 )
 
 // encodeBits is the spec serialization of Bits: the fixed part (V4, V16, then
@@ -117,5 +120,26 @@ func TestUint64Array(t *testing.T) {
 	root, err := in.HashTreeRoot()
 	if err != nil || !bytes.Equal(root[:], want) {
 		t.Fatalf("HashTreeRoot() = %x, %v; want %x", root, err, want)
+	}
+}
+
+// G3. The first offset of a container must equal the size of its fixed part
+// (EthLib deserialize, remerkleable decode_bytes); here 8 + 4 = 12. Any
+// other value is rejected, including one past the end of the input, so a
+// separate "offset > size" check is unreachable.
+func TestListU64FirstOffset(t *testing.T) {
+	enc := binary.LittleEndian.AppendUint64(nil, 7)
+	enc = binary.LittleEndian.AppendUint32(enc, 12)
+	enc = binary.LittleEndian.AppendUint64(enc, 9)
+	var dec ListU64
+	if err := dec.UnmarshalSSZ(enc); err != nil || dec.A != 7 || len(dec.L) != 1 || dec.L[0] != 9 {
+		t.Fatalf("UnmarshalSSZ(%x) = %+v, %v", enc, dec, err)
+	}
+	for _, off := range []uint32{0, 11, 13, 20, 0xffffffff} {
+		bad := append([]byte{}, enc...)
+		binary.LittleEndian.PutUint32(bad[8:12], off)
+		if err := dec.UnmarshalSSZ(bad); !errors.Is(err, ssz.ErrInvalidVariableOffset) {
+			t.Fatalf("offset %d: UnmarshalSSZ = %v, want ErrInvalidVariableOffset", off, err)
+		}
 	}
 }

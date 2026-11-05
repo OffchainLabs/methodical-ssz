@@ -616,9 +616,6 @@ func (c *Example) UnmarshalSSZ(buf []byte) error {
 	if sszVarOffset2 != 781 {
 		return ssz.ErrInvalidVariableOffset
 	}
-	if sszVarOffset2 > size {
-		return ssz.ErrOffset
-	}
 	sszVarOffset3 := ssz.ReadOffset(buf[44:48]) // c.D
 	if sszVarOffset3 > size || sszVarOffset3 < sszVarOffset2 {
 		return ssz.ErrOffset

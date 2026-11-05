@@ -63,9 +63,6 @@ func (c *Bits) UnmarshalSSZ(buf []byte) error {
 	if sszVarOffset2 != 7 {
 		return ssz.ErrInvalidVariableOffset
 	}
-	if sszVarOffset2 > size {
-		return ssz.ErrOffset
-	}
 	sszSlice2 := buf[sszVarOffset2:] // c.L
 
 	// Field 0: V4
@@ -190,6 +187,109 @@ func (c *Limbs) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 			hh.AppendUint64(o)
 		}
 		hh.Merkleize(subIndx)
+	}
+	hh.Merkleize(indx)
+	return nil
+}
+
+func (c *ListU64) SizeSSZ() int {
+	size := 12
+	size += len(c.L) * 8
+	return size
+}
+
+func (c *ListU64) MarshalSSZ() ([]byte, error) {
+	buf := make([]byte, c.SizeSSZ())
+	return c.MarshalSSZTo(buf[:0])
+}
+
+func (c *ListU64) MarshalSSZTo(dst []byte) ([]byte, error) {
+	var err error
+	offset := 12
+
+	// Field 0: A
+	dst = binary.LittleEndian.AppendUint64(dst, c.A)
+
+	// Field 1: L
+	dst = ssz.WriteOffset(dst, offset)
+	offset += len(c.L) * 8
+
+	// Field 1: L
+	if len(c.L) > 4 {
+		return nil, ssz.ErrListTooBig
+	}
+	for _, o := range c.L {
+		dst = binary.LittleEndian.AppendUint64(dst, o)
+	}
+	return dst, err
+}
+
+func (c *ListU64) UnmarshalSSZ(buf []byte) error {
+	var err error
+	size := uint64(len(buf))
+	if size < 12 {
+		return ssz.ErrSize
+	}
+
+	sszSlice0 := buf[0:8] // c.A
+
+	sszVarOffset1 := ssz.ReadOffset(buf[8:12]) // c.L
+	if sszVarOffset1 != 12 {
+		return ssz.ErrInvalidVariableOffset
+	}
+	sszSlice1 := buf[sszVarOffset1:] // c.L
+
+	// Field 0: A
+	c.A = binary.LittleEndian.Uint64(sszSlice0)
+
+	// Field 1: L
+	{
+		if len(sszSlice1)%8 != 0 {
+			return fmt.Errorf("misaligned bytes: c.L length is %d, which is not a multiple of 8: %w", len(sszSlice1), ssz.ErrIncorrectListSize)
+		}
+		numElem := len(sszSlice1) / 8
+		if numElem > 4 {
+			return fmt.Errorf("ssz-max exceeded: c.L has %d elements, ssz-max is 4: %w", numElem, ssz.ErrListTooBig)
+		}
+		c.L = make([]uint64, numElem)
+		for i := 0; i < numElem; i++ {
+			var tmp uint64
+
+			tmpSlice := sszSlice1[i*8 : (1+i)*8]
+			tmp = binary.LittleEndian.Uint64(tmpSlice)
+			c.L[i] = tmp
+		}
+	}
+	return err
+}
+
+func (c *ListU64) HashTreeRoot() ([32]byte, error) {
+	hh := ssz.DefaultHasherPool.Get()
+	if err := c.HashTreeRootWith(hh); err != nil {
+		ssz.DefaultHasherPool.Put(hh)
+		return [32]byte{}, err
+	}
+	root, err := hh.HashRoot()
+	ssz.DefaultHasherPool.Put(hh)
+	return root, err
+}
+
+func (c *ListU64) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+	indx := hh.Index()
+	// Field 0: A
+	hh.PutUint64(c.A)
+	// Field 1: L
+	{
+		if len(c.L) > 4 {
+			return ssz.ErrListTooBig
+		}
+		subIndx := hh.Index()
+		for _, o := range c.L {
+			hh.AppendUint64(o)
+		}
+		hh.FillUpTo32()
+		numItems := uint64(len(c.L))
+		hh.MerkleizeWithMixin(subIndx, numItems, ssz.CalculateLimit(4, numItems, 8))
 	}
 	hh.Merkleize(indx)
 	return nil

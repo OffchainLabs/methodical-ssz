@@ -280,9 +280,6 @@ func (c *BeaconState) UnmarshalSSZ(buf []byte) error {
 	if sszVarOffset7 != 2687377 {
 		return ssz.ErrInvalidVariableOffset
 	}
-	if sszVarOffset7 > size {
-		return ssz.ErrOffset
-	}
 	sszVarOffset9 := ssz.ReadOffset(buf[524540:524544]) // c.Eth1DataVotes
 	if sszVarOffset9 > size || sszVarOffset9 < sszVarOffset7 {
 		return ssz.ErrOffset

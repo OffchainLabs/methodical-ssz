@@ -505,13 +505,12 @@ if {{.SliceName}}[0] == 1 {
 		`{{.FieldName}} = make([]byte, 0, {{.Size}})
 {{.FieldName}} = append({{.FieldName}}, {{.Source}}...)`))
 
+	// No `> size` check: the offset equals OuterSize, and the size guard at
+	// the top of UnmarshalSSZ already returned unless size >= OuterSize.
 	unmarshalFirstOffsetTmpl = template.Must(template.New("unmarshalFirstOffset").Parse(
 		`{{.VarOffsetName}} := ssz.ReadOffset(buf[{{.Begin}}:{{.End}}]) // {{.FieldName}}
 if {{.VarOffsetName}} != {{.OuterSize}} {
 	return ssz.ErrInvalidVariableOffset
-}
-if {{.VarOffsetName}} > size {
-	return ssz.ErrOffset
 }`))
 
 	unmarshalNextOffsetTmpl = template.Must(template.New("unmarshalNextOffset").Parse(

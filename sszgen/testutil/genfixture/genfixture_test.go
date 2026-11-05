@@ -143,3 +143,19 @@ func TestListU64FirstOffset(t *testing.T) {
 		}
 	}
 }
+
+// G2. MarshalSSZTo writes A and L's offset before it checks L against its
+// limit, so on error the bytes past len(dst) are unspecified (see the
+// ssz.Marshaler doc). This pins what the doc does promise: a nil result and
+// an unchanged dst[:len(dst)].
+func TestMarshalSSZToErrorKeepsPrefix(t *testing.T) {
+	in := ListU64{A: 1, L: make([]uint64, 5)} // 5 > ssz-max 4
+	dst := bytes.Repeat([]byte{0xaa}, 64)[:3]
+	got, err := in.MarshalSSZTo(dst)
+	if !errors.Is(err, ssz.ErrListTooBig) || got != nil {
+		t.Fatalf("MarshalSSZTo = %x, %v; want nil, ErrListTooBig", got, err)
+	}
+	if !bytes.Equal(dst, []byte{0xaa, 0xaa, 0xaa}) {
+		t.Fatalf("dst[:len(dst)] changed: %x", dst)
+	}
+}

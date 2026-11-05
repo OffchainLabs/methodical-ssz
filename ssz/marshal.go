@@ -11,6 +11,11 @@ type Sizer interface {
 }
 
 // Marshaler is the interface implemented by types that can marshal themselves into valid SZZ.
+//
+// MarshalSSZTo appends to dst. On error it returns a nil slice, and
+// dst[:len(dst)] is unchanged, but the bytes of dst's backing array past
+// len(dst) are unspecified: generated code may have appended part of the
+// encoding before a later length check failed.
 type Marshaler interface {
 	MarshalSSZTo(dst []byte) ([]byte, error)
 	MarshalSSZ() ([]byte, error)

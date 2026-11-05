@@ -15,7 +15,8 @@ type Sizer interface {
 // MarshalSSZTo appends to dst. On error it returns a nil slice, and
 // dst[:len(dst)] is unchanged, but the bytes of dst's backing array past
 // len(dst) are unspecified: generated code may have appended part of the
-// encoding before a later length check failed.
+// encoding before a later length check failed. For generated code this holds
+// only if every delegated MarshalSSZTo it calls keeps the same contract.
 type Marshaler interface {
 	MarshalSSZTo(dst []byte) ([]byte, error)
 	MarshalSSZ() ([]byte, error)

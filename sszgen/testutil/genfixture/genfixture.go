@@ -25,3 +25,13 @@ type ListU64 struct {
 	A uint64
 	L []uint64 `ssz-max:"4"`
 }
+
+// Inner is a variable-size container.
+type Inner struct {
+	B []byte `ssz-max:"8"`
+}
+
+// InnerPair covers a Go array of variable-size elements (Vector[Inner, 2]).
+type InnerPair struct {
+	P [2]*Inner
+}

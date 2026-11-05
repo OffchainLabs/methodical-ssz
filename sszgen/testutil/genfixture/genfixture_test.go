@@ -31,6 +31,15 @@ func checkBits(t *testing.T, in Bits, valid bool) {
 	if err := dec.UnmarshalSSZ(enc); valid != (err == nil) {
 		t.Fatalf("UnmarshalSSZ(%x) = %v, want valid=%v", enc, err, valid)
 	}
+	if valid {
+		// the decoded value must be the input, and must re-encode to enc
+		if !bytes.Equal(dec.V4, in.V4) || !bytes.Equal(dec.V16, in.V16) || !bytes.Equal(dec.L, in.L) {
+			t.Fatalf("UnmarshalSSZ(%x) = %+v, want %+v", enc, dec, in)
+		}
+		if re, err := dec.MarshalSSZ(); err != nil || !bytes.Equal(re, enc) {
+			t.Fatalf("decoded MarshalSSZ() = %x, %v; want %x", re, err, enc)
+		}
+	}
 	// the encoder rejects the same values, so it never emits bytes its own
 	// decoder rejects
 	got, err := in.MarshalSSZ()
@@ -157,5 +166,38 @@ func TestMarshalSSZToErrorKeepsPrefix(t *testing.T) {
 	}
 	if !bytes.Equal(dst, []byte{0xaa, 0xaa, 0xaa}) {
 		t.Fatalf("dst[:len(dst)] changed: %x", dst)
+	}
+}
+
+// G1, variable-size elements. Expected bytes from the consensus-specs
+// serializer, built by hand: Inner{B} is offset 4 then B; Vector[Inner, 2]
+// is two offsets (8, 8+6 = 14) then the two Inner encodings; InnerPair is
+// offset 4 then P.
+func TestVariableElementArray(t *testing.T) {
+	in := InnerPair{P: [2]*Inner{{B: []byte{1, 2}}, {B: []byte{3}}}}
+	want := []byte{
+		4, 0, 0, 0, // InnerPair: offset of P
+		8, 0, 0, 0, 14, 0, 0, 0, // P: element offsets
+		4, 0, 0, 0, 1, 2, // P[0]
+		4, 0, 0, 0, 3, // P[1]
+	}
+	enc, err := in.MarshalSSZ()
+	if err != nil || !bytes.Equal(enc, want) {
+		t.Fatalf("MarshalSSZ() = %x, %v; want %x", enc, err, want)
+	}
+	var dec InnerPair
+	if err := dec.UnmarshalSSZ(want); err != nil {
+		t.Fatal(err)
+	}
+	for i := range in.P {
+		if dec.P[i] == nil || !bytes.Equal(dec.P[i].B, in.P[i].B) {
+			t.Fatalf("UnmarshalSSZ P[%d] = %+v, want %+v", i, dec.P[i], in.P[i])
+		}
+	}
+	// the first element offset must be 4*2 = 8
+	bad := append([]byte{}, want...)
+	bad[4] = 4
+	if err := dec.UnmarshalSSZ(bad); err == nil {
+		t.Fatal("UnmarshalSSZ accepted a first element offset of 4")
 	}
 }

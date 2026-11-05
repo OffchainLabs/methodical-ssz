@@ -294,3 +294,200 @@ func (c *ListU64) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	hh.Merkleize(indx)
 	return nil
 }
+
+func (c *Inner) SizeSSZ() int {
+	size := 4
+	size += len(c.B)
+	return size
+}
+
+func (c *Inner) MarshalSSZ() ([]byte, error) {
+	buf := make([]byte, c.SizeSSZ())
+	return c.MarshalSSZTo(buf[:0])
+}
+
+func (c *Inner) MarshalSSZTo(dst []byte) ([]byte, error) {
+	var err error
+	offset := 4
+
+	// Field 0: B
+	dst = ssz.WriteOffset(dst, offset)
+	offset += len(c.B)
+
+	// Field 0: B
+	if len(c.B) > 8 {
+		return nil, ssz.ErrListTooBig
+	}
+	dst = append(dst, c.B...)
+	return dst, err
+}
+
+func (c *Inner) UnmarshalSSZ(buf []byte) error {
+	var err error
+	size := uint64(len(buf))
+	if size < 4 {
+		return ssz.ErrSize
+	}
+
+	sszVarOffset0 := ssz.ReadOffset(buf[0:4]) // c.B
+	if sszVarOffset0 != 4 {
+		return ssz.ErrInvalidVariableOffset
+	}
+	sszSlice0 := buf[sszVarOffset0:] // c.B
+
+	// Field 0: B
+	c.B = append([]byte{}, sszSlice0...)
+	return err
+}
+
+func (c *Inner) HashTreeRoot() ([32]byte, error) {
+	hh := ssz.DefaultHasherPool.Get()
+	if err := c.HashTreeRootWith(hh); err != nil {
+		ssz.DefaultHasherPool.Put(hh)
+		return [32]byte{}, err
+	}
+	root, err := hh.HashRoot()
+	ssz.DefaultHasherPool.Put(hh)
+	return root, err
+}
+
+func (c *Inner) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+	indx := hh.Index()
+	// Field 0: B
+
+	{
+		if len(c.B) > 8 {
+			return ssz.ErrBytesLength
+		}
+		subIndx := hh.Index()
+		hh.AppendBytes32(c.B)
+		numItems := uint64(len(c.B))
+		hh.MerkleizeWithMixin(subIndx, numItems, (8*1+31)/32)
+	}
+
+	hh.Merkleize(indx)
+	return nil
+}
+
+func (c *InnerPair) SizeSSZ() int {
+	size := 4
+	for _, o := range c.P {
+		size += 4
+		size += o.SizeSSZ()
+	}
+	return size
+}
+
+func (c *InnerPair) MarshalSSZ() ([]byte, error) {
+	buf := make([]byte, c.SizeSSZ())
+	return c.MarshalSSZTo(buf[:0])
+}
+
+func (c *InnerPair) MarshalSSZTo(dst []byte) ([]byte, error) {
+	var err error
+	offset := 4
+
+	// Field 0: P
+	dst = ssz.WriteOffset(dst, offset)
+	for _, o := range c.P {
+		offset += 4
+		offset += o.SizeSSZ()
+	}
+
+	// Field 0: P
+	if len(c.P) != 2 {
+		return nil, ssz.ErrBytesLength
+	}
+	{
+		offset = 4 * len(c.P)
+		for _, o := range c.P {
+			dst = ssz.WriteOffset(dst, offset)
+			offset += o.SizeSSZ()
+		}
+	}
+	for _, o := range c.P {
+		if dst, err = o.MarshalSSZTo(dst); err != nil {
+			return nil, fmt.Errorf("P: %w", err)
+		}
+	}
+	return dst, err
+}
+
+func (c *InnerPair) UnmarshalSSZ(buf []byte) error {
+	var err error
+	size := uint64(len(buf))
+	if size < 4 {
+		return ssz.ErrSize
+	}
+
+	sszVarOffset0 := ssz.ReadOffset(buf[0:4]) // c.P
+	if sszVarOffset0 != 4 {
+		return ssz.ErrInvalidVariableOffset
+	}
+	sszSlice0 := buf[sszVarOffset0:] // c.P
+
+	// Field 0: P
+	{
+		if len(sszSlice0) < 4*2 {
+			return fmt.Errorf("vector bytes too short to contain offsets when decoding c.P: %w", ssz.ErrSize)
+		}
+		startOffset := ssz.ReadOffset(sszSlice0[0:4])
+		if startOffset != 4*2 {
+			return fmt.Errorf("invalid initial offset %d when decoding c.P, expected %d: %w", startOffset, 4*2, ssz.ErrInvalidVariableOffset)
+		}
+		totalVarBytes := uint64(len(sszSlice0))
+
+		var tmpSlice []byte
+		for i := uint64(0); i < 2; i++ {
+			var tmp *Inner
+			tmp = new(Inner)
+			endOffset := totalVarBytes
+			if i+1 != 2 {
+				endOffset = ssz.ReadOffset(sszSlice0[(i+1)*4 : (i+2)*4])
+				if totalVarBytes < endOffset {
+					return fmt.Errorf("offset %d points past the end of buffer when decoding c.P", endOffset)
+				}
+			}
+			if endOffset < startOffset {
+				return fmt.Errorf("offset %d is not greater than start offset %d when decoding c.P", endOffset, startOffset)
+			}
+			tmpSlice = sszSlice0[startOffset:endOffset]
+			if err = tmp.UnmarshalSSZ(tmpSlice); err != nil {
+				return fmt.Errorf("P: %w", err)
+			}
+			c.P[i] = tmp
+			startOffset = endOffset
+		}
+	}
+	return err
+}
+
+func (c *InnerPair) HashTreeRoot() ([32]byte, error) {
+	hh := ssz.DefaultHasherPool.Get()
+	if err := c.HashTreeRootWith(hh); err != nil {
+		ssz.DefaultHasherPool.Put(hh)
+		return [32]byte{}, err
+	}
+	root, err := hh.HashRoot()
+	ssz.DefaultHasherPool.Put(hh)
+	return root, err
+}
+
+func (c *InnerPair) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+	indx := hh.Index()
+	// Field 0: P
+	{
+		if len(c.P) != 2 {
+			return ssz.ErrVectorLength
+		}
+		subIndx := hh.Index()
+		for _, o := range c.P {
+			if err := o.HashTreeRootWith(hh); err != nil {
+				return fmt.Errorf("P: %w", err)
+			}
+		}
+		hh.Merkleize(subIndx)
+	}
+	hh.Merkleize(indx)
+	return nil
+}

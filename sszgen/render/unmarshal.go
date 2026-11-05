@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/types"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -201,8 +202,22 @@ func (unmarshalOp) Overlay(v *gentypes.ValueOverlay, ref unmarshalRef, ctx *core
 			}
 			return execTmpl(validateBitlistTmpl, validateBitlistElements{SliceName: ref.SliceName, MaxSize: ul.MaxSize, Unmarshal: umv, Field: ref.Field})
 		}
+		if bits := paddedBitvectorLen(v); bits != 0 {
+			return execTmpl(validateBitvectorTmpl, validateBitlistElements{SliceName: ref.SliceName, MaxSize: bits, Unmarshal: umv, Field: ref.Field})
+		}
 	}
 	return umv
+}
+
+// paddedBitvectorLen is N for a go-bitfield BitvectorN whose N is not a
+// multiple of 8 (its last byte has padding bits the spec requires to be zero),
+// and 0 otherwise.
+func paddedBitvectorLen(v *gentypes.ValueOverlay) int {
+	bits, err := strconv.Atoi(strings.TrimPrefix(v.Name, "Bitvector"))
+	if err != nil || bits%8 == 0 {
+		return 0
+	}
+	return bits
 }
 
 func (unmarshalOp) Vector(v *gentypes.ValueVector, ref unmarshalRef, ctx *core.GenContext) string {
@@ -474,6 +489,12 @@ if {{.SliceName}}[0] == 1 {
 
 	validateBitlistTmpl = template.Must(template.New("validateBitlist").Parse(
 		`if err = ssz.ValidateBitlist({{.SliceName}}, {{.MaxSize}}); err != nil {
+	return fmt.Errorf("{{.Field}}: %w", err)
+}
+{{.Unmarshal}}`))
+
+	validateBitvectorTmpl = template.Must(template.New("validateBitvector").Parse(
+		`if err = ssz.ValidateBitvector({{.SliceName}}, {{.MaxSize}}); err != nil {
 	return fmt.Errorf("{{.Field}}: %w", err)
 }
 {{.Unmarshal}}`))

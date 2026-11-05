@@ -159,6 +159,14 @@ func (o marshalOp) Overlay(v *gentypes.ValueOverlay, ref string, ctx *core.GenCo
 	if v.Underlying.IsVariableSized() {
 		frag.Variable = core.Dispatch(marshalOp{field: o.field}, v.Underlying, ref, ctx).Variable
 	}
+	if !v.IsBitfield() {
+		return frag
+	}
+	// Bitfields reject what their own decoder rejects: a BitvectorN with
+	// N%8 != 0 needs zero padding bits.
+	if bits := paddedBitvectorLen(v); bits != 0 {
+		frag.Fixed = execTmpl(marshalValidateTmpl, marshalValidateElements{Check: fmt.Sprintf("ssz.ValidateBitvector(%s, %d)", ref, bits), Field: o.field, Marshal: frag.Fixed})
+	}
 	return frag
 }
 
@@ -312,7 +320,21 @@ type delegateMarshalElements struct {
 	Field     string
 }
 
+// marshalValidateElements parameterizes a bitfield write guarded by an ssz
+// validation call: Check is the call, Marshal the guarded write.
+type marshalValidateElements struct {
+	Check   string
+	Field   string
+	Marshal string
+}
+
 var (
+	marshalValidateTmpl = template.Must(template.New("marshalValidate").Parse(
+		`if err = {{.Check}}; err != nil {
+	return nil, fmt.Errorf("{{.Field}}: %w", err)
+}
+{{.Marshal}}`))
+
 	delegateMarshalTmpl = template.Must(template.New("delegateMarshal").Parse(
 		`if dst, err = {{.FieldName}}.MarshalSSZTo(dst); err != nil {
 	return nil, fmt.Errorf("{{.Field}}: %w", err)

@@ -93,3 +93,38 @@ func TestBitlist_MaxValue(t *testing.T) {
 		})
 	}
 }
+
+// Expected values come from the consensus-specs BitVector[N] serializer
+// (ssz/simple-serialize.md): it writes value[i] at bit i%8 of byte i//8 for
+// i < N into (N+7)//8 zero bytes, so bits N..8*((N+7)//8)-1 are always zero.
+// EthLib's deserialize rejects a set padding bit with .paddingBits.
+func TestValidateBitvector(t *testing.T) {
+	tests := []struct {
+		name  string
+		buf   []byte
+		bits  uint64
+		valid bool
+	}{
+		{"N=4 all value bits", []byte{0x0f}, 4, true},
+		{"N=4 padding bit 4 set", []byte{0x10}, 4, false},
+		{"N=4 padding bit 7 set", []byte{0x80}, 4, false},
+		{"N=9 value bit 8 set", []byte{0xff, 0x01}, 9, true},
+		{"N=9 padding bit 9 set", []byte{0x00, 0x02}, 9, false},
+		{"N=9 padding bit 15 set", []byte{0x00, 0x80}, 9, false},
+		// N%8 == 0: no padding bits, every byte value is valid
+		{"N=16 all ones", []byte{0xff, 0xff}, 16, true},
+		{"N=16 zero", []byte{0x00, 0x00}, 16, true},
+		// length must be exactly (N+7)//8
+		{"N=4 empty", []byte{}, 4, false},
+		{"N=9 one byte", []byte{0x01}, 9, false},
+		{"N=16 three bytes", []byte{0, 0, 0}, 16, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateBitvector(tt.buf, tt.bits)
+			if tt.valid != (err == nil) {
+				t.Fatalf("ValidateBitvector(%x, %d) = %v, want valid=%v", tt.buf, tt.bits, err, tt.valid)
+			}
+		})
+	}
+}

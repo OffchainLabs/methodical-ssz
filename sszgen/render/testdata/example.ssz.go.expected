@@ -390,8 +390,8 @@ func (c *Example) MarshalSSZTo(dst []byte) ([]byte, error) {
 	dst = append(dst, c.K...)
 
 	// Field 11: L
-	if len(c.L) > 2048 {
-		return nil, ssz.ErrListTooBig
+	if err = ssz.ValidateBitlist(c.L, 2048); err != nil {
+		return nil, fmt.Errorf("L: %w", err)
 	}
 	dst = append(dst, c.L...)
 
@@ -523,8 +523,8 @@ func (c *Example) MarshalSSZTo(dst []byte) ([]byte, error) {
 		}
 	}
 	for _, o := range c.AG {
-		if len(o) > 2048 {
-			return nil, ssz.ErrListTooBig
+		if err = ssz.ValidateBitlist(o, 2048); err != nil {
+			return nil, fmt.Errorf("AG: %w", err)
 		}
 		dst = append(dst, o...)
 	}
@@ -541,8 +541,8 @@ func (c *Example) MarshalSSZTo(dst []byte) ([]byte, error) {
 		}
 	}
 	for _, o := range c.AH {
-		if len(o) > 2048 {
-			return nil, ssz.ErrListTooBig
+		if err = ssz.ValidateBitlist(o, 2048); err != nil {
+			return nil, fmt.Errorf("AH: %w", err)
 		}
 		dst = append(dst, o...)
 	}

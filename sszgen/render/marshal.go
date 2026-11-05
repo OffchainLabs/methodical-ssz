@@ -162,9 +162,17 @@ func (o marshalOp) Overlay(v *gentypes.ValueOverlay, ref string, ctx *core.GenCo
 	if !v.IsBitfield() {
 		return frag
 	}
-	// Bitfields reject what their own decoder rejects: a BitvectorN with
-	// N%8 != 0 needs zero padding bits.
-	if bits := paddedBitvectorLen(v); bits != 0 {
+	// Bitfields reject what their own decoder rejects: a bitlist is checked
+	// by its bit length (not its byte length) and needs its delimiter bit, and
+	// a BitvectorN with N%8 != 0 needs zero padding bits.
+	if ul, ok := v.Underlying.(*gentypes.ValueList); ok {
+		check := fmt.Sprintf("ssz.ValidateBitlist(%s, %d)", ref, ul.MaxSize)
+		if ul.Progressive {
+			// no spec limit, as for the other progressive lists
+			check = fmt.Sprintf("ssz.ValidateProgressiveBitlist(%s)", ref)
+		}
+		frag.Variable = execTmpl(marshalValidateTmpl, marshalValidateElements{Check: check, Field: o.field, Marshal: fmt.Sprintf("dst = append(dst, %s...)", ref)})
+	} else if bits := paddedBitvectorLen(v); bits != 0 {
 		frag.Fixed = execTmpl(marshalValidateTmpl, marshalValidateElements{Check: fmt.Sprintf("ssz.ValidateBitvector(%s, %d)", ref, bits), Field: o.field, Marshal: frag.Fixed})
 	}
 	return frag

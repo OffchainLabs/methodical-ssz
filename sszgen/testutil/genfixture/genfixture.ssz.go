@@ -7,8 +7,8 @@ import (
 )
 
 func (c *Bits) SizeSSZ() int {
-	size := 3
-
+	size := 7
+	size += len(c.L)
 	return size
 }
 
@@ -19,6 +19,7 @@ func (c *Bits) MarshalSSZ() ([]byte, error) {
 
 func (c *Bits) MarshalSSZTo(dst []byte) ([]byte, error) {
 	var err error
+	offset := 7
 
 	// Field 0: V4
 	if err = ssz.ValidateBitvector(c.V4, 4); err != nil {
@@ -35,18 +36,36 @@ func (c *Bits) MarshalSSZTo(dst []byte) ([]byte, error) {
 	}
 	dst = append(dst, []byte(c.V16)...)
 
+	// Field 2: L
+	dst = ssz.WriteOffset(dst, offset)
+	offset += len(c.L)
+
+	// Field 2: L
+	if err = ssz.ValidateBitlist(c.L, 2048); err != nil {
+		return nil, fmt.Errorf("L: %w", err)
+	}
+	dst = append(dst, c.L...)
 	return dst, err
 }
 
 func (c *Bits) UnmarshalSSZ(buf []byte) error {
 	var err error
 	size := uint64(len(buf))
-	if size != 3 {
+	if size < 7 {
 		return ssz.ErrSize
 	}
 
 	sszSlice0 := buf[0:1] // c.V4
 	sszSlice1 := buf[1:3] // c.V16
+
+	sszVarOffset2 := ssz.ReadOffset(buf[3:7]) // c.L
+	if sszVarOffset2 != 7 {
+		return ssz.ErrInvalidVariableOffset
+	}
+	if sszVarOffset2 > size {
+		return ssz.ErrOffset
+	}
+	sszSlice2 := buf[sszVarOffset2:] // c.L
 
 	// Field 0: V4
 	if err = ssz.ValidateBitvector(sszSlice0, 4); err != nil {
@@ -58,6 +77,12 @@ func (c *Bits) UnmarshalSSZ(buf []byte) error {
 	// Field 1: V16
 	c.V16 = make([]byte, 0, 2)
 	c.V16 = append(c.V16, go_bitfield.Bitvector16(sszSlice1)...)
+
+	// Field 2: L
+	if err = ssz.ValidateBitlist(sszSlice2, 2048); err != nil {
+		return fmt.Errorf("L: %w", err)
+	}
+	c.L = append([]byte{}, go_bitfield.Bitlist(sszSlice2)...)
 	return err
 }
 
@@ -84,6 +109,11 @@ func (c *Bits) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 		return ssz.ErrBytesLength
 	}
 	hh.PutBytes([]byte(c.V16))
+	// Field 2: L
+	if len(c.L) == 0 {
+		return ssz.ErrEmptyBitlist
+	}
+	hh.PutBitlist(c.L, 2048)
 	hh.Merkleize(indx)
 	return nil
 }

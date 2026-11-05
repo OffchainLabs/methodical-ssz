@@ -7,8 +7,10 @@ package genfixture
 
 import bitfield "github.com/OffchainLabs/go-bitfield"
 
-// Bits covers bitfields: a padded Bitvector[4] and an unpadded Bitvector[16].
+// Bits covers bitfields: a padded Bitvector[4], an unpadded Bitvector[16]
+// and a Bitlist[2048].
 type Bits struct {
 	V4  bitfield.Bitvector4  `ssz-size:"1"`
 	V16 bitfield.Bitvector16 `ssz-size:"2"`
+	L   bitfield.Bitlist     `ssz-max:"2048"`
 }

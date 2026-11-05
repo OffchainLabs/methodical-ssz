@@ -31,10 +31,17 @@ func ValidateProgressiveBitlist(buf []byte) error {
 // byte must be zero. The spec serializer only sets bits 0..bits-1, so a set
 // padding bit is not the encoding of any Bitvector[bits] value.
 func ValidateBitvector(buf []byte, bits uint64) error {
-	if uint64(len(buf)) != (bits+7)/8 {
+	// bits/8 + (bits%8 != 0) is (bits+7)/8 without the uint64 overflow of
+	// bits+7 near MaxUint64.
+	pad := bits % 8
+	byteLen := bits / 8
+	if pad != 0 {
+		byteLen++
+	}
+	if uint64(len(buf)) != byteLen {
 		return ErrBytesLength
 	}
-	if pad := bits % 8; pad != 0 && buf[len(buf)-1]>>pad != 0 {
+	if pad != 0 && buf[len(buf)-1]>>pad != 0 {
 		return fmt.Errorf("bitvector padding bits are not zero")
 	}
 	return nil

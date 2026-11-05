@@ -1,6 +1,7 @@
 package ssz
 
 import (
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -118,6 +119,12 @@ func TestValidateBitvector(t *testing.T) {
 		{"N=4 empty", []byte{}, 4, false},
 		{"N=9 one byte", []byte{0x01}, 9, false},
 		{"N=16 three bytes", []byte{0, 0, 0}, 16, false},
+		// (N+7)//8 overflows uint64 for N >= MaxUint64-6; these must return
+		// an error, not panic on buf[-1]
+		{"N=MaxUint64 empty", []byte{}, math.MaxUint64, false},
+		{"N=MaxUint64-6 empty", nil, math.MaxUint64 - 6, false},
+		{"N=MaxUint64-3 one byte", []byte{0}, math.MaxUint64 - 3, false},
+		{"N=0 empty", []byte{}, 0, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

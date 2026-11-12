@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/types"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -201,8 +202,22 @@ func (unmarshalOp) Overlay(v *gentypes.ValueOverlay, ref unmarshalRef, ctx *core
 			}
 			return execTmpl(validateBitlistTmpl, validateBitlistElements{SliceName: ref.SliceName, MaxSize: ul.MaxSize, Unmarshal: umv, Field: ref.Field})
 		}
+		if bits := paddedBitvectorLen(v); bits != 0 {
+			return execTmpl(validateBitvectorTmpl, validateBitlistElements{SliceName: ref.SliceName, MaxSize: bits, Unmarshal: umv, Field: ref.Field})
+		}
 	}
 	return umv
+}
+
+// paddedBitvectorLen is N for a go-bitfield BitvectorN whose N is not a
+// multiple of 8 (its last byte has padding bits the spec requires to be zero),
+// and 0 otherwise.
+func paddedBitvectorLen(v *gentypes.ValueOverlay) int {
+	bits, err := strconv.Atoi(strings.TrimPrefix(v.Name, "Bitvector"))
+	if err != nil || bits%8 == 0 {
+		return 0
+	}
+	return bits
 }
 
 func (unmarshalOp) Vector(v *gentypes.ValueVector, ref unmarshalRef, ctx *core.GenContext) string {
@@ -225,6 +240,7 @@ func (unmarshalOp) Vector(v *gentypes.ValueVector, ref unmarshalRef, ctx *core.G
 		FieldName:       ref.FieldName,
 		TypeName:        ctx.QualifiedTypeName(elem),
 		NumElements:     v.Size,
+		IsArray:         v.IsArray,
 		LoopVar:         loopVarFor(ref.FieldName),
 		Initializer:     elemInitializer(elem, ctx, tmpName(ref.Depth+1)),
 		SliceName:       ref.SliceName,
@@ -278,6 +294,7 @@ type unmarshalLoopElements struct {
 	Tmp             string
 	TmpSlice        string
 	NumElements     int
+	IsArray         bool // vector-only: a Go array destination needs no make
 	ElementSize     int
 	MaxSize         int
 }
@@ -478,17 +495,22 @@ if {{.SliceName}}[0] == 1 {
 }
 {{.Unmarshal}}`))
 
+	validateBitvectorTmpl = template.Must(template.New("validateBitvector").Parse(
+		`if err = ssz.ValidateBitvector({{.SliceName}}, {{.MaxSize}}); err != nil {
+	return fmt.Errorf("{{.Field}}: %w", err)
+}
+{{.Unmarshal}}`))
+
 	unmarshalByteVectorTmpl = template.Must(template.New("unmarshalByteVector").Parse(
 		`{{.FieldName}} = make([]byte, 0, {{.Size}})
 {{.FieldName}} = append({{.FieldName}}, {{.Source}}...)`))
 
+	// No `> size` check: the offset equals OuterSize, and the size guard at
+	// the top of UnmarshalSSZ already returned unless size >= OuterSize.
 	unmarshalFirstOffsetTmpl = template.Must(template.New("unmarshalFirstOffset").Parse(
 		`{{.VarOffsetName}} := ssz.ReadOffset(buf[{{.Begin}}:{{.End}}]) // {{.FieldName}}
 if {{.VarOffsetName}} != {{.OuterSize}} {
 	return ssz.ErrInvalidVariableOffset
-}
-if {{.VarOffsetName}} > size {
-	return ssz.ErrOffset
 }`))
 
 	unmarshalNextOffsetTmpl = template.Must(template.New("unmarshalNextOffset").Parse(
@@ -498,7 +520,7 @@ if {{.VarOffsetName}} > size || {{.VarOffsetName}} < {{.PrevOffsetName}} {
 }`))
 
 	unmarshalVectorTmpl = template.Must(template.New("unmarshalVector").Parse(`{
-	{{.FieldName}} = make([]{{.TypeName}}, {{.NumElements}})
+	{{if not .IsArray}}{{.FieldName}} = make([]{{.TypeName}}, {{.NumElements}}){{end}}
 	for {{.LoopVar}} := 0; {{.LoopVar}} < {{.NumElements}}; {{.LoopVar}} ++ {
 		var {{.Tmp}} {{.TypeName}}
 		{{.Initializer}}
@@ -520,7 +542,7 @@ if {{.VarOffsetName}} > size || {{.VarOffsetName}} < {{.PrevOffsetName}} {
 		return fmt.Errorf("invalid initial offset %d when decoding {{.FieldName}}, expected %d: %w", startOffset, 4*{{.NumElements}}, ssz.ErrInvalidVariableOffset)
 	}
 	totalVarBytes := uint64(len({{.SliceName}}))
-	{{.FieldName}} = make([]{{.TypeName}}, {{.NumElements}})
+	{{if not .IsArray}}{{.FieldName}} = make([]{{.TypeName}}, {{.NumElements}}){{end}}
 	var {{.TmpSlice}} []byte
 	for {{.LoopVar}} := uint64(0); {{.LoopVar}} < {{.NumElements}}; {{.LoopVar}}++ {
 		var {{.Tmp}} {{.TypeName}}

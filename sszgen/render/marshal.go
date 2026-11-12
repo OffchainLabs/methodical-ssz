@@ -159,6 +159,26 @@ func (o marshalOp) Overlay(v *gentypes.ValueOverlay, ref string, ctx *core.GenCo
 	if v.Underlying.IsVariableSized() {
 		frag.Variable = core.Dispatch(marshalOp{field: o.field}, v.Underlying, ref, ctx).Variable
 	}
+	if !v.IsBitfield() {
+		return frag
+	}
+	// go-bitfield types reject what their own decoder rejects: a bitlist is
+	// checked by its bit length (not its byte length) and needs its delimiter
+	// bit, and a BitvectorN with N%8 != 0 needs zero padding bits. Not
+	// covered: delegated types (dispatched before Overlay) and HTR, which
+	// still hashes a padded BitvectorN.
+	if ul, ok := v.Underlying.(*gentypes.ValueList); ok {
+		check := fmt.Sprintf("ssz.ValidateBitlist(%s, %d)", ref, ul.MaxSize)
+		if ul.Progressive {
+			// no spec limit, as for the other progressive lists. The
+			// decoder still applies a local ssz-max if the field has one,
+			// so the encoder accepts more than that decoder.
+			check = fmt.Sprintf("ssz.ValidateProgressiveBitlist(%s)", ref)
+		}
+		frag.Variable = execTmpl(marshalValidateTmpl, marshalValidateElements{Check: check, Field: o.field, Marshal: fmt.Sprintf("dst = append(dst, %s...)", ref)})
+	} else if bits := paddedBitvectorLen(v); bits != 0 {
+		frag.Fixed = execTmpl(marshalValidateTmpl, marshalValidateElements{Check: fmt.Sprintf("ssz.ValidateBitvector(%s, %d)", ref, bits), Field: o.field, Marshal: frag.Fixed})
+	}
 	return frag
 }
 
@@ -312,7 +332,21 @@ type delegateMarshalElements struct {
 	Field     string
 }
 
+// marshalValidateElements parameterizes a bitfield write guarded by an ssz
+// validation call: Check is the call, Marshal the guarded write.
+type marshalValidateElements struct {
+	Check   string
+	Field   string
+	Marshal string
+}
+
 var (
+	marshalValidateTmpl = template.Must(template.New("marshalValidate").Parse(
+		`if err = {{.Check}}; err != nil {
+	return nil, fmt.Errorf("{{.Field}}: %w", err)
+}
+{{.Marshal}}`))
+
 	delegateMarshalTmpl = template.Must(template.New("delegateMarshal").Parse(
 		`if dst, err = {{.FieldName}}.MarshalSSZTo(dst); err != nil {
 	return nil, fmt.Errorf("{{.Field}}: %w", err)

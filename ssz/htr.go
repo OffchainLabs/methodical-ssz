@@ -450,7 +450,14 @@ func merkleizeChunks(elements [][32]byte, chunkCount uint64) [32]byte {
 			elements = append(elements, zerohash)
 		}
 		outputLen := len(elements) / 2
-		// gohashtree concurrently overwrites elements
+		// In place: digest k overwrites elements[k]. Safe for gohashtree
+		// v0.0.5-beta (checked by reading its source): every path (generic;
+		// amd64 avx1 x4/x1, avx2 x8, avx512 x16, shani x2/x1; arm64 neon
+		// x4/x1, sha2 x1) hashes batches of L pairs in increasing order and
+		// loads all 2L chunks of a batch before it stores its L digests.
+		// Batch k0..k0+L-1 stores below index k0+L, and the next batch reads
+		// from 2(k0+L). Recheck on a gohashtree upgrade.
+		// TestMerkleizeInPlaceHash compares with a non-aliased call.
 		err := gohashtree.Hash(elements, elements)
 		if err != nil {
 			panic(err)

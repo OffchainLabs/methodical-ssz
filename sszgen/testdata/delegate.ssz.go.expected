@@ -107,9 +107,6 @@ func (c *DelegateContainer) UnmarshalSSZ(buf []byte) error {
 	if sszVarOffset2 != 28 {
 		return ssz.ErrInvalidVariableOffset
 	}
-	if sszVarOffset2 > size {
-		return ssz.ErrOffset
-	}
 	sszVarOffset3 := ssz.ReadOffset(buf[20:24]) // c.B
 	if sszVarOffset3 > size || sszVarOffset3 < sszVarOffset2 {
 		return ssz.ErrOffset

@@ -52,3 +52,42 @@ func TestDelegateFixture(t *testing.T) {
 		t.Fatalf("Render output differs from golden %s (run with -update if the change is intended):\n--- want ---\n%s\n--- got ---\n%s", golden, want, got)
 	}
 }
+
+// TestGenFixture pins the checked-in generated code of the compiled
+// genfixture package, whose tests execute it.
+func TestGenFixture(t *testing.T) {
+	pkgPath := "github.com/OffchainLabs/methodical-ssz/sszgen/testutil/genfixture"
+	ps, err := NewGoPathScoper(pkgPath, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defs, err := TypeDefs(ps, "Bits", "Limbs", "ListU64", "Inner", "InnerPair")
+	if err != nil {
+		t.Fatal(err)
+	}
+	reps := make([]gentypes.ValRep, 0, len(defs))
+	for _, d := range defs {
+		rep, err := ParseTypeDef(d)
+		if err != nil {
+			t.Fatal(err)
+		}
+		reps = append(reps, rep)
+	}
+	got, err := render.Render(pkgPath, "", reps)
+	if err != nil {
+		t.Fatal(err)
+	}
+	golden := "testutil/genfixture/genfixture.ssz.go"
+	if *update {
+		if err := os.WriteFile(golden, got, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	want, err := os.ReadFile(golden)
+	if err != nil {
+		t.Fatalf("reading golden (run with -update to create it): %v", err)
+	}
+	if string(got) != string(want) {
+		t.Fatalf("Render output differs from %s (run with -update if the change is intended):\n--- want ---\n%s\n--- got ---\n%s", golden, want, got)
+	}
+}

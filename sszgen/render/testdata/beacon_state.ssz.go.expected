@@ -146,6 +146,9 @@ func (c *BeaconState) MarshalSSZTo(dst []byte) ([]byte, error) {
 	}
 
 	// Field 17: JustificationBits
+	if err = ssz.ValidateBitvector(c.JustificationBits, 4); err != nil {
+		return nil, fmt.Errorf("JustificationBits: %w", err)
+	}
 	if len([]byte(c.JustificationBits)) != 1 {
 		return nil, ssz.ErrBytesLength
 	}
@@ -276,9 +279,6 @@ func (c *BeaconState) UnmarshalSSZ(buf []byte) error {
 	sszVarOffset7 := ssz.ReadOffset(buf[524464:524468]) // c.HistoricalRoots
 	if sszVarOffset7 != 2687377 {
 		return ssz.ErrInvalidVariableOffset
-	}
-	if sszVarOffset7 > size {
-		return ssz.ErrOffset
 	}
 	sszVarOffset9 := ssz.ReadOffset(buf[524540:524544]) // c.Eth1DataVotes
 	if sszVarOffset9 > size || sszVarOffset9 < sszVarOffset7 {
@@ -571,6 +571,9 @@ func (c *BeaconState) UnmarshalSSZ(buf []byte) error {
 	}
 
 	// Field 17: JustificationBits
+	if err = ssz.ValidateBitvector(sszSlice17, 4); err != nil {
+		return fmt.Errorf("JustificationBits: %w", err)
+	}
 	c.JustificationBits = make([]byte, 0, 1)
 	c.JustificationBits = append(c.JustificationBits, go_bitfield.Bitvector4(sszSlice17)...)
 

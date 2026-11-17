@@ -201,6 +201,9 @@ func (unmarshalOp) Overlay(v *gentypes.ValueOverlay, ref unmarshalRef, ctx *core
 			}
 			return execTmpl(validateBitlistTmpl, validateBitlistElements{SliceName: ref.SliceName, MaxSize: ul.MaxSize, Unmarshal: umv, Field: ref.Field})
 		}
+		if bits := v.PaddedBits(); bits != 0 {
+			return execTmpl(validateBitvectorTmpl, validateBitlistElements{SliceName: ref.SliceName, MaxSize: bits, Unmarshal: umv, Field: ref.Field})
+		}
 	}
 	return umv
 }
@@ -474,6 +477,12 @@ if {{.SliceName}}[0] == 1 {
 
 	validateBitlistTmpl = template.Must(template.New("validateBitlist").Parse(
 		`if err = ssz.ValidateBitlist({{.SliceName}}, {{.MaxSize}}); err != nil {
+	return fmt.Errorf("{{.Field}}: %w", err)
+}
+{{.Unmarshal}}`))
+
+	validateBitvectorTmpl = template.Must(template.New("validateBitvector").Parse(
+		`if err = ssz.ValidateBitvector({{.SliceName}}, {{.MaxSize}}); err != nil {
 	return fmt.Errorf("{{.Field}}: %w", err)
 }
 {{.Unmarshal}}`))

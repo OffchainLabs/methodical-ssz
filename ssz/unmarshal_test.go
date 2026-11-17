@@ -1,6 +1,8 @@
 package ssz
 
 import (
+	"errors"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -89,6 +91,39 @@ func TestBitlist_MaxValue(t *testing.T) {
 			}
 			if !tt.valid && err == nil {
 				t.Error("Invalid bitlist did not fail validation")
+			}
+		})
+	}
+}
+
+func TestValidateBitvector(t *testing.T) {
+	tests := []struct {
+		name string
+		buf  []byte
+		bits uint64
+		want error
+	}{
+		{"N=4 all value bits", []byte{0x0f}, 4, nil},
+		{"N=4 padding bit 4 set", []byte{0x10}, 4, ErrBitvectorPadding},
+		{"N=4 padding bit 7 set", []byte{0x80}, 4, ErrBitvectorPadding},
+		{"N=9 value bit 8 set", []byte{0xff, 0x01}, 9, nil},
+		{"N=9 padding bit 9 set", []byte{0x00, 0x02}, 9, ErrBitvectorPadding},
+		{"N=9 padding bit 15 set", []byte{0x00, 0x80}, 9, ErrBitvectorPadding},
+		{"N=16 all ones", []byte{0xff, 0xff}, 16, nil},
+		{"N=16 zero", []byte{0x00, 0x00}, 16, nil},
+		{"N=4 empty", []byte{}, 4, ErrBytesLength},
+		{"N=9 one byte", []byte{0x01}, 9, ErrBytesLength},
+		{"N=16 three bytes", []byte{0, 0, 0}, 16, ErrBytesLength},
+		// N+7 overflows: return an error, do not panic
+		{"N=MaxUint64 empty", []byte{}, math.MaxUint64, ErrBytesLength},
+		{"N=MaxUint64-6 empty", nil, math.MaxUint64 - 6, ErrBytesLength},
+		{"N=MaxUint64-3 one byte", []byte{0}, math.MaxUint64 - 3, ErrBytesLength},
+		{"N=0 empty", []byte{}, 0, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := ValidateBitvector(tt.buf, tt.bits); !errors.Is(err, tt.want) {
+				t.Fatalf("ValidateBitvector(%x, %d) = %v, want %v", tt.buf, tt.bits, err, tt.want)
 			}
 		})
 	}

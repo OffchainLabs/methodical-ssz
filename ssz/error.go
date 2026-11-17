@@ -6,6 +6,7 @@ import (
 )
 
 var (
+	ErrBitvectorPadding      = errors.New("bitvector padding bits are not zero")
 	ErrBytesLength           = errors.New("bytes array does not have the correct length")
 	ErrEmptyBitlist          = errors.New("bitlist is empty")
 	ErrInvalidSerialization  = errors.New("invalid serialization for the expected ssz type")

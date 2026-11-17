@@ -125,8 +125,8 @@ func (c *Example) MarshalSSZTo(dst []byte) ([]byte, error) {
 	}
 
 	// Field 9: J
-	if len([]byte(c.J)) != 1 {
-		return nil, ssz.ErrBytesLength
+	if err = ssz.ValidateBitvector(c.J, 4); err != nil {
+		return nil, fmt.Errorf("J: %w", err)
 	}
 	dst = append(dst, []byte(c.J)...)
 
@@ -867,6 +867,9 @@ func (c *Example) UnmarshalSSZ(buf []byte) error {
 	}
 
 	// Field 9: J
+	if err = ssz.ValidateBitvector(sszSlice9, 4); err != nil {
+		return fmt.Errorf("J: %w", err)
+	}
 	c.J = make([]byte, 0, 1)
 	c.J = append(c.J, go_bitfield.Bitvector4(sszSlice9)...)
 

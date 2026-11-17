@@ -26,6 +26,23 @@ func ValidateProgressiveBitlist(buf []byte) error {
 	return nil
 }
 
+// ValidateBitvector checks that buf encodes a Bitvector[bits]:
+// it has ceil(bits/8) bytes, and the padding bits of the last byte are zero.
+func ValidateBitvector(buf []byte, bits uint64) error {
+	pad := bits % 8
+	byteLen := bits / 8
+	if pad != 0 {
+		byteLen++
+	}
+	if uint64(len(buf)) != byteLen {
+		return ErrBytesLength
+	}
+	if pad != 0 && buf[len(buf)-1]>>pad != 0 {
+		return ErrBitvectorPadding
+	}
+	return nil
+}
+
 // ValidateBitlist validates that the bitlist is correct
 func ValidateBitlist(buf []byte, bitLimit uint64) error {
 	byteLen := len(buf)

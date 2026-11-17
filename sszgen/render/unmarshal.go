@@ -193,6 +193,8 @@ func (unmarshalOp) Overlay(v *gentypes.ValueOverlay, ref unmarshalRef, ctx *core
 	umv := core.Dispatch(unmarshalOp{}, v.Underlying, child, ctx)
 	if v.IsBitfield() {
 		if ul, ok := v.Underlying.(*gentypes.ValueList); ok {
+			// the bitlist limit counts bits and ValidateBitlist checks it
+			umv = fmt.Sprintf("%s = append([]byte{}, %s...)", ref.FieldName, child.Cast(ref.SliceName))
 			// A progressive bitlist with a known ssz-max limit is validated like
 			// the non-progressive form; only fields without an ssz-max tag
 			// get the limitless progressive validation.
@@ -200,6 +202,9 @@ func (unmarshalOp) Overlay(v *gentypes.ValueOverlay, ref unmarshalRef, ctx *core
 				return execTmpl(validateProgressiveBitlistTmpl, validateBitlistElements{SliceName: ref.SliceName, Unmarshal: umv, Field: ref.Field})
 			}
 			return execTmpl(validateBitlistTmpl, validateBitlistElements{SliceName: ref.SliceName, MaxSize: ul.MaxSize, Unmarshal: umv, Field: ref.Field})
+		}
+		if bits := v.PaddedBits(); bits != 0 {
+			return execTmpl(validateBitvectorTmpl, validateBitlistElements{SliceName: ref.SliceName, MaxSize: bits, Unmarshal: umv, Field: ref.Field})
 		}
 	}
 	return umv
@@ -255,7 +260,16 @@ func (unmarshalOp) List(v *gentypes.ValueList, ref unmarshalRef, ctx *core.GenCo
 		return execTmpl(unmarshalListVariableTmpl, unmarshalListData(v, ref, ctx))
 	}
 	if _, isByte := elem.(*gentypes.ValueByte); isByte {
-		return fmt.Sprintf("%s = append([]byte{}, %s...)", ref.FieldName, ref.Cast(ref.SliceName))
+		umv := fmt.Sprintf("%s = append([]byte{}, %s...)", ref.FieldName, ref.Cast(ref.SliceName))
+		if unbounded {
+			return umv
+		}
+		return execTmpl(unmarshalByteListTmpl, unmarshalByteListElements{
+			FieldName: ref.FieldName,
+			SliceName: ref.SliceName,
+			MaxSize:   v.MaxSize,
+			Unmarshal: umv,
+		})
 	}
 	if unbounded {
 		return execTmpl(unmarshalProgressiveListFixedTmpl, unmarshalListData(v, ref, ctx))
@@ -280,6 +294,13 @@ type unmarshalLoopElements struct {
 	NumElements     int
 	ElementSize     int
 	MaxSize         int
+}
+
+type unmarshalByteListElements struct {
+	FieldName string
+	SliceName string
+	MaxSize   int
+	Unmarshal string
 }
 
 func unmarshalListData(v *gentypes.ValueList, ref unmarshalRef, ctx *core.GenContext) unmarshalLoopElements {
@@ -478,6 +499,12 @@ if {{.SliceName}}[0] == 1 {
 }
 {{.Unmarshal}}`))
 
+	validateBitvectorTmpl = template.Must(template.New("validateBitvector").Parse(
+		`if err = ssz.ValidateBitvector({{.SliceName}}, {{.MaxSize}}); err != nil {
+	return fmt.Errorf("{{.Field}}: %w", err)
+}
+{{.Unmarshal}}`))
+
 	unmarshalByteVectorTmpl = template.Must(template.New("unmarshalByteVector").Parse(
 		`{{.FieldName}} = make([]byte, 0, {{.Size}})
 {{.FieldName}} = append({{.FieldName}}, {{.Source}}...)`))
@@ -486,9 +513,6 @@ if {{.SliceName}}[0] == 1 {
 		`{{.VarOffsetName}} := ssz.ReadOffset(buf[{{.Begin}}:{{.End}}]) // {{.FieldName}}
 if {{.VarOffsetName}} != {{.OuterSize}} {
 	return ssz.ErrInvalidVariableOffset
-}
-if {{.VarOffsetName}} > size {
-	return ssz.ErrOffset
 }`))
 
 	unmarshalNextOffsetTmpl = template.Must(template.New("unmarshalNextOffset").Parse(
@@ -542,6 +566,10 @@ if {{.VarOffsetName}} > size || {{.VarOffsetName}} < {{.PrevOffsetName}} {
 	}
 }`))
 
+	unmarshalByteListTmpl = template.Must(template.New("unmarshalByteList").Parse(`if len({{.SliceName}}) > {{.MaxSize}} {
+	return fmt.Errorf("ssz-max exceeded: {{.FieldName}} has %d elements, ssz-max is {{.MaxSize}}: %w", len({{.SliceName}}), ssz.ErrListTooBig)
+}
+{{.Unmarshal}}`))
 	unmarshalListFixedTmpl = template.Must(template.New("unmarshalListFixed").Parse(`{
 	if len({{.SliceName}}) % {{.ElementSize}} != 0 {
 		return fmt.Errorf("misaligned bytes: {{.FieldName}} length is %d, which is not a multiple of {{.ElementSize}}: %w", len({{.SliceName}}), ssz.ErrIncorrectListSize)

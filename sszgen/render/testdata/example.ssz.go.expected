@@ -125,8 +125,8 @@ func (c *Example) MarshalSSZTo(dst []byte) ([]byte, error) {
 	}
 
 	// Field 9: J
-	if len([]byte(c.J)) != 1 {
-		return nil, ssz.ErrBytesLength
+	if err = ssz.ValidateBitvector(c.J, 4); err != nil {
+		return nil, fmt.Errorf("J: %w", err)
 	}
 	dst = append(dst, []byte(c.J)...)
 
@@ -387,8 +387,8 @@ func (c *Example) MarshalSSZTo(dst []byte) ([]byte, error) {
 	dst = append(dst, c.K...)
 
 	// Field 11: L
-	if len(c.L) > 2048 {
-		return nil, ssz.ErrListTooBig
+	if err = ssz.ValidateBitlist(c.L, 2048); err != nil {
+		return nil, fmt.Errorf("L: %w", err)
 	}
 	dst = append(dst, c.L...)
 
@@ -520,8 +520,8 @@ func (c *Example) MarshalSSZTo(dst []byte) ([]byte, error) {
 		}
 	}
 	for _, o := range c.AG {
-		if len(o) > 2048 {
-			return nil, ssz.ErrListTooBig
+		if err = ssz.ValidateBitlist(o, 2048); err != nil {
+			return nil, fmt.Errorf("AG: %w", err)
 		}
 		dst = append(dst, o...)
 	}
@@ -538,8 +538,8 @@ func (c *Example) MarshalSSZTo(dst []byte) ([]byte, error) {
 		}
 	}
 	for _, o := range c.AH {
-		if len(o) > 2048 {
-			return nil, ssz.ErrListTooBig
+		if err = ssz.ValidateBitlist(o, 2048); err != nil {
+			return nil, fmt.Errorf("AH: %w", err)
 		}
 		dst = append(dst, o...)
 	}
@@ -612,9 +612,6 @@ func (c *Example) UnmarshalSSZ(buf []byte) error {
 	sszVarOffset2 := ssz.ReadOffset(buf[40:44]) // c.C
 	if sszVarOffset2 != 781 {
 		return ssz.ErrInvalidVariableOffset
-	}
-	if sszVarOffset2 > size {
-		return ssz.ErrOffset
 	}
 	sszVarOffset3 := ssz.ReadOffset(buf[44:48]) // c.D
 	if sszVarOffset3 > size || sszVarOffset3 < sszVarOffset2 {
@@ -770,6 +767,9 @@ func (c *Example) UnmarshalSSZ(buf []byte) error {
 					return fmt.Errorf("offset %d is not greater than start offset %d when decoding c.D", endOffset, startOffset)
 				}
 				tmpSlice = sszSlice3[startOffset:endOffset]
+				if len(tmpSlice) > 64 {
+					return fmt.Errorf("ssz-max exceeded: tmp has %d elements, ssz-max is 64: %w", len(tmpSlice), ssz.ErrListTooBig)
+				}
 				tmp = append([]byte{}, tmpSlice...)
 				c.D[i] = tmp
 				startOffset = endOffset
@@ -867,10 +867,16 @@ func (c *Example) UnmarshalSSZ(buf []byte) error {
 	}
 
 	// Field 9: J
+	if err = ssz.ValidateBitvector(sszSlice9, 4); err != nil {
+		return fmt.Errorf("J: %w", err)
+	}
 	c.J = make([]byte, 0, 1)
 	c.J = append(c.J, go_bitfield.Bitvector4(sszSlice9)...)
 
 	// Field 10: K
+	if len(sszSlice10) > 256 {
+		return fmt.Errorf("ssz-max exceeded: c.K has %d elements, ssz-max is 256: %w", len(sszSlice10), ssz.ErrListTooBig)
+	}
 	c.K = append([]byte{}, sszSlice10...)
 
 	// Field 11: L
@@ -950,6 +956,9 @@ func (c *Example) UnmarshalSSZ(buf []byte) error {
 				return fmt.Errorf("offset %d is not greater than start offset %d when decoding c.P", endOffset, startOffset)
 			}
 			tmpSlice = sszSlice15[startOffset:endOffset]
+			if len(tmpSlice) > 64 {
+				return fmt.Errorf("ssz-max exceeded: tmp has %d elements, ssz-max is 64: %w", len(tmpSlice), ssz.ErrListTooBig)
+			}
 			tmp = append([]byte{}, tmpSlice...)
 			c.P[i] = tmp
 			startOffset = endOffset

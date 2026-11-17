@@ -26,6 +26,23 @@ func ValidateProgressiveBitlist(buf []byte) error {
 	return nil
 }
 
+// ValidateBitvector checks that buf encodes a Bitvector[bits]:
+// it has ceil(bits/8) bytes, and the padding bits of the last byte are zero.
+func ValidateBitvector(buf []byte, bits uint64) error {
+	pad := bits % 8
+	byteLen := bits / 8
+	if pad != 0 {
+		byteLen++
+	}
+	if uint64(len(buf)) != byteLen {
+		return ErrBytesLength
+	}
+	if pad != 0 && buf[len(buf)-1]>>pad != 0 {
+		return ErrBitvectorPadding
+	}
+	return nil
+}
+
 // ValidateBitlist validates that the bitlist is correct
 func ValidateBitlist(buf []byte, bitLimit uint64) error {
 	byteLen := len(buf)
@@ -35,7 +52,7 @@ func ValidateBitlist(buf []byte, bitLimit uint64) error {
 	// Maximum possible bytes in a bitlist with provided bitlimit.
 	maxBytes := (bitLimit >> 3) + 1
 	if byteLen > int(maxBytes) {
-		return fmt.Errorf("unexpected number of bytes, got %d but found %d", byteLen, maxBytes)
+		return fmt.Errorf("unexpected number of bytes, got %d but found %d: %w", byteLen, maxBytes, ErrListTooBig)
 	}
 
 	// The most significant bit is present in the last byte in the array.
@@ -53,7 +70,7 @@ func ValidateBitlist(buf []byte, bitLimit uint64) error {
 	numOfBits := uint64(8*(byteLen-1) + msb - 1)
 
 	if numOfBits > bitLimit {
-		return fmt.Errorf("too many bits")
+		return fmt.Errorf("too many bits: %w", ErrListTooBig)
 	}
 	return nil
 }

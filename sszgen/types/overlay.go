@@ -45,6 +45,8 @@ func (vo *ValueOverlay) bitfieldFixedSize() int {
 		return 4
 	case "Bitlist64":
 		return 4
+	case "Bitvector2":
+		return 1
 	case "Bitvector4":
 		return 1
 	case "Bitvector8":
@@ -65,6 +67,21 @@ func (vo *ValueOverlay) bitfieldFixedSize() int {
 		return 128
 	}
 	panic(fmt.Sprintf("Can't determine the correct size for bitfield type = %s", vo.Name))
+}
+
+// PaddedBits returns N for a go-bitfield BitvectorN with N%8 != 0, and 0
+// otherwise.
+func (vo *ValueOverlay) PaddedBits() int {
+	if !vo.IsBitfield() {
+		return 0
+	}
+	switch vo.Name {
+	case "Bitvector2":
+		return 2
+	case "Bitvector4":
+		return 4
+	}
+	return 0
 }
 
 var _ ValRep = &ValueOverlay{}

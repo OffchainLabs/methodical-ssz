@@ -19,3 +19,8 @@ type Bits2 struct {
 type ListBits struct {
 	L bitfield.Bitlist `ssz-max:"2048"`
 }
+
+type ListU64 struct {
+	A uint64
+	L []uint64 `ssz-max:"4"`
+}

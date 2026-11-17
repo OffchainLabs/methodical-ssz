@@ -2,7 +2,11 @@ package genfixture
 
 import (
 	"bytes"
+	"encoding/binary"
+	"errors"
 	"testing"
+
+	"github.com/OffchainLabs/methodical-ssz/ssz"
 )
 
 func TestBitsRoundTrip(t *testing.T) {
@@ -101,5 +105,23 @@ func TestBitlistLimit(t *testing.T) {
 				t.Fatalf("round trip: MarshalSSZ() = %x, decoded L = %x; want %x", got, dec.L, enc)
 			}
 		})
+	}
+}
+
+func TestListU64FirstOffset(t *testing.T) {
+	enc := binary.LittleEndian.AppendUint64(nil, 7)
+	enc = binary.LittleEndian.AppendUint32(enc, 12)
+	enc = binary.LittleEndian.AppendUint64(enc, 9)
+	var dec ListU64
+	if err := dec.UnmarshalSSZ(enc); err != nil || dec.A != 7 || len(dec.L) != 1 || dec.L[0] != 9 {
+		t.Fatalf("UnmarshalSSZ(%x) = %+v, %v", enc, dec, err)
+	}
+	// The fixed part is 8 + 4 = 12 bytes, so the first offset must be 12.
+	for _, off := range []uint32{0, 11, 13, 20, 0xffffffff} {
+		bad := append([]byte{}, enc...)
+		binary.LittleEndian.PutUint32(bad[8:12], off)
+		if err := dec.UnmarshalSSZ(bad); !errors.Is(err, ssz.ErrInvalidVariableOffset) {
+			t.Fatalf("offset %d: UnmarshalSSZ = %v, want ErrInvalidVariableOffset", off, err)
+		}
 	}
 }

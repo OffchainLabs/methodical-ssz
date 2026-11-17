@@ -495,9 +495,6 @@ if {{.SliceName}}[0] == 1 {
 		`{{.VarOffsetName}} := ssz.ReadOffset(buf[{{.Begin}}:{{.End}}]) // {{.FieldName}}
 if {{.VarOffsetName}} != {{.OuterSize}} {
 	return ssz.ErrInvalidVariableOffset
-}
-if {{.VarOffsetName}} > size {
-	return ssz.ErrOffset
 }`))
 
 	unmarshalNextOffsetTmpl = template.Must(template.New("unmarshalNextOffset").Parse(

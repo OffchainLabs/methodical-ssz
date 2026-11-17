@@ -76,6 +76,9 @@ func (c *Prog) MarshalSSZTo(dst []byte) ([]byte, error) {
 	}
 
 	// Field 3: D
+	if err = ssz.ValidateProgressiveBitlist(c.D); err != nil {
+		return nil, fmt.Errorf("D: %w", err)
+	}
 	dst = append(dst, c.D...)
 
 	// Field 4: E

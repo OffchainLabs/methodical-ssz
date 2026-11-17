@@ -67,3 +67,39 @@ func TestBitvector2Padding(t *testing.T) {
 		}
 	}
 }
+
+func TestBitlistLimit(t *testing.T) {
+	bitlist := func(n int, last byte) []byte {
+		b := make([]byte, n)
+		b[n-1] = last
+		return b
+	}
+	tests := []struct {
+		name  string
+		l     []byte
+		valid bool
+	}{
+		{"0 bits", []byte{0x01}, true},
+		{"2048 bits", bitlist(257, 0x01), true},
+		{"2049 bits", bitlist(257, 0x02), false},
+		{"258 bytes", bitlist(258, 0x01), false},
+		{"empty", []byte{}, false},
+		{"last byte zero", []byte{0x01, 0x00}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			enc := append([]byte{4, 0, 0, 0}, tt.l...) // offset 4, then L
+			var dec ListBits
+			if err := dec.UnmarshalSSZ(enc); tt.valid != (err == nil) {
+				t.Fatalf("UnmarshalSSZ(%x) = %v, want valid=%v", enc, err, tt.valid)
+			}
+			got, err := (&ListBits{L: tt.l}).MarshalSSZ()
+			if tt.valid != (err == nil) {
+				t.Fatalf("MarshalSSZ() = %v, want valid=%v", err, tt.valid)
+			}
+			if tt.valid && (!bytes.Equal(got, enc) || !bytes.Equal(dec.L, tt.l)) {
+				t.Fatalf("round trip: MarshalSSZ() = %x, decoded L = %x; want %x", got, dec.L, enc)
+			}
+		})
+	}
+}

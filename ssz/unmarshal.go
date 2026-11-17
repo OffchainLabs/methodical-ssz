@@ -52,7 +52,7 @@ func ValidateBitlist(buf []byte, bitLimit uint64) error {
 	// Maximum possible bytes in a bitlist with provided bitlimit.
 	maxBytes := (bitLimit >> 3) + 1
 	if byteLen > int(maxBytes) {
-		return fmt.Errorf("unexpected number of bytes, got %d but found %d", byteLen, maxBytes)
+		return fmt.Errorf("unexpected number of bytes, got %d but found %d: %w", byteLen, maxBytes, ErrListTooBig)
 	}
 
 	// The most significant bit is present in the last byte in the array.
@@ -70,7 +70,7 @@ func ValidateBitlist(buf []byte, bitLimit uint64) error {
 	numOfBits := uint64(8*(byteLen-1) + msb - 1)
 
 	if numOfBits > bitLimit {
-		return fmt.Errorf("too many bits")
+		return fmt.Errorf("too many bits: %w", ErrListTooBig)
 	}
 	return nil
 }

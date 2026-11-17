@@ -81,6 +81,12 @@ func TestBitlist_MaxValue(t *testing.T) {
 			maxSize: 2048,
 			valid:   false,
 		},
+		{
+			name:    "Too many bytes",
+			bitlist: append(make([]byte, 257), 0x01),
+			maxSize: 2048,
+			valid:   false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -89,8 +95,8 @@ func TestBitlist_MaxValue(t *testing.T) {
 			if tt.valid && err != nil {
 				t.Error(err)
 			}
-			if !tt.valid && err == nil {
-				t.Error("Invalid bitlist did not fail validation")
+			if !tt.valid && !errors.Is(err, ErrListTooBig) {
+				t.Errorf("ValidateBitlist = %v, want ErrListTooBig", err)
 			}
 		})
 	}

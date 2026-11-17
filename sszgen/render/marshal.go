@@ -159,6 +159,18 @@ func (o marshalOp) Overlay(v *gentypes.ValueOverlay, ref string, ctx *core.GenCo
 	if v.Underlying.IsVariableSized() {
 		frag.Variable = core.Dispatch(marshalOp{field: o.field}, v.Underlying, ref, ctx).Variable
 	}
+	if ul, ok := v.Underlying.(*gentypes.ValueList); ok && v.IsBitfield() {
+		check := fmt.Sprintf("ssz.ValidateBitlist(%s, %d)", ref, ul.MaxSize)
+		if ul.Progressive {
+			// no spec limit. ssz-max only bounds the decoder's input
+			check = fmt.Sprintf("ssz.ValidateProgressiveBitlist(%s)", ref)
+		}
+		frag.Variable = execTmpl(marshalValidateTmpl, marshalValidateElements{
+			Check:   check,
+			Field:   o.field,
+			Marshal: fmt.Sprintf("dst = append(dst, %s...)", ref),
+		})
+	}
 	if bits := v.PaddedBits(); bits != 0 {
 		frag.Fixed = execTmpl(marshalValidateTmpl, marshalValidateElements{
 			Check:   fmt.Sprintf("ssz.ValidateBitvector(%s, %d)", ref, bits),

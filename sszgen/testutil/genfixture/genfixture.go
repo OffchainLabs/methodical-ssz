@@ -15,3 +15,7 @@ type Bits struct {
 type Bits2 struct {
 	V2 bitfield.Bitvector2 `ssz-size:"1"`
 }
+
+type ListBits struct {
+	L bitfield.Bitlist `ssz-max:"2048"`
+}

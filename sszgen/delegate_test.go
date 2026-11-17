@@ -61,7 +61,7 @@ func TestGenFixture(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defs, err := TypeDefs(ps, "Bits", "Bits2")
+	defs, err := TypeDefs(ps, "Bits", "Bits2", "ListBits")
 	if err != nil {
 		t.Fatal(err)
 	}

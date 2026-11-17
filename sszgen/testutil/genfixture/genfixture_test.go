@@ -125,3 +125,24 @@ func TestListU64FirstOffset(t *testing.T) {
 		}
 	}
 }
+
+// A List[byte, 32] of 33 bytes must fail to decode, encode and hash.
+func TestByteListLimit(t *testing.T) {
+	encodeExtra := func(n int) []byte {
+		return append([]byte{4, 0, 0, 0}, bytes.Repeat([]byte{0xab}, n)...) // offset 4, then ExtraData
+	}
+	var dec Extra
+	if err := dec.UnmarshalSSZ(encodeExtra(32)); err != nil || len(dec.ExtraData) != 32 {
+		t.Fatalf("UnmarshalSSZ(32 bytes) = %v, len %d; want nil, 32", err, len(dec.ExtraData))
+	}
+	if err := dec.UnmarshalSSZ(encodeExtra(33)); !errors.Is(err, ssz.ErrListTooBig) {
+		t.Fatalf("UnmarshalSSZ(33 bytes) = %v, want ErrListTooBig", err)
+	}
+	in := Extra{ExtraData: bytes.Repeat([]byte{0xab}, 33)}
+	if _, err := in.MarshalSSZ(); err == nil {
+		t.Fatal("MarshalSSZ accepted 33 bytes")
+	}
+	if _, err := in.HashTreeRoot(); err == nil {
+		t.Fatal("HashTreeRoot accepted 33 bytes")
+	}
+}

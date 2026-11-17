@@ -323,3 +323,80 @@ func (c *ListU64) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	hh.Merkleize(indx)
 	return nil
 }
+
+func (c *Extra) SizeSSZ() int {
+	size := 4
+	size += len(c.ExtraData)
+	return size
+}
+
+func (c *Extra) MarshalSSZ() ([]byte, error) {
+	buf := make([]byte, c.SizeSSZ())
+	return c.MarshalSSZTo(buf[:0])
+}
+
+func (c *Extra) MarshalSSZTo(dst []byte) ([]byte, error) {
+	var err error
+	offset := 4
+
+	// Field 0: ExtraData
+	dst = ssz.WriteOffset(dst, offset)
+	offset += len(c.ExtraData)
+
+	// Field 0: ExtraData
+	if len(c.ExtraData) > 32 {
+		return nil, ssz.ErrListTooBig
+	}
+	dst = append(dst, c.ExtraData...)
+	return dst, err
+}
+
+func (c *Extra) UnmarshalSSZ(buf []byte) error {
+	var err error
+	size := uint64(len(buf))
+	if size < 4 {
+		return ssz.ErrSize
+	}
+
+	sszVarOffset0 := ssz.ReadOffset(buf[0:4]) // c.ExtraData
+	if sszVarOffset0 != 4 {
+		return ssz.ErrInvalidVariableOffset
+	}
+	sszSlice0 := buf[sszVarOffset0:] // c.ExtraData
+
+	// Field 0: ExtraData
+	if len(sszSlice0) > 32 {
+		return fmt.Errorf("ssz-max exceeded: c.ExtraData has %d elements, ssz-max is 32: %w", len(sszSlice0), ssz.ErrListTooBig)
+	}
+	c.ExtraData = append([]byte{}, sszSlice0...)
+	return err
+}
+
+func (c *Extra) HashTreeRoot() ([32]byte, error) {
+	hh := ssz.DefaultHasherPool.Get()
+	if err := c.HashTreeRootWith(hh); err != nil {
+		ssz.DefaultHasherPool.Put(hh)
+		return [32]byte{}, err
+	}
+	root, err := hh.HashRoot()
+	ssz.DefaultHasherPool.Put(hh)
+	return root, err
+}
+
+func (c *Extra) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+	indx := hh.Index()
+	// Field 0: ExtraData
+
+	{
+		if len(c.ExtraData) > 32 {
+			return ssz.ErrBytesLength
+		}
+		subIndx := hh.Index()
+		hh.AppendBytes32(c.ExtraData)
+		numItems := uint64(len(c.ExtraData))
+		hh.MerkleizeWithMixin(subIndx, numItems, (32*1+31)/32)
+	}
+
+	hh.Merkleize(indx)
+	return nil
+}

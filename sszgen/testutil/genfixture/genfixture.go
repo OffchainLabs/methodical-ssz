@@ -24,3 +24,7 @@ type ListU64 struct {
 	A uint64
 	L []uint64 `ssz-max:"4"`
 }
+
+type Extra struct {
+	ExtraData []byte `ssz-max:"32"`
+}

@@ -767,6 +767,9 @@ func (c *Example) UnmarshalSSZ(buf []byte) error {
 					return fmt.Errorf("offset %d is not greater than start offset %d when decoding c.D", endOffset, startOffset)
 				}
 				tmpSlice = sszSlice3[startOffset:endOffset]
+				if len(tmpSlice) > 64 {
+					return fmt.Errorf("ssz-max exceeded: tmp has %d elements, ssz-max is 64: %w", len(tmpSlice), ssz.ErrListTooBig)
+				}
 				tmp = append([]byte{}, tmpSlice...)
 				c.D[i] = tmp
 				startOffset = endOffset
@@ -871,6 +874,9 @@ func (c *Example) UnmarshalSSZ(buf []byte) error {
 	c.J = append(c.J, go_bitfield.Bitvector4(sszSlice9)...)
 
 	// Field 10: K
+	if len(sszSlice10) > 256 {
+		return fmt.Errorf("ssz-max exceeded: c.K has %d elements, ssz-max is 256: %w", len(sszSlice10), ssz.ErrListTooBig)
+	}
 	c.K = append([]byte{}, sszSlice10...)
 
 	// Field 11: L
@@ -950,6 +956,9 @@ func (c *Example) UnmarshalSSZ(buf []byte) error {
 				return fmt.Errorf("offset %d is not greater than start offset %d when decoding c.P", endOffset, startOffset)
 			}
 			tmpSlice = sszSlice15[startOffset:endOffset]
+			if len(tmpSlice) > 64 {
+				return fmt.Errorf("ssz-max exceeded: tmp has %d elements, ssz-max is 64: %w", len(tmpSlice), ssz.ErrListTooBig)
+			}
 			tmp = append([]byte{}, tmpSlice...)
 			c.P[i] = tmp
 			startOffset = endOffset

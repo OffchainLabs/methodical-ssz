@@ -763,8 +763,8 @@ func (c *BeaconState) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 		hh.MerkleizeWithMixin(subIndx, uint64(len(c.CurrentEpochAttestations)), 4096)
 	}
 	// Field 17: JustificationBits
-	if len([]byte(c.JustificationBits)) != 1 {
-		return ssz.ErrBytesLength
+	if err := ssz.ValidateBitvector(c.JustificationBits, 4); err != nil {
+		return fmt.Errorf("JustificationBits: %w", err)
 	}
 	hh.PutBytes([]byte(c.JustificationBits))
 	// Field 18: PreviousJustifiedCheckpoint

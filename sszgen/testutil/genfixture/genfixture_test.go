@@ -52,6 +52,9 @@ func TestBitvectorPadding(t *testing.T) {
 			if tt.valid && !bytes.Equal(got, enc) {
 				t.Fatalf("MarshalSSZ = %x, want %x", got, enc)
 			}
+			if _, err := in.HashTreeRoot(); tt.valid != (err == nil) {
+				t.Fatalf("HashTreeRoot(%x) = %v, want valid=%v", enc, err, tt.valid)
+			}
 		})
 	}
 }
@@ -68,6 +71,9 @@ func TestBitvector2Padding(t *testing.T) {
 		in := Bits2{V2: []byte{tt.b}}
 		if _, err := in.MarshalSSZ(); tt.valid != (err == nil) {
 			t.Fatalf("MarshalSSZ(%x) = %v, want valid=%v", tt.b, err, tt.valid)
+		}
+		if _, err := in.HashTreeRoot(); tt.valid != (err == nil) {
+			t.Fatalf("HashTreeRoot(%x) = %v, want valid=%v", tt.b, err, tt.valid)
 		}
 	}
 }
@@ -103,6 +109,35 @@ func TestBitlistLimit(t *testing.T) {
 			}
 			if tt.valid && (!bytes.Equal(got, enc) || !bytes.Equal(dec.L, tt.l)) {
 				t.Fatalf("round trip: MarshalSSZ() = %x, decoded L = %x; want %x", got, dec.L, enc)
+			}
+			if _, err := (&ListBits{L: tt.l}).HashTreeRoot(); tt.valid != (err == nil) {
+				t.Fatalf("HashTreeRoot() = %v, want valid=%v", err, tt.valid)
+			}
+		})
+	}
+}
+
+func TestProgressiveBitlist(t *testing.T) {
+	tests := []struct {
+		name  string
+		l     []byte
+		valid bool
+	}{
+		{"0 bits", []byte{0x01}, true},
+		{"8 bits, ends at a byte boundary", []byte{0xff, 0x01}, true},
+		{"empty", []byte{}, false},
+		{"one zero byte", []byte{0x00}, false},
+		{"last byte zero", []byte{0x05, 0x00}, false},
+		{"33 bytes, last byte zero", append(bytes.Repeat([]byte{0xff}, 32), 0x00), false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			in := ProgBits{L: tt.l}
+			if _, err := in.MarshalSSZ(); tt.valid != (err == nil) {
+				t.Fatalf("MarshalSSZ() = %v, want valid=%v", err, tt.valid)
+			}
+			if _, err := in.HashTreeRoot(); tt.valid != (err == nil) {
+				t.Fatalf("HashTreeRoot() = %v, want valid=%v", err, tt.valid)
 			}
 		})
 	}

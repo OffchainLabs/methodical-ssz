@@ -75,8 +75,8 @@ func (c *Bits) HashTreeRoot() ([32]byte, error) {
 func (c *Bits) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	indx := hh.Index()
 	// Field 0: V4
-	if len([]byte(c.V4)) != 1 {
-		return ssz.ErrBytesLength
+	if err := ssz.ValidateBitvector(c.V4, 4); err != nil {
+		return fmt.Errorf("V4: %w", err)
 	}
 	hh.PutBytes([]byte(c.V4))
 	// Field 1: V16
@@ -143,8 +143,8 @@ func (c *Bits2) HashTreeRoot() ([32]byte, error) {
 func (c *Bits2) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	indx := hh.Index()
 	// Field 0: V2
-	if len([]byte(c.V2)) != 1 {
-		return ssz.ErrBytesLength
+	if err := ssz.ValidateBitvector(c.V2, 2); err != nil {
+		return fmt.Errorf("V2: %w", err)
 	}
 	hh.PutBytes([]byte(c.V2))
 	hh.Merkleize(indx)
@@ -213,10 +213,80 @@ func (c *ListBits) HashTreeRoot() ([32]byte, error) {
 func (c *ListBits) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	indx := hh.Index()
 	// Field 0: L
-	if len(c.L) == 0 {
-		return ssz.ErrEmptyBitlist
+	if err := ssz.ValidateBitlist(c.L, 2048); err != nil {
+		return fmt.Errorf("L: %w", err)
 	}
 	hh.PutBitlist(c.L, 2048)
+	hh.Merkleize(indx)
+	return nil
+}
+
+func (c *ProgBits) SizeSSZ() int {
+	size := 4
+	size += len(c.L)
+	return size
+}
+
+func (c *ProgBits) MarshalSSZ() ([]byte, error) {
+	buf := make([]byte, c.SizeSSZ())
+	return c.MarshalSSZTo(buf[:0])
+}
+
+func (c *ProgBits) MarshalSSZTo(dst []byte) ([]byte, error) {
+	var err error
+	offset := 4
+
+	// Field 0: L
+	dst = ssz.WriteOffset(dst, offset)
+	offset += len(c.L)
+
+	// Field 0: L
+	if err = ssz.ValidateProgressiveBitlist(c.L); err != nil {
+		return nil, fmt.Errorf("L: %w", err)
+	}
+	dst = append(dst, c.L...)
+	return dst, err
+}
+
+func (c *ProgBits) UnmarshalSSZ(buf []byte) error {
+	var err error
+	size := uint64(len(buf))
+	if size < 4 {
+		return ssz.ErrSize
+	}
+
+	sszVarOffset0 := ssz.ReadOffset(buf[0:4]) // c.L
+	if sszVarOffset0 != 4 {
+		return ssz.ErrInvalidVariableOffset
+	}
+	sszSlice0 := buf[sszVarOffset0:] // c.L
+
+	// Field 0: L
+	if err = ssz.ValidateProgressiveBitlist(sszSlice0); err != nil {
+		return fmt.Errorf("L: %w", err)
+	}
+	c.L = append([]byte{}, go_bitfield.Bitlist(sszSlice0)...)
+	return err
+}
+
+func (c *ProgBits) HashTreeRoot() ([32]byte, error) {
+	hh := ssz.DefaultHasherPool.Get()
+	if err := c.HashTreeRootWith(hh); err != nil {
+		ssz.DefaultHasherPool.Put(hh)
+		return [32]byte{}, err
+	}
+	root, err := hh.HashRoot()
+	ssz.DefaultHasherPool.Put(hh)
+	return root, err
+}
+
+func (c *ProgBits) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+	indx := hh.Index()
+	// Field 0: L
+	if err := ssz.ValidateProgressiveBitlist(c.L); err != nil {
+		return fmt.Errorf("L: %w", err)
+	}
+	hh.PutProgressiveBitlist(c.L)
 	hh.Merkleize(indx)
 	return nil
 }

@@ -20,6 +20,10 @@ type ListBits struct {
 	L bitfield.Bitlist `ssz-max:"2048"`
 }
 
+type ProgBits struct {
+	L bitfield.Bitlist
+}
+
 type ListU64 struct {
 	A uint64
 	L []uint64 `ssz-max:"4"`

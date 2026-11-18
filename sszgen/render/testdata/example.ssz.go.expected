@@ -1558,8 +1558,8 @@ func (c *Example) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 		hh.Merkleize(subIndx)
 	}
 	// Field 9: J
-	if len([]byte(c.J)) != 1 {
-		return ssz.ErrBytesLength
+	if err := ssz.ValidateBitvector(c.J, 4); err != nil {
+		return fmt.Errorf("J: %w", err)
 	}
 	hh.PutBytes([]byte(c.J))
 	// Field 10: K
@@ -1575,8 +1575,8 @@ func (c *Example) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	}
 
 	// Field 11: L
-	if len(c.L) == 0 {
-		return ssz.ErrEmptyBitlist
+	if err := ssz.ValidateBitlist(c.L, 2048); err != nil {
+		return fmt.Errorf("L: %w", err)
 	}
 	hh.PutBitlist(c.L, 2048)
 	// Field 12: M
@@ -1821,8 +1821,8 @@ func (c *Example) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 		}
 		subIndx := hh.Index()
 		for _, o := range c.AG {
-			if len(o) == 0 {
-				return ssz.ErrEmptyBitlist
+			if err := ssz.ValidateBitlist(o, 2048); err != nil {
+				return fmt.Errorf("AG: %w", err)
 			}
 			hh.PutBitlist(o, 2048)
 		}
@@ -1835,8 +1835,8 @@ func (c *Example) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 		}
 		subIndx := hh.Index()
 		for _, o := range c.AH {
-			if len(o) == 0 {
-				return ssz.ErrEmptyBitlist
+			if err := ssz.ValidateBitlist(o, 2048); err != nil {
+				return fmt.Errorf("AH: %w", err)
 			}
 			hh.PutBitlist(o, 2048)
 		}

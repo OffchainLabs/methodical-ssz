@@ -145,7 +145,11 @@ func (o htrOp) Pointer(v *gentypes.ValuePointer, ref string, ctx *core.GenContex
 func (o htrOp) Overlay(v *gentypes.ValueOverlay, ref string, ctx *core.GenContext) string {
 	if v.IsBitfield() {
 		if ul, ok := v.Underlying.(*gentypes.ValueList); ok && ul.Progressive {
-			return execTmpl(htrProgressiveBitlistTmpl, fieldElements{FieldName: ref})
+			return execTmpl(htrValidateTmpl, htrValidateElements{
+				Check: fmt.Sprintf("ssz.ValidateProgressiveBitlist(%s)", ref),
+				Field: o.field,
+				Put:   fmt.Sprintf("hh.PutProgressiveBitlist(%s)", ref),
+			})
 		}
 	}
 	if v.IsBitfield() && v.Name == "Bitlist" {
@@ -153,7 +157,18 @@ func (o htrOp) Overlay(v *gentypes.ValueOverlay, ref string, ctx *core.GenContex
 		if !ok {
 			panic(fmt.Sprintf("unexpected underlying type for Bitlist, expected ValueList, got %v", v.Underlying))
 		}
-		return execTmpl(htrBitlistTmpl, bitlistPutElements{FieldName: ref, MaxSize: ul.MaxSize})
+		return execTmpl(htrValidateTmpl, htrValidateElements{
+			Check: fmt.Sprintf("ssz.ValidateBitlist(%s, %d)", ref, ul.MaxSize),
+			Field: o.field,
+			Put:   fmt.Sprintf("hh.PutBitlist(%s, %d)", ref, ul.MaxSize),
+		})
+	}
+	if bits := v.PaddedBits(); bits != 0 {
+		return execTmpl(htrValidateTmpl, htrValidateElements{
+			Check: fmt.Sprintf("ssz.ValidateBitvector(%s, %d)", ref, bits),
+			Field: o.field,
+			Put:   fmt.Sprintf("hh.PutBytes(%s)", core.Coerce(v.Underlying)(ref)),
+		})
 	}
 	return core.Dispatch(htrOp{field: o.field}, v.Underlying, core.Coerce(v.Underlying)(ref), ctx)
 }
@@ -370,10 +385,11 @@ type listLimitElements struct {
 	ElementSize int
 }
 
-// bitlistPutElements parameterizes the bitlist hash block.
-type bitlistPutElements struct {
-	FieldName string
-	MaxSize   int
+// htrValidateElements parameterizes a bitfield check before its hash call.
+type htrValidateElements struct {
+	Check string
+	Field string
+	Put   string
 }
 
 // htrCallElements parameterizes the nested HashTreeRoot[With] call: the field
@@ -396,17 +412,11 @@ var (
 	hh.AppendBytes32(hash[:])
 }`))
 
-	htrBitlistTmpl = template.Must(template.New("htrBitlist").Parse(
-		`if len({{.FieldName}}) == 0 {
-	return ssz.ErrEmptyBitlist
+	htrValidateTmpl = template.Must(template.New("htrValidate").Parse(
+		`if err := {{.Check}}; err != nil {
+	return fmt.Errorf("{{.Field}}: %w", err)
 }
-hh.PutBitlist({{.FieldName}}, {{.MaxSize}})`))
-
-	htrProgressiveBitlistTmpl = template.Must(template.New("htrProgressiveBitlist").Parse(
-		`if len({{.FieldName}}) == 0 {
-	return ssz.ErrEmptyBitlist
-}
-hh.PutProgressiveBitlist({{.FieldName}})`))
+{{.Put}}`))
 
 	byteAppendTmpl = template.Must(template.New("byteAppend").Parse(
 		`if len({{.FieldName}}) != {{.Size}} {

@@ -251,8 +251,8 @@ func (c *Prog) ProgressiveHashTreeRootWith(hh *ssz.Hasher) (err error) {
 		hh.MerkleizeProgressiveWithMixin(subIndx, uint64(len(c.C)))
 	}
 	// Position 4: D
-	if len(c.D) == 0 {
-		return ssz.ErrEmptyBitlist
+	if err := ssz.ValidateProgressiveBitlist(c.D); err != nil {
+		return fmt.Errorf("D: %w", err)
 	}
 	hh.PutProgressiveBitlist(c.D)
 	// Position 5: E

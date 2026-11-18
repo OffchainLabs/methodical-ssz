@@ -18,7 +18,7 @@ const bytesPerLengthOffset = 4
 // in a non-zero trailing byte.
 func ValidateProgressiveBitlist(buf []byte) error {
 	if len(buf) == 0 {
-		return fmt.Errorf("bitlist empty, it does not have length bit")
+		return fmt.Errorf("bitlist empty, it does not have length bit: %w", ErrEmptyBitlist)
 	}
 	if buf[len(buf)-1] == 0 {
 		return fmt.Errorf("trailing byte is zero")
@@ -47,7 +47,7 @@ func ValidateBitvector(buf []byte, bits uint64) error {
 func ValidateBitlist(buf []byte, bitLimit uint64) error {
 	byteLen := len(buf)
 	if byteLen == 0 {
-		return fmt.Errorf("bitlist empty, it does not have length bit")
+		return fmt.Errorf("bitlist empty, it does not have length bit: %w", ErrEmptyBitlist)
 	}
 	// Maximum possible bytes in a bitlist with provided bitlimit.
 	maxBytes := (bitLimit >> 3) + 1

@@ -94,6 +94,10 @@ type Hasher struct {
 	// trace, when non-nil, records each collapse for merkleization tracing
 	// (see trace.go). nil on the hot path => zero overhead.
 	trace *traceState
+
+	// err holds the first invalid input of a Put* function that cannot return
+	// an error. HashRoot returns it.
+	err error
 }
 
 // NewHasher creates a new Hasher object
@@ -114,6 +118,9 @@ func NewHasherWithHash(hh hash.Hash) *Hasher {
 
 // HashRoot creates the hash final hash root
 func (h *Hasher) HashRoot() (res [32]byte, err error) {
+	if h.err != nil {
+		return res, h.err
+	}
 	if len(h.buf) != 32 {
 		err = fmt.Errorf("expected 32 byte size")
 		return
@@ -127,6 +134,7 @@ func (h *Hasher) Reset() {
 	h.buf = h.buf[:0]
 	h.hash.Reset()
 	h.trace = nil
+	h.err = nil
 }
 
 func (h *Hasher) Index() int {
@@ -260,8 +268,13 @@ func CalculateLimit(maxCapacity, numItems, size uint64) uint64 {
 	return numItems
 }
 
-// PutBitlist appends a ssz bitlist
+// PutBitlist appends a ssz bitlist. An invalid bitlist makes HashRoot fail.
 func (h *Hasher) PutBitlist(bb []byte, maxSize uint64) {
+	if err := ValidateBitlist(bb, maxSize); err != nil {
+		h.putInvalid(err)
+		return
+	}
+
 	var size uint64
 	h.tmp, size = parseBitlist(h.tmp[:0], bb)
 
@@ -269,6 +282,15 @@ func (h *Hasher) PutBitlist(bb []byte, maxSize uint64) {
 	indx := h.Index()
 	h.AppendBytes32(h.tmp)
 	h.MerkleizeWithMixin(indx, size, (maxSize+255)/256)
+}
+
+// putInvalid records err for HashRoot.
+// The zero chunk keeps the layout of the buffer.
+func (h *Hasher) putInvalid(err error) {
+	if h.err == nil {
+		h.err = err
+	}
+	h.Append(zeroBytes)
 }
 
 func parseBitlist(dst, buf []byte) ([]byte, uint64) {
@@ -369,8 +391,13 @@ func (h *Hasher) MerkleizeProgressiveWithActiveFields(indx int, activeFields []b
 }
 
 // PutProgressiveBitlist appends an ssz progressive bitlist (no limit; the
-// progressive analog of PutBitlist).
+// progressive analog of PutBitlist). An invalid bitlist makes HashRoot fail.
 func (h *Hasher) PutProgressiveBitlist(bb []byte) {
+	if err := ValidateProgressiveBitlist(bb); err != nil {
+		h.putInvalid(err)
+		return
+	}
+
 	var size uint64
 	h.tmp, size = parseBitlistProgressive(h.tmp[:0], bb)
 

@@ -36,3 +36,38 @@ func TestMerkleize8ByteVector(t *testing.T) {
 		t.Fatalf("Unexpected result: %v", result)
 	}
 }
+
+func TestPutBitlistInvalid(t *testing.T) {
+	tests := []struct {
+		name  string
+		put   func(h *Hasher)
+		valid bool
+	}{
+		{"0 bits", func(h *Hasher) { h.PutBitlist([]byte{0x01}, 2048) }, true},
+		{"2048 bits", func(h *Hasher) { h.PutBitlist(append(make([]byte, 256), 0x01), 2048) }, true},
+		{"empty", func(h *Hasher) { h.PutBitlist(nil, 2048) }, false},
+		{"last byte zero", func(h *Hasher) { h.PutBitlist([]byte{0x01, 0x00}, 2048) }, false},
+		{"2049 bits", func(h *Hasher) { h.PutBitlist(append(make([]byte, 256), 0x02), 2048) }, false},
+		{"258 bytes", func(h *Hasher) { h.PutBitlist(append(make([]byte, 257), 0x01), 2048) }, false},
+		{"progressive 0 bits", func(h *Hasher) { h.PutProgressiveBitlist([]byte{0x01}) }, true},
+		{"progressive 8 bits", func(h *Hasher) { h.PutProgressiveBitlist([]byte{0xff, 0x01}) }, true},
+		{"progressive empty", func(h *Hasher) { h.PutProgressiveBitlist(nil) }, false},
+		{"progressive one zero byte", func(h *Hasher) { h.PutProgressiveBitlist([]byte{0x00}) }, false},
+		{"progressive last byte zero", func(h *Hasher) { h.PutProgressiveBitlist([]byte{0x05, 0x00}) }, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := NewHasher()
+			tt.put(h)
+			if _, err := h.HashRoot(); tt.valid != (err == nil) {
+				t.Fatalf("HashRoot() = %v, want valid=%v", err, tt.valid)
+			}
+			// Reset clears the error, so that a pooled hasher can hash again.
+			h.Reset()
+			h.PutBitlist([]byte{0x01}, 8)
+			if _, err := h.HashRoot(); err != nil {
+				t.Fatalf("HashRoot() after Reset = %v", err)
+			}
+		})
+	}
+}
